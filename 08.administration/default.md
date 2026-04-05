@@ -14,7 +14,7 @@ metadata:
 
 The Dune admin panel is a browser-based interface for managing content, media, users, and site configuration without editing files directly.
 
-> **Stability note**: The admin panel UI and its internal API endpoints (`/admin/api/…`) are functional but should be considered **beta**. Breaking changes to panel internals may occur in minor releases. The panel is intended for human editors, not programmatic integrations — use the [REST API](/reference/api) for machine-to-machine access.
+> **Stability note**: The admin panel UI and its internal API endpoints (`/admin/api/…`) are functional but should be considered **beta**. Breaking changes to panel internals may occur in minor releases. The panel is intended for human editors, not programmatic integrations — use the [REST API](../reference/api) for machine-to-machine access.
 
 ## Accessing the panel
 
@@ -63,17 +63,17 @@ On first startup, a default `admin` account is created automatically. Delete the
 | Feature | Description |
 |---------|-------------|
 | **Content editor** | Create, edit, and delete pages. Supports Markdown, MDX, and frontmatter editing. Blueprint-driven custom fields are auto-generated from `blueprints/{template}.yaml`. |
-| **Draft preview** | Save a draft and get a shareable preview URL that renders through the active theme. Reviewers don't need admin access. See [Draft preview](/content/workflow#draft-preview). |
+| **Draft preview** | Save a draft and get a shareable preview URL that renders through the active theme. Reviewers don't need admin access. See [Draft preview](../content/workflow#draft-preview). |
 | **Workflow** | Move pages through `draft → in_review → published → archived` states. |
 | **Scheduled actions** | Set a date/time for automatic publish or unpublish. |
 | **Revision history** | Browse and restore previous versions of any page. Up to `admin.maxRevisions` (default 50) saved per page. The current revision count is shown in the editor toolbar. |
-| **Comments & annotations** | Leave threaded comments on pages with @mention support and a resolve workflow for editorial sign-off. See [Comments](/comments). |
-| **Webhooks** | Fire outbound HTTP POST requests when pages are created, updated, deleted, or workflow status changes. See [Webhooks](/webhooks). |
-| **Flex Objects** | Create, edit, and delete records for schema-driven custom data types (products, team members, events, etc.). Schemas defined in `flex-objects/{type}.yaml`. See [Flex Objects](/flex-objects). |
+| **Comments & annotations** | Leave threaded comments on pages with @mention support and a resolve workflow for editorial sign-off. See [Comments](../comments). |
+| **Webhooks** | Fire outbound HTTP POST requests when pages are created, updated, deleted, or workflow status changes. See [Webhooks](../webhooks). |
+| **Flex Objects** | Create, edit, and delete records for schema-driven custom data types (products, team members, events, etc.). Schemas defined in `flex-objects/{type}.yaml`. See [Flex Objects](../flex-objects). |
 | **Configuration editor** | Edit `config/site.yaml` and `config/system.yaml` through a form UI without touching files directly (admin role only). |
 | **Themes** | Browse installed and registry themes, preview any theme before switching, and install new themes from the marketplace. See `/admin/themes`. |
 | **Media library** | Upload, browse, and delete media files co-located with content pages. |
-| **Form submissions** | View submissions collected from blueprint-driven forms. See [Forms](/forms). |
+| **Form submissions** | View submissions collected from blueprint-driven forms. See [Forms](../forms). |
 | **User management** | Create, edit, enable/disable admin users (admin role only). |
 
 ## Configuration editor
@@ -86,7 +86,7 @@ Changes are written back to the config files and take effect on next request (fo
 
 The **Theme tab** of the configuration editor lets you switch the active theme and preview alternatives before committing. Select a theme from the dropdown and click **Preview** to see an iframe rendering of your site in that theme; click **Apply this theme** to make the switch.
 
-For a full theme browser, go to `/admin/themes` (also linked from the bottom of the Theme tab). The marketplace shows your installed themes and a curated registry of community themes. You can install a theme directly from the registry — no restart required. See [Theme Preview & Marketplace](/themes/preview-and-marketplace) for details.
+For a full theme browser, go to `/admin/themes` (also linked from the bottom of the Theme tab). The marketplace shows your installed themes and a curated registry of community themes. You can install a theme directly from the registry — no restart required. See [Theme Preview & Marketplace](../themes/preview-and-marketplace) for details.
 
 ## Revision history
 

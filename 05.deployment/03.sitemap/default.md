@@ -77,7 +77,7 @@ Each URL's `<lastmod>` is the file modification time of the content file, format
 
 ## Multilingual sites
 
-For sites with more than one language configured (see [Multilingual Content](/content/i18n)), the sitemap adds `xhtml:link` alternates to each URL entry:
+For sites with more than one language configured (see [Multilingual Content](../../content/i18n)), the sitemap adds `xhtml:link` alternates to each URL entry:
 
 ```xml
 <url>
@@ -130,7 +130,7 @@ This produces:
 </url>
 ```
 
-The `xmlns:image` namespace attribute is added to `<urlset>` automatically when any image entries are present. See [Frontmatter Reference](/content/frontmatter#media) for the `image` field.
+The `xmlns:image` namespace attribute is added to `<urlset>` automatically when any image entries are present. See [Frontmatter Reference](../../content/frontmatter#media) for the `image` field.
 
 ## Generation timing
 

@@ -68,7 +68,7 @@ Hooks let you run code at specific points in Dune's lifecycle — when a page lo
 
 ### Content mutation hooks
 
-Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](/webhooks).
+Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../../webhooks).
 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
@@ -198,7 +198,7 @@ The `data` field in `HookContext` is typed per event. Here is what each hook rec
 
 `WorkflowStatus` is `"draft" | "in_review" | "published" | "archived"`.
 
-These same events also trigger [outbound webhooks](/webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
+These same events also trigger [outbound webhooks](../../webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
 
 > **Note:** The startup hooks (`onConfigLoaded`, `onStorageReady`, `onContentIndexReady`) and engine lifecycle hooks (`onRebuild`, `onThemeSwitch`) are fired automatically by Dune. The request and API hooks can also be fired by custom server code using `hooks.fire(event, data)` when integrating Dune into a custom server.
 

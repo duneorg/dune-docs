@@ -36,7 +36,7 @@ description: "My custom theme"
 author: "Your Name"
 ```
 
-All fields except `name` are optional. Set `parent: default` to inherit templates from another theme (see [Theme Inheritance](/themes/inheritance)).
+All fields except `name` are optional. Set `parent: default` to inherit templates from another theme (see [Theme Inheritance](../inheritance)).
 
 ## 3. Write your first template
 
@@ -171,7 +171,7 @@ import { Callout } from "./components/Callout.tsx";
 export default { Alert, Callout };
 ```
 
-Dune loads this file automatically at startup. See [MDX Content](/extending/mdx-content) for details.
+Dune loads this file automatically at startup. See [MDX Content](../../extending/mdx-content) for details.
 
 ## 9. Add a collection template
 

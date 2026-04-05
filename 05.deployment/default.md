@@ -41,7 +41,7 @@ dune build --static --base-url https://example.com
 netlify deploy --dir=dist --prod
 ```
 
-See [Static Site Generation](/deployment/static) for full options including incremental builds and hybrid mode.
+See [Static Site Generation](static) for full options including incremental builds and hybrid mode.
 
 ### Traditional server
 

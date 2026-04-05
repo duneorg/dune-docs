@@ -172,7 +172,7 @@ Files in Hugo's `static/` directory are copied to `static/` in your Dune site ro
 
 ### Not imported
 
-- Hugo layouts and partials (Dune uses its own theme system — see [Themes](/themes))
+- Hugo layouts and partials (Dune uses its own theme system — see [Themes](../../themes))
 - Hugo shortcodes (convert to plain HTML or Dune's block system manually)
 - Hugo data files (`data/` directory)
 - Hugo `config.toml` / `config.yaml` (recreate your settings in Dune's `site.yaml`)

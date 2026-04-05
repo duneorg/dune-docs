@@ -219,7 +219,7 @@ Dune also serves a public `/search` page that renders search results server-side
 
 1. A visitor opens `/search?q=deno`
 2. Dune checks whether your active theme has a `templates/search.tsx` template
-3. **If found** — the search template is rendered with the results injected as `searchQuery` and `searchResults` in `TemplateProps` (see [Templates](/themes/templates))
+3. **If found** — the search template is rendered with the results injected as `searchQuery` and `searchResults` in `TemplateProps` (see [Templates](../../themes/templates))
 4. **If not found** — Dune falls back to a built-in standalone page with minimal styling
 
 The standalone fallback includes inline JavaScript that debounces queries against `/api/search` and updates the result list live as the user types, without a full page reload.
@@ -259,7 +259,7 @@ export default function SearchTemplate({ searchQuery, searchResults, site, Layou
 
 ### `getSearchUrl` helper
 
-The [Theme SDK](/themes/theme-sdk) provides `getSearchUrl` to build links to the search page:
+The [Theme SDK](../../themes/theme-sdk) provides `getSearchUrl` to build links to the search page:
 
 ```ts
 import { getSearchUrl } from "dune/theme-helpers";
