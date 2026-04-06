@@ -16,7 +16,7 @@ The admin panel lets you preview what your site looks like with a different them
 
 ## Previewing a theme
 
-The Theme tab of the [configuration editor](../../administration) (`/admin/config` → Theme tab) has a **Preview** button next to the theme dropdown.
+The Theme tab of the [configuration editor](../administration) (`/admin/config` → Theme tab) has a **Preview** button next to the theme dropdown.
 
 1. Select a theme from the dropdown
 2. Click **Preview** — an iframe opens showing your site rendered in that theme (without switching)

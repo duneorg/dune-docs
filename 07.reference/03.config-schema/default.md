@@ -140,7 +140,7 @@ admin:
       actions: [purge-cache]
 ```
 
-Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../../webhooks) for full documentation.
+Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
 Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` (clears the processed image cache).
 

@@ -112,7 +112,7 @@ Without this list, API requests from other domains will be blocked by the browse
 
 ### `feed`
 
-Controls RSS 2.0 and Atom 1.0 feed generation. See [RSS & Atom Feeds](../../deployment/feeds) for full details.
+Controls RSS 2.0 and Atom 1.0 feed generation. See [RSS & Atom Feeds](../deployment/feeds) for full details.
 
 | Key | Default | Description |
 |-----|---------|-------------|
@@ -122,7 +122,7 @@ Controls RSS 2.0 and Atom 1.0 feed generation. See [RSS & Atom Feeds](../../depl
 
 ### `sitemap`
 
-Controls sitemap generation. See [Sitemap](../../deployment/sitemap) for full details.
+Controls sitemap generation. See [Sitemap](../deployment/sitemap) for full details.
 
 | Key | Default | Description |
 |-----|---------|-------------|

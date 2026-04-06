@@ -119,7 +119,7 @@ The following template names are used by Dune's built-in routes:
 |----------|-------|---------------|
 | `search` | `/search` | When a visitor submits a search query. Receives `searchQuery` and `searchResults` in props. If not present, Dune falls back to a built-in standalone page. |
 
-See [Search](../../reference/search#search-ui) for a full example.
+See [Search](../reference/search#search-ui) for a full example.
 
 ## Blog listing template example
 

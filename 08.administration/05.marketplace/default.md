@@ -118,4 +118,4 @@ To list a plugin or theme in the official Marketplace:
 2. Open a pull request against the [dune-cms/registry](https://github.com/dune-cms/registry) repository adding your entry.
 3. The Dune Team will review and, if approved, include it in the next registry update.
 
-See the [Plugin Development](../../reference/plugin-api) and [Theme Development](../../themes/creating-themes) guides for packaging requirements.
+See the [Plugin Development](../reference/plugin-api) and [Theme Development](../themes/creating-a-theme) guides for packaging requirements.

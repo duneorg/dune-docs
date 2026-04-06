@@ -68,7 +68,7 @@ Hooks let you run code at specific points in Dune's lifecycle — when a page lo
 
 ### Content mutation hooks
 
-Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../../webhooks).
+Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../webhooks).
 
 | Hook | When it fires | Use case |
 |------|--------------|----------|

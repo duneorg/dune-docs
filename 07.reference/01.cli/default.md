@@ -43,7 +43,7 @@ All commands are run with `dune` (or `deno task dune`).
 | `--include-drafts` | — | Include unpublished pages |
 | `--verbose` | — | Print each rendered route |
 
-See [Static Site Generation](../../deployment/static) for full documentation.
+See [Static Site Generation](../deployment/static) for full documentation.
 
 ## Configuration
 

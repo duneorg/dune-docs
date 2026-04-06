@@ -244,7 +244,7 @@ export default function createSeo(config = {}): DunePlugin {
 }
 ```
 
-Config schema fields use the same types as [Flex Object fields](../../flex-objects#field-types): `text`, `textarea`, `number`, `toggle`, `date`, `select`, `color`.
+Config schema fields use the same types as [Flex Object fields](../flex-objects#field-types): `text`, `textarea`, `number`, `toggle`, `date`, `select`, `color`.
 
 ## The `setup()` function
 

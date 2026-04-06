@@ -137,7 +137,7 @@ All latency values are in **milliseconds**.
 Collection and search queries that exceed `slowQueryThresholdMs` are recorded. The last 20 are retained in memory and shown on the dashboard and in the API response.
 
 If you see frequent slow queries, consider:
-- Enabling the [in-process page cache](../../deployment/caching) to reduce re-rendering
+- Enabling the [in-process page cache](../deployment/caching) to reduce re-rendering
 - Narrowing collection queries (add `filter` criteria, reduce `limit`)
 - Checking for large content directories with many files
 

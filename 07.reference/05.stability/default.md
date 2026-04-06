@@ -200,7 +200,7 @@ const fm: PageFrontmatter = { title: "…" };
 
 ## Config schema stability
 
-Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](../config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0.
+Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0.
 
 ## What is NOT stable
 

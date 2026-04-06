@@ -410,7 +410,7 @@ Processed images are cached with `Cache-Control: public, max-age=31536000, immut
 
 ## Flex Objects
 
-Flex Objects are schema-driven custom data types managed outside the content tree. See the [Flex Objects](../../flex-objects) documentation for schema authoring details.
+Flex Objects are schema-driven custom data types managed outside the content tree. See the [Flex Objects](../flex-objects) documentation for schema authoring details.
 
 ### List records
 

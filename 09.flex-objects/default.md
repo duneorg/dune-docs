@@ -82,7 +82,7 @@ fields:
 
 ## Field types
 
-Flex Object fields use the same type system as [Blueprint fields](../extending/blueprints). Every type supports `label`, `required`, and `default`.
+Flex Object fields use the same type system as [Blueprint fields](extending/blueprints). Every type supports `label`, `required`, and `default`.
 
 | Type | Stored as | Description |
 |------|-----------|-------------|
