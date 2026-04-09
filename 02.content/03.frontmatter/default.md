@@ -25,6 +25,7 @@ Frontmatter is the YAML block at the top of every content file. It controls how 
 | `heading` | string | `title` | On-page `<h1>` — use when the SEO title differs from the desired on-page heading |
 | `descriptor` | string | — | Short subtitle shown after title in browser tab |
 | `slug` | string | folder name | Override the URL slug |
+| `order` | number | from folder prefix | Explicit sort position among siblings. Overrides the numeric folder/filename prefix when set. Unprefixed pages with no `order` sort after all explicitly-ordered ones. |
 | `template` | string | filename | Override template selection (`.md` only) |
 | `layout` | string \| false | `"default"` | Layout wrapping (`.tsx` only) |
 
@@ -142,7 +143,7 @@ image: cover.jpg
 ---
 ```
 
-The image must be a bare filename, not a path or URL. The generated URL follows the pattern `/content-media/{content-dir}/{image}`.
+The image must be a bare filename, not a path or URL. The served URL mirrors the content path with numeric prefixes stripped — so `02.blog/01.post/cover.jpg` is served at `/blog/post/cover.jpg`.
 
 ### Custom data
 

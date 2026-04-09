@@ -56,10 +56,30 @@ my-site/
 
 | Pattern | Meaning | URL |
 |---------|---------|-----|
-| `01.name/` | Ordered, visible in navigation | `/name` (number stripped) |
-| `name/` | Unordered, hidden from auto-navigation | `/name` |
+| `01.name/` | Ordered folder page | `/name` (number stripped) |
+| `name/` | Unordered folder page | `/name` |
+| `01.name.md` | Ordered flat-file page (no folder) | `/name` (number stripped) |
 | `_name/` | Modular section, non-routable | Not accessible by URL |
 | `_drafts/` | Draft container | Nothing inside is accessible |
+
+### Folder pages vs flat-file pages
+
+The standard approach is one folder per page (`01.about/default.md`). Folders are required when a page has co-located media, child pages, or module parts.
+
+Flat-file pages (`01.about.md` directly inside the parent folder) are a lighter alternative for simple leaf pages with no media or children. The numeric prefix works identically for ordering. When both a folder and a flat file produce the same route, the folder wins.
+
+### Ordering without filename prefixes
+
+The `order` frontmatter field is an alternative to numeric prefixes. This keeps filenames clean while still controlling sibling sort order:
+
+```yaml
+---
+title: "About"
+order: 3
+---
+```
+
+Pages without a prefix and without `order` sort alphabetically after all explicitly-ordered pages.
 
 ## Config hierarchy
 

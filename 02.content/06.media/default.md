@@ -107,7 +107,7 @@ The `media` helper provides:
 Dune can resize, crop, and convert images on the fly. Add query parameters to any image URL:
 
 ```
-/content-media/02.blog/01.post/cover.jpg?width=800&format=webp
+/blog/post/cover.jpg?width=800&format=webp
 ```
 
 ### Parameters

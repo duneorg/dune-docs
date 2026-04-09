@@ -78,6 +78,27 @@ See [Static Site Generation](../deployment/static) for full documentation.
 |---------|-------------|
 | `dune new [name]` | Create a new Dune site with starter content and default theme. |
 
+## Global flags
+
+| Flag | Description |
+|------|-------------|
+| `--version`, `-V` | Print version and install source, then exit. |
+| `--help`, `-h` | Print help, then exit. |
+| `--root <dir>` | Site root directory (default: `.`). |
+| `--port <n>` | Server port for `dev` and `serve` (default: `3000`). |
+| `--debug` | Enable verbose debug output. |
+
+### Diagnosing local vs JSR installs
+
+`dune --version` shows where the CLI is running from:
+
+```
+dune 0.6.9 (jsr:@dune/core)           ← installed from JSR
+dune 0.6.9 (source: /path/to/dune)    ← running from a local clone
+```
+
+This is useful when debugging version mismatches or confirming which code is active.
+
 ## Config show example
 
 ```bash
