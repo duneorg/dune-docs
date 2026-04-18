@@ -210,7 +210,18 @@ fields:
 
 Uploaded files are stored in `admin.dataDir/uploads/` and referenced from the submission record by filename. The admin panel displays uploaded files with download links.
 
-> **Note**: There is currently no built-in file size or type restriction in the form schema — apply restrictions at the infrastructure level (reverse proxy upload size limits) or validate in a `onApiRequest` hook.
+### Allowed file types
+
+Dune enforces a server-side extension allowlist. Only the following types are accepted:
+
+**Images:** `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`  
+**Documents:** `.pdf`, `.txt`, `.csv`  
+**Office:** `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`  
+**Archives:** `.zip`
+
+Script, executable, and HTML/SVG files (`.php`, `.sh`, `.exe`, `.html`, `.svg`, `.js`, etc.) are rejected with a `400` error. The stored content-type is derived from the file extension rather than the browser-supplied type.
+
+Form submissions larger than 55 MB are rejected before the body is parsed (`413 Request Too Large`).
 
 ## Using forms with JavaScript
 

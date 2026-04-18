@@ -48,6 +48,7 @@ descriptor: "Custom Web Solutions"
 | `unpublish_date` | string | — | Scheduled unpublish (ISO 8601 datetime) |
 | `visible` | boolean | `true` | If `false`, accessible but hidden from navigation |
 | `routable` | boolean | `true` | If `false`, page has no URL (modular sections) |
+| `trusted_html` | boolean | `false` | If `true`, raw HTML embedded in this page's markdown is rendered as-is, bypassing the HTML sanitiser. Only use for pages whose content you fully trust. Site-wide opt-out via `trusted_html: true` in `site.yaml`. |
 
 The `status` field is used by the content workflow system for editorial management. It works independently of `published` — a page with `status: draft` and `published: true` is still accessible. Use `published: false` to actually hide a page from visitors.
 

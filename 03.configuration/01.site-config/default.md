@@ -110,6 +110,26 @@ cors_origins:
 
 Without this list, API requests from other domains will be blocked by the browser (CORS policy).
 
+### `trusted_html`
+
+By default, Dune sanitises raw HTML embedded in Markdown content to prevent stored XSS. Set this to `true` to disable sanitisation site-wide when your content is fully trusted (e.g. an internal site with no user-generated content):
+
+```yaml
+trusted_html: true
+```
+
+Individual pages can also opt out via `trusted_html: true` in their frontmatter without changing this global setting.
+
+### `auto_discover_plugins`
+
+By default, Dune does **not** automatically load TypeScript files found in `plugins/*.ts`. Plugins must be explicitly listed in `site.yaml` under `plugins:`. Set this to `true` to re-enable auto-discovery (legacy behaviour):
+
+```yaml
+auto_discover_plugins: true
+```
+
+Keeping this off (the default) limits the blast radius if an unexpected file lands in the plugins directory.
+
 ### `feed`
 
 Controls RSS 2.0 and Atom 1.0 feed generation. See [RSS & Atom Feeds](../deployment/feeds) for full details.

@@ -457,3 +457,16 @@ Returns a single record by its ID.
 ```
 
 Returns `404` if the type or record does not exist.
+
+
+## Rate limiting
+
+The following endpoints are rate-limited per IP address to protect against cheap denial-of-service:
+
+`/api/search`, `/api/collections`, `/api/taxonomy/*`, `/api/pages`, `/api/flex/*`
+
+**Limit**: 120 requests per minute per IP.
+
+When the limit is exceeded the API returns `429 Too Many Requests` with a `Retry-After` header indicating when the client may retry.
+
+`/api/nav` and `/api/config/site` are exempt — they are served directly from an in-memory index with negligible cost.
