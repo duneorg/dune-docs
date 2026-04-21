@@ -73,5 +73,5 @@ The dev server watches for changes — edit `content/01.home/default.md` and you
 
 1. Dune scanned the `content/` directory and built a **content index** — a lightweight map of every page, its route, and its frontmatter
 2. It loaded `config/site.yaml` and `config/system.yaml`, merging them with defaults
-3. It started a Fresh 2 server with a catch-all route that resolves URLs against the content index
-4. When you visited `/`, Dune found `01.home/default.md`, loaded its Markdown, rendered it to HTML, and injected it into the `default.tsx` template from your theme
+3. It started a Fresh 2 server. GET requests for content pages are routed through Fresh's `ctx.render()`, which handles the response and injects Fresh's client bootstrap script into every HTML page — enabling island hydration once you add interactive components
+4. When you visited `/`, Dune found `01.home/default.md`, loaded its Markdown, rendered it to HTML, passed it to your theme's `default.tsx` template, and returned the result via Fresh
