@@ -52,6 +52,24 @@ export default function Counter({ initial = 0 }: { initial?: number }) {
 
 Any Preact hooks (`useState`, `useEffect`, `useRef`, etc.) are available — import from `preact/hooks`.
 
+### `deno.json` import map
+
+esbuild (used internally by Fresh to bundle islands) cannot resolve Preact subpath imports through a trailing-slash prefix mapping alone. Add explicit entries for each subpath you use:
+
+```json
+{
+  "imports": {
+    "preact": "npm:preact@^10",
+    "preact/": "npm:preact@^10/",
+    "preact/hooks": "npm:preact@^10/hooks",
+    "preact/jsx-runtime": "npm:preact@^10/jsx-runtime",
+    "preact/jsx-dev-runtime": "npm:preact@^10/jsx-dev-runtime"
+  }
+}
+```
+
+`preact/jsx-dev-runtime` is required in dev mode; `preact/jsx-runtime` in production. `preact/hooks` is required whenever you use any hook. You'll get a build error at startup if any of these are missing.
+
 ## Using an island in a template
 
 Import the island component into a server-side template. Fresh detects the import path and wires up the hydration automatically:
@@ -109,7 +127,9 @@ Islands do not share state by default. Use browser APIs (`localStorage`, `Broadc
 
 ## `dune dev` and `dune serve`
 
-Islands are bundled at startup in both dev and production modes. In dev mode (`dune dev`), the bundle is rebuilt when the server restarts — file watching does not yet rebuild island bundles on save. Restart `dune dev` after editing an island component to pick up changes.
+Islands are bundled at startup in both modes. In dev mode (`dune dev`), Fresh watches the `islands/` directory and rebuilds the JS bundle automatically when any island file changes — no restart needed. The browser reloads via the `/_fresh_live_reload` SSE endpoint once the new bundle is ready.
+
+Content changes (Markdown files, templates, components) trigger a separate rebuild cycle via Dune's own file watcher, which pushes a reload over `/__dune_reload`. Both live-reload channels operate independently and coexist without interference.
 
 ## Directory structure requirements
 

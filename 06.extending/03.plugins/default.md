@@ -133,6 +133,16 @@ The `onRequest` hook fires at the very start of every request, before Dune's rou
 
 This gives plugins a first-class way to add custom API endpoints, authentication guards, or any other per-request middleware without touching the serve command.
 
+The handler receives a `HookContext<Request>` with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `data` | `Request` | The incoming request |
+| `config` | `DuneConfig` | Full merged site config (read-only) |
+| `storage` | `StorageAdapter` | Read/write access to site storage |
+| `setData(value)` | `fn` | Replace `data` — pass a `Response` to short-circuit routing |
+| `stopPropagation()` | `fn` | Prevent subsequent `onRequest` handlers from running |
+
 ### Custom API endpoint
 
 ```typescript
@@ -146,9 +156,7 @@ export default {
       const url = new URL(req.url);
 
       if (url.pathname === "/api/status") {
-        setData(
-          Response.json({ ok: true, timestamp: Date.now() }),
-        );
+        setData(Response.json({ ok: true, timestamp: Date.now() }));
         stopPropagation();
       }
     },
@@ -166,6 +174,27 @@ onRequest: ({ data: req, setData, stopPropagation }) => {
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
     if (!isValidToken(token)) {
       setData(new Response("Unauthorized", { status: 401 }));
+      stopPropagation();
+    }
+  }
+},
+```
+
+### Reading config or storage
+
+`config` and `storage` are available on the context object — useful when the interception logic depends on plugin settings or persisted data:
+
+```typescript
+onRequest: async ({ data: req, config, storage, setData, stopPropagation }) => {
+  const url = new URL(req.url);
+  const cfg = (config.plugins["my-plugin"] ?? {}) as MyPluginConfig;
+
+  if (url.pathname.startsWith("/protected/") && cfg.enabled) {
+    const allowList = JSON.parse(
+      await storage.readText("data/plugins/my-plugin/allow.json").catch(() => "[]"),
+    ) as string[];
+    if (!allowList.includes(req.headers.get("x-api-key") ?? "")) {
+      setData(new Response("Forbidden", { status: 403 }));
       stopPropagation();
     }
   }
