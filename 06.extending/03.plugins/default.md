@@ -127,6 +127,53 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
 | `setup` | — | One-time initialization function called when the plugin is registered |
 | `dependencies` | — | Names of other plugins this plugin requires (soft warning at startup) |
 
+## Request interception
+
+The `onRequest` hook fires at the very start of every request, before Dune's routing pipeline. If a plugin replaces the request data with a `Response` and calls `stopPropagation()`, that response is returned immediately — Dune's page routing, admin panel, and API handlers are skipped entirely.
+
+This gives plugins a first-class way to add custom API endpoints, authentication guards, or any other per-request middleware without touching the serve command.
+
+### Custom API endpoint
+
+```typescript
+import type { DunePlugin } from "../../src/hooks/types.ts";
+
+export default {
+  name: "my-api",
+  version: "1.0.0",
+  hooks: {
+    onRequest: ({ data: req, setData, stopPropagation }) => {
+      const url = new URL(req.url);
+
+      if (url.pathname === "/api/status") {
+        setData(
+          Response.json({ ok: true, timestamp: Date.now() }),
+        );
+        stopPropagation();
+      }
+    },
+  },
+} satisfies DunePlugin;
+```
+
+### Auth guard
+
+```typescript
+onRequest: ({ data: req, setData, stopPropagation }) => {
+  const url = new URL(req.url);
+
+  if (url.pathname.startsWith("/members/")) {
+    const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!isValidToken(token)) {
+      setData(new Response("Unauthorized", { status: 401 }));
+      stopPropagation();
+    }
+  }
+},
+```
+
+If `setData()` is not called (or the new value is not a `Response`), the request continues through Dune's normal routing pipeline unchanged. Multiple plugins can register `onRequest` handlers — they run in registration order and the first one to call `stopPropagation()` wins.
+
 ## Static assets
 
 If your plugin needs to serve CSS, JavaScript, images, or other static files, place them in an `assets/` subdirectory next to your plugin's `mod.ts`:

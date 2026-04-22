@@ -107,7 +107,7 @@ All hook events as of v0.6.0:
 | Startup | `onConfigLoaded` | `DuneConfig` |
 | Startup | `onStorageReady` | `StorageAdapter` |
 | Startup | `onContentIndexReady` | `PageIndex[]` |
-| Request | `onRequest` | `Request` |
+| Request | `onRequest` | `Request` — replace with a `Response` + call `stopPropagation()` to short-circuit routing |
 | Request | `onRouteResolved` | `RouteMatch` |
 | Request | `onPageLoaded` | `Page` |
 | Request | `onCollectionResolved` | `Collection` |
