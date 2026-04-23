@@ -21,6 +21,7 @@ All commands are run with `dune` (or `deno task dune`).
 | `dune dev` | Start dev server with hot-reload. Watches content and themes for changes. |
 | `dune serve` | Start production server. Uses pre-built content index. |
 | `dune serve --port 3000` | Serve on a specific port. |
+| `dune serve --root my-site` | Serve a site in a subdirectory without `cd`-ing into it first. |
 
 ## Build & Cache
 
@@ -71,6 +72,24 @@ See [Static Site Generation](../deployment/static) for full documentation.
 | `dune plugin:publish [name]` | Publish a local plugin to JSR (runs `deno publish`). |
 | `dune plugin:search <query>` | Search JSR for Dune-compatible plugins. |
 | `dune plugin:update [name]` | Update a JSR or npm plugin to its latest version. Omit name to update all. |
+
+## Migration
+
+| Command | Description |
+|---------|-------------|
+| `dune migrate:from-grav <src>` | Import a Grav site from its `user/pages/` folder. |
+| `dune migrate:from-wordpress <src>` | Import a WordPress WXR export (`.xml` file). |
+| `dune migrate:from-markdown <src>` | Import a flat folder of markdown files. |
+| `dune migrate:from-hugo <src>` | Import a Hugo site from its `content/` folder. |
+
+### Migration options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--out <dir>` | `<root>/content` | Content directory to import into |
+| `--dry-run` | — | Report what would be imported without writing any files |
+| `--verbose` | — | Print each imported page |
+| `--trust-source` | — | Skip HTML sanitization — only use for sources you fully trust |
 
 ## Scaffolding
 
