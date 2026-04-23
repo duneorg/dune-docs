@@ -54,13 +54,12 @@ Any Preact hooks (`useState`, `useEffect`, `useRef`, etc.) are available — imp
 
 ### `deno.json` import map
 
-esbuild (used internally by Fresh to bundle islands) cannot resolve Preact subpath imports through a trailing-slash prefix mapping alone. Add explicit entries for each subpath you use:
+esbuild requires explicit import map entries for each Preact subpath — a catch-all prefix entry is not sufficient. Add these to your site's `deno.json`:
 
 ```json
 {
   "imports": {
     "preact": "npm:preact@^10",
-    "preact/": "npm:preact@^10/",
     "preact/hooks": "npm:preact@^10/hooks",
     "preact/jsx-runtime": "npm:preact@^10/jsx-runtime",
     "preact/jsx-dev-runtime": "npm:preact@^10/jsx-dev-runtime"
@@ -68,7 +67,7 @@ esbuild (used internally by Fresh to bundle islands) cannot resolve Preact subpa
 }
 ```
 
-`preact/jsx-dev-runtime` is required in dev mode; `preact/jsx-runtime` in production. `preact/hooks` is required whenever you use any hook. You'll get a build error at startup if any of these are missing.
+`preact/jsx-dev-runtime` is required in dev mode; `preact/jsx-runtime` in production. `preact/hooks` is required whenever you use any hook.
 
 ## Using an island in a template
 
