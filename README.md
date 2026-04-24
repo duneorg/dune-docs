@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 # Dune CMS Documentation
 
 Content for the [Dune CMS](https://getdune.org) documentation, published at [getdune.org/docs](https://getdune.org/docs).
