@@ -30,7 +30,11 @@ Dune is designed for three audiences:
 - **Webmasters** who need to configure, deploy, and maintain a content site across environments
 - **Developers** who want full control with TypeScript, JSX templates, interactive islands, and a plugin system
 
-Every page in this documentation is tagged with its audience. You can follow a linear path through the sections, or jump to what matters to you.
+Every page in this documentation is tagged with its audience. Follow a guided path for your role, or navigate freely through the sections:
+
+- [**Content Editor path →**](/docs/for-editors) — Markdown, frontmatter, media, workflow
+- [**Webmaster path →**](/docs/for-webmasters) — Configuration, deployment, administration
+- [**Developer path →**](/docs/for-developers) — Themes, extending, API, CLI
 
 ## What you'll need
 
