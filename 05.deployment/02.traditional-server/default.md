@@ -89,7 +89,7 @@ Type=simple
 User=www-data
 WorkingDirectory=/path/to/my-site
 Environment=DUNE_ENV=production
-ExecStart=/home/user/.deno/bin/deno run -A src/main.ts serve --port 8000
+ExecStart=/home/user/.deno/bin/deno run -A --config=deno.json jsr:@dune/core/cli serve --root . --port 8000
 Restart=on-failure
 
 [Install]
@@ -103,7 +103,7 @@ On a traditional server, content lives on the filesystem. Update it however you 
 - **Git pull**: `git pull origin main && dune cache:rebuild`
 - **rsync**: Sync from a local machine
 - **SFTP**: Upload changed files
-- **Admin panel**: When available (v0.2)
+- **Admin panel**: Available at `/admin` — manage content, users, and settings through the browser
 
 After updating content, rebuild the index:
 
