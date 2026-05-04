@@ -63,6 +63,59 @@ The sidecar file name is always `{filename}.meta.yaml`:
 | `diagram.png` | `diagram.png.meta.yaml` |
 | `document.pdf` | `document.pdf.meta.yaml` |
 
+## Co-located HTML embeds
+
+Co-located `.html` files can be embedded as iframes in your content. This is useful for interactive demos, standalone data visualisations, or any self-contained HTML document you want to display inline.
+
+Place the HTML file alongside your post and reference it with a relative `<iframe src>`:
+
+```
+content/02.blog/01.my-post/
+├── post.md
+└── chart.html       ← standalone HTML file
+```
+
+```markdown
+<iframe src="./chart.html" width="100%"></iframe>
+```
+
+Dune rewrites the relative src to the correct absolute URL and the file is served with the proper `text/html` content type.
+
+### Automatic height synchronisation
+
+When Dune serves a co-located HTML file, it automatically injects a small script that reports the document height to the parent frame. The parent page receives this message and resizes the iframe to fit the content exactly — no fixed `height` attribute needed, no scrollbars.
+
+The resizing is reactive: if the iframe content changes size (e.g. due to a window resize), the height is updated automatically.
+
+### Requirement: trusted_html
+
+Iframes require `trusted_html` to be enabled, since the HTML sanitiser strips `<iframe>` tags by default. Set it at the page or site level:
+
+```yaml
+# In post frontmatter (page level)
+trusted_html: true
+```
+
+```yaml
+# In config/site.yaml (site level — applies to all pages)
+trusted_html: true
+```
+
+A complete example:
+
+```markdown
+---
+title: "My Post"
+trusted_html: true
+---
+
+Here is the interactive chart:
+
+<iframe src="./chart.html" width="100%"></iframe>
+
+The chart shows...
+```
+
 ## Supported file types
 
 Dune serves any file placed in a content folder. Common types:
@@ -73,7 +126,7 @@ Dune serves any file placed in a content folder. Common types:
 
 **Audio:** `.mp3`, `.wav`
 
-**Documents:** `.pdf`, `.zip`, `.csv`
+**Documents:** `.pdf`, `.zip`, `.csv`, `.html`
 
 ## In TSX content pages
 

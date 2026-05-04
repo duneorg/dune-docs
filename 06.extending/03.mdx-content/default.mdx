@@ -44,7 +44,7 @@ You can also embed JSX components inline.
 
 1. **JSX expressions** — You can use JSX syntax inline with markdown
 2. **Standard HTML always works** — All standard HTML elements (`<div>`, `<aside>`, `<details>`, etc.) can be used directly in MDX without any setup
-3. **Custom components need registration** — Theme components (`<Alert />`, `<Chart />`, etc.) must be registered via the component registry (see below)
+3. **Components from two sources** — Import post-specific components with relative `import` statements, or use theme-wide components from the registry (see below)
 4. **Same frontmatter** — YAML between `---` delimiters, identical to `.md`
 5. **Same routing** — Folder = page, numeric prefixes for ordering
 6. **Same collections** — MDX pages appear in collections and taxonomy queries
@@ -55,12 +55,61 @@ You can also embed JSX components inline.
 When a `.mdx` file is requested:
 
 1. **Parse frontmatter** — YAML between `---` delimiters extracted with gray-matter
-2. **Compile MDX** — `@mdx-js/mdx` compiles the source to a JavaScript module
-3. **Evaluate** — The compiled module is evaluated to get a Preact component
-4. **Render** — The component is rendered to an HTML string via Preact SSR
-5. **Media resolution** — Relative image paths are rewritten to `/content-media/` URLs (same as Markdown)
+2. **Media resolution** — Relative image/link paths rewritten to absolute URLs (same as Markdown)
+3. **Co-located imports** — Relative `import` statements resolved against the MDX file's directory, loaded server-side, stripped from source
+4. **Compile MDX** — `@mdx-js/mdx` compiles the import-stripped source to a JavaScript module
+5. **Evaluate** — The compiled module is evaluated with a merged component scope (registry + co-located imports)
+6. **Render** — The component is rendered to an HTML string via Preact SSR
 
 The output is a static HTML string — MDX content is server-rendered, not client-side.
+
+## Co-located component imports
+
+MDX files can import components using relative paths, placing post-specific components right alongside the content file:
+
+```
+content/02.blog/01.my-post/
+├── post.mdx
+└── DataChart.tsx        ← co-located component
+```
+
+Use a standard ES import statement at the top of the MDX file:
+
+```mdx
+---
+title: "My Post"
+---
+
+import DataChart from './DataChart.tsx'
+
+# My Post
+
+Here is the data visualisation:
+
+<DataChart data={[1, 4, 9, 16, 25]} />
+
+The chart above shows...
+```
+
+Dune resolves the relative import against the MDX file's directory, loads the module server-side, and makes it available as a component in the MDX scope. The import statement is stripped from the source before MDX compilation.
+
+All three standard import forms are supported:
+
+```mdx
+import Chart from './Chart.tsx'                    // default export
+import { Legend, Tooltip } from './helpers.tsx'    // named exports
+import * as Icons from './icons.tsx'               // namespace import
+```
+
+**Co-located imports take precedence over theme registry components** — if both define a component with the same name, the co-located import wins. This lets a post override a theme component for its own use.
+
+### When to use co-located imports vs. the registry
+
+Use **co-located imports** for components that belong to a specific post — charts with embedded data, one-off diagrams, post-specific interactive elements. The component and its data live alongside the content.
+
+Use the **component registry** (`themes/{name}/mdx-components.ts`) for reusable components shared across many posts — callout boxes, code playgrounds, design system elements.
+
+Both can be used in the same MDX file.
 
 ## Component registry
 
