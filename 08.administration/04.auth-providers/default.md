@@ -147,12 +147,19 @@ export class MyAuthProvider implements AuthProvider {
 }
 ```
 
-Then wire it up in your `bootstrap.ts`:
+Pass it to `bootstrap()` via the `authProvider` option:
 
 ```typescript
-import { MyAuthProvider } from "./my-auth-provider.ts";
-// Pass to createAdminHandler({ ..., authProvider: new MyAuthProvider() })
+// main.ts (headless mode) or your own entry point
+import { bootstrap } from "@dune/core";
+import { MyAuthProvider } from "./auth/my-auth-provider.ts";
+
+const ctx = await bootstrap("./", {
+  authProvider: new MyAuthProvider(),
+});
 ```
+
+The injected provider takes precedence over anything set in `system.yaml`. Use this for fully custom providers (OpenID Connect, internal SSO, etc.) that aren't covered by the built-in LDAP/SAML config.
 
 ### `AuthProviderUser` fields
 
@@ -169,10 +176,16 @@ import { MyAuthProvider } from "./my-auth-provider.ts";
 ## Configuration reference
 
 ```yaml
+# config/system.yaml
 admin:
   auth_provider:
-    type: "local" | "ldap" | "saml"
+    type: ldap   # or saml — omit entirely for local passwords
     # ... provider-specific fields as documented above
 ```
 
-If `auth_provider` is not set, local password authentication is used and `admin.auth_provider` has no effect.
+Selection priority:
+1. `authProvider` passed to `bootstrap()` — highest priority, ignores config
+2. `admin.auth_provider` in `system.yaml` — selects a built-in provider
+3. Default — local password authentication
+
+If `auth_provider` is not set and no provider is injected, local password authentication is used.

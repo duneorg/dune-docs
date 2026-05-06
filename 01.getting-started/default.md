@@ -20,7 +20,7 @@ collection:
 
 Dune is a flat-file CMS built on Deno Fresh. Your content lives as files on disk — Markdown for prose, TSX for interactive pages — organized in folders, configured with YAML frontmatter.
 
-No database. No admin panel (yet). Just files, a CLI, and a fast server.
+No database. Just files, a CLI, a fast server, and a built-in admin panel.
 
 ## Who is this for?
 
