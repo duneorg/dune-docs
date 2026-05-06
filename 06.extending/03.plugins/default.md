@@ -126,6 +126,7 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
 | `configSchema` | — | Blueprint-style field definitions for admin-driven config UI |
 | `setup` | — | One-time initialization function called when the plugin is registered |
 | `dependencies` | — | Names of other plugins this plugin requires (soft warning at startup) |
+| `publicRoutes` | — | Fresh routes registered on the public site (see below) |
 
 ## Request interception
 
@@ -202,6 +203,56 @@ onRequest: async ({ data: req, config, storage, setData, stopPropagation }) => {
 ```
 
 If `setData()` is not called (or the new value is not a `Response`), the request continues through Dune's normal routing pipeline unchanged. Multiple plugins can register `onRequest` handlers — they run in registration order and the first one to call `stopPropagation()` wins.
+
+## Public routes
+
+`publicRoutes` is the preferred way to add custom endpoints to the public site. Each entry is a proper Fresh route registered before the content catch-all, so it takes priority over content pages and the `onRequest` hook.
+
+```typescript
+import type { DunePlugin } from "../../src/hooks/types.ts";
+
+export default {
+  name: "my-api",
+  version: "1.0.0",
+  hooks: {},
+
+  publicRoutes: [
+    {
+      path: "/api/status",
+      method: "GET",           // optional — defaults to "GET"
+      handler: (_fc) => Response.json({ ok: true, ts: Date.now() }),
+    },
+    {
+      path: "/api/subscribe",
+      method: "POST",
+      handler: async (fc) => {
+        const { email } = await fc.req.json();
+        // … store email …
+        return Response.json({ subscribed: true });
+      },
+    },
+  ],
+} satisfies DunePlugin;
+```
+
+### `PublicRouteRegistration` shape
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `path` | `string` | URL path pattern — supports Fresh param syntax (`:id`, `*`) |
+| `method` | `"GET" \| "POST" \| "PUT" \| "DELETE" \| "all"` | HTTP method. Defaults to `"GET"`. Use `"all"` to match any method. |
+| `handler` | `(fc: FreshContext) => Response \| Promise<Response>` | Request handler |
+
+### `publicRoutes` vs `onRequest`
+
+Use `publicRoutes` when:
+- You need a stable, named endpoint at a specific path
+- You want proper HTTP method matching without writing `if` checks
+- The route should be visible in Fresh's route list
+
+Use `onRequest` when:
+- You need to intercept or modify requests that Dune itself handles
+- You need to run logic before every request regardless of path
 
 ## Static assets
 

@@ -35,7 +35,12 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 [MDX Content](/docs/extending/mdx-content) — JSX inside Markdown  
 [Plugins](/docs/extending/plugins) — packaging and distributing extensions
 
-### 4. Deploy and integrate
+### 4. Go headless (optional)
+
+[Headless Mode](/docs/for-developers/headless-mode) — Fresh developer owns all routes; Dune manages content and admin  
+`dune new my-site --headless` to scaffold a headless project
+
+### 5. Deploy and integrate
 
 [Deno Deploy](/docs/deployment/deno-deploy) — zero-config cloud deployment  
 [Static Site Generation](/docs/deployment/static) — build to static HTML  

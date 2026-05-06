@@ -47,6 +47,8 @@ The following sub-module exports are also available:
 |---|---|
 | `@dune/core/plugins` | `PLUGIN_API_VERSION`, `loadPlugins`, `loadPluginAdminConfigs` |
 | `@dune/core/sections` | `SectionRegistry`, `sectionRegistry`, `renderSections`, section types |
+| `@dune/core/content` | `getContent()`, `ContentApi` — content query API for headless Fresh routes |
+| `@dune/core/admin` | `mountDuneAdmin()`, `getDuneAdminIslands()` — headless admin mounting |
 
 ## Internal APIs
 

@@ -96,6 +96,7 @@ See [Static Site Generation](../deployment/static) for full documentation.
 | Command | Description |
 |---------|-------------|
 | `dune new [name]` | Create a new Dune site with starter content and default theme. |
+| `dune new [name] --headless` | Create a headless Fresh+Dune site. No theme — you own all routes. See [Headless Mode](/docs/for-developers/headless-mode). |
 
 ## Global flags
 

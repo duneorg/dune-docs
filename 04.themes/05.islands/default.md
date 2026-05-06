@@ -130,8 +130,44 @@ Islands are bundled at startup in both modes. In dev mode (`dune dev`), Fresh wa
 
 Content changes (Markdown files, templates, components) trigger a separate rebuild cycle via Dune's own file watcher, which pushes a reload over `/__dune_reload`. Both live-reload channels operate independently and coexist without interference.
 
+## Islands in TSX content pages
+
+Islands are not limited to theme templates. A `.tsx` file in your `content/` directory can import and use islands directly:
+
+```tsx
+// content/02.interactive/demo.tsx
+/** @jsxImportSource preact */
+import Counter from "../../themes/my-theme/islands/Counter.tsx";
+
+export default function DemoPage({ page }: any) {
+  return (
+    <div>
+      <h1>{page.frontmatter.title}</h1>
+      <Counter initial={page.frontmatter.custom?.start ?? 0} />
+    </div>
+  );
+}
+```
+
+Dune scans TSX content pages at startup and follows their relative imports. Any import that resolves to a file inside an `islands/` directory is automatically added to the bundle — no manual registration required. The content page itself runs on the server; only the imported island hydrates in the browser.
+
+The import path must be relative (`./` or `../`). Bare specifier imports are not scanned.
+
+## Theme inheritance and islands
+
+When a theme extends a parent theme, Dune collects islands from the **entire inheritance chain** — not just the active theme. If `child-theme` extends `parent-theme`, islands from both `themes/child-theme/islands/` and `themes/parent-theme/islands/` are bundled together.
+
+This means a child theme can use an island defined in its parent without re-exporting or copying it:
+
+```tsx
+// themes/child-theme/templates/default.tsx
+import ParentWidget from "../parent-theme/islands/Widget.tsx"; // ✅ auto-discovered
+```
+
+Keep island file names unique across the chain to avoid module ID collisions.
+
 ## Directory structure requirements
 
-- Island files must be in `themes/{active-theme}/islands/`. Sub-themes inherit templates and components from parent themes but **not** islands — each theme has its own island bundle.
-- File names become the component's bundled module name. Keep names unique across the islands directory.
-- The `islands/` directory is optional. If it does not exist, no JS bundle is generated and no boot script is activated.
+- Place island files in `themes/{name}/islands/` inside any theme in the active inheritance chain.
+- File names become the component's bundled module name. Keep names unique across all islands directories in the chain.
+- The `islands/` directory is optional. If no theme in the chain has one, no JS bundle is generated and no boot script is activated.
