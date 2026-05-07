@@ -127,6 +127,7 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
 | `setup` | — | One-time initialization function called when the plugin is registered |
 | `dependencies` | — | Names of other plugins this plugin requires (soft warning at startup) |
 | `publicRoutes` | — | Fresh routes registered on the public site (see below) |
+| `adminPages` | — | Admin panel pages contributed by this plugin (see below) |
 
 ## Request interception
 
@@ -253,6 +254,37 @@ Use `publicRoutes` when:
 Use `onRequest` when:
 - You need to intercept or modify requests that Dune itself handles
 - You need to run logic before every request regardless of path
+
+## Admin pages
+
+Plugins can contribute pages to the admin panel via `adminPages`. Each entry adds a route under `/admin/` that is rendered inside the admin shell (sidebar, header, auth) automatically.
+
+```typescript
+import type { DunePlugin } from "../../src/hooks/types.ts";
+
+export default {
+  name: "my-plugin",
+  version: "1.0.0",
+  hooks: {},
+  adminPages: [
+    {
+      path: "/admin/my-plugin",
+      label: "My Plugin",
+      icon: "🔌",
+      handler: async (ctx) => {
+        return ctx.render(
+          <div>
+            <h1>My Plugin</h1>
+            <p>Custom admin UI here.</p>
+          </div>
+        );
+      },
+    },
+  ],
+} satisfies DunePlugin;
+```
+
+The page appears in the admin sidebar under the label and icon you provide. The `handler` receives a Fresh `FreshContext` and must return a response via `ctx.render()`.
 
 ## Static assets
 

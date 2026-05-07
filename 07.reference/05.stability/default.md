@@ -93,8 +93,8 @@ Check `PLUGIN_API_VERSION` at runtime if your plugin uses features that were add
 ```ts
 import { PLUGIN_API_VERSION } from "@dune/core/plugins";
 
-if (PLUGIN_API_VERSION !== "0.6") {
-  console.warn(`[my-plugin] expected plugin API 0.6, got ${PLUGIN_API_VERSION}`);
+if (PLUGIN_API_VERSION !== "0.7") {
+  console.warn(`[my-plugin] expected plugin API 0.7, got ${PLUGIN_API_VERSION}`);
 }
 ```
 
