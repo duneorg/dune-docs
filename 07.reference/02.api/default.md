@@ -459,6 +459,145 @@ Returns a single record by its ID.
 Returns `404` if the type or record does not exist.
 
 
+## Schema
+
+### Export site config schema
+
+```
+GET /_dune/schema/config
+```
+
+Returns the JSON Schema for `site.yaml`. Useful for editor autocompletion or agent tooling to validate config before writing it. No authentication required.
+
+Also available from the CLI: `dune schema:export`.
+
+## Admin API
+
+The following endpoints are available under the admin prefix (default `/admin`). They require authentication unless noted.
+
+### Introspect runtime state
+
+```
+GET /admin/api/introspect
+```
+
+Returns a live snapshot of the engine's runtime state — useful for agents and tooling to understand the current site without scraping individual pages.
+
+```json
+{
+  "pages": { "total": 42, "published": 38, "drafts": 4 },
+  "plugins": [{ "name": "my-plugin", "version": "1.0.0", "hooks": ["onPageLoaded"] }],
+  "theme": { "name": "default", "templates": ["default", "post", "landing"] },
+  "forms": [{ "name": "contact", "enabled": true }],
+  "config": { "title": "My Site", "url": "https://example.com" }
+}
+```
+
+Requires admin authentication.
+
+### Get page source
+
+```
+GET /admin/api/page-source?path={sourcePath}
+```
+
+Returns the raw source content (YAML frontmatter + markdown body) for a page. Intended for agent tooling that needs to read and edit raw content.
+
+```json
+{
+  "sourcePath": "01.blog/01.hello/default.md",
+  "frontmatter": { "title": "Hello", "published": true },
+  "body": "# Hello\n\nThis is the body.",
+  "raw": "---\ntitle: Hello\npublished: true\n---\n\n# Hello\n\nThis is the body.",
+  "size": 64,
+  "format": "md"
+}
+```
+
+Requires `pages.read` permission.
+
+### Render markdown
+
+```
+POST /admin/api/render-markdown
+Content-Type: application/json
+
+{ "markdown": "# Hello\n\nThis is **bold**." }
+```
+
+Converts markdown to HTML server-side using Dune's full rendering pipeline (plugins, media resolution, sanitisation). Returns:
+
+```json
+{ "html": "<h1>Hello</h1><p>This is <strong>bold</strong>.</p>" }
+```
+
+Requires `pages.read` permission.
+
+### Apply batched mutations (dev mode only)
+
+```
+POST /admin/api/dev/apply
+Content-Type: application/json
+```
+
+Applies a batch of content and config mutations atomically. Only available when `DUNE_DEV=1`. Intended for agent-driven scaffolding workflows.
+
+Supported operations:
+
+| `op` | Description |
+|------|-------------|
+| `write` | Write a file at `path` with `content`. |
+| `delete` | Delete the file at `path`. |
+| `frontmatter` | Patch frontmatter fields on an existing content file at `path`. |
+| `config` | Patch a dot-notation config key in `site.yaml` (e.g. `theme.name`). |
+| `plugin.install` | Add a plugin specifier to `site.yaml`. |
+
+Request body:
+
+```json
+{
+  "ops": [
+    { "op": "write", "path": "content/01.home/default.md", "content": "---\ntitle: Home\n---\n" },
+    { "op": "frontmatter", "path": "content/01.home/default.md", "patch": { "published": true } },
+    { "op": "config", "key": "theme.name", "value": "my-theme" }
+  ]
+}
+```
+
+Returns `{ "applied": 3 }` or an error with the index of the first failing operation.
+
+## Health
+
+### Liveness probe
+
+```
+GET /health/live
+```
+
+Returns `200 OK` with `{ "status": "ok" }` when the server process is running. Does not check content index or storage. Use for container restart policies.
+
+### Readiness probe
+
+```
+GET /health/ready
+```
+
+Returns `200 OK` with `{ "status": "ok" }` when the content index is loaded and the site is ready to serve requests. Returns `503` during startup. Use for load balancer health checks.
+
+### Detailed health (authenticated)
+
+```
+GET /health?detailed=true&token={health_token}
+```
+
+Returns extended stats (uptime, page count, cache stats) when a valid `health_token` is provided. Configure the token in `site.yaml`:
+
+```yaml
+health_token: "your-secret-token"
+```
+
+Without a valid token the response is always the minimal `{ "status": "ok" }`.
+
 ## Rate limiting
 
 The following endpoints are rate-limited per IP address to protect against cheap denial-of-service:
