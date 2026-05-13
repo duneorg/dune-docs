@@ -540,31 +540,50 @@ POST /admin/api/dev/apply
 Content-Type: application/json
 ```
 
-Applies a batch of content and config mutations atomically. Only available when `DUNE_DEV=1`. Intended for agent-driven scaffolding workflows.
+Applies a batch of content and config mutations in a single request, with per-change validation and results. Only available in dev mode (`DUNE_ENV=dev` or `system.debug: true` in `system.yaml`). Requires `pages.update` permission.
 
 Supported operations:
 
-| `op` | Description |
-|------|-------------|
-| `write` | Write a file at `path` with `content`. |
-| `delete` | Delete the file at `path`. |
-| `frontmatter` | Patch frontmatter fields on an existing content file at `path`. |
-| `config` | Patch a dot-notation config key in `site.yaml` (e.g. `theme.name`). |
-| `plugin.install` | Add a plugin specifier to `site.yaml`. |
+| `op` | Fields | Description |
+|------|--------|-------------|
+| `write` | `path`, `content` | Write a file at `path` with `content`. Validates YAML frontmatter if the file is `.md`. |
+| `delete` | `path` | Delete the file at `path`. |
+| `frontmatter` | `path`, `patch` | Merge `patch` keys into the frontmatter of an existing content file. Creates the file if absent. |
+| `config` | `key`, `value` | Set a dot-notation key in `config/site.yaml` (e.g. `"admin.path"`). |
+| `plugin.install` | `spec` | Append a plugin specifier to the `plugins:` list in `config/site.yaml`. No-op if already present. |
 
 Request body:
 
 ```json
 {
-  "ops": [
-    { "op": "write", "path": "content/01.home/default.md", "content": "---\ntitle: Home\n---\n" },
-    { "op": "frontmatter", "path": "content/01.home/default.md", "patch": { "published": true } },
-    { "op": "config", "key": "theme.name", "value": "my-theme" }
+  "dry_run": true,
+  "changes": [
+    { "op": "write", "path": "content/01.home/default.md", "content": "---\ntitle: Home\npublished: true\n---\n\n# Home\n" },
+    { "op": "frontmatter", "path": "content/02.blog/post.md", "patch": { "published": true } },
+    { "op": "config", "key": "admin.path", "value": "/cms" },
+    { "op": "plugin.install", "spec": "jsr:@dune/blog@1.0.0" }
   ]
 }
 ```
 
-Returns `{ "applied": 3 }` or an error with the index of the first failing operation.
+Set `dry_run: true` to validate all changes and preview outcomes without writing any files.
+
+Response:
+
+```json
+{
+  "dry_run": true,
+  "results": [
+    { "op": "write", "path": "content/01.home/default.md", "status": "would_create", "errors": [] },
+    { "op": "frontmatter", "path": "content/02.blog/post.md", "status": "would_update", "errors": [] },
+    { "op": "config", "key": "admin.path", "status": "would_update", "errors": [] },
+    { "op": "plugin.install", "spec": "jsr:@dune/blog@1.0.0", "status": "would_create", "errors": [] }
+  ],
+  "summary": { "total": 4, "valid": 4, "errors": 0 }
+}
+```
+
+Each result carries a `status` (`would_create`, `would_update`, `would_delete`, `created`, `updated`, `deleted`, `skipped`, or `error`) and an `errors` array. Validation errors on one change do not block the rest of the batch.
 
 ## Health
 

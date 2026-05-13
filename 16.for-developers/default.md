@@ -35,19 +35,24 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 [MDX Content](/docs/extending/mdx-content) — JSX inside Markdown  
 [Plugins](/docs/extending/plugins) — packaging and distributing extensions
 
-### 4. Go headless (optional)
+### 4. Work with AI agents
+
+[AI Agent Integration](/docs/for-developers/agent-integration) — llms.txt, skill files, MCP server, and the change API  
+[MCP Server](/docs/for-developers/mcp-server) — live content and config context over the Model Context Protocol
+
+### 5. Go headless (optional)
 
 [Headless Mode](/docs/for-developers/headless-mode) — Fresh developer owns all routes; Dune manages content and admin  
 `dune new my-site --headless` to scaffold a headless project
 
-### 5. Deploy and integrate
+### 6. Deploy and integrate
 
 [Deno Deploy](/docs/deployment/deno-deploy) — zero-config cloud deployment  
 [Static Site Generation](/docs/deployment/static) — build to static HTML  
 [REST API](/docs/reference/api) — content and search API endpoints  
 [CLI Commands](/docs/reference/cli) — `dune serve`, `dune build`, `dune new`
 
-### 5. Reference
+### 7. Reference
 
 [Config Schema](/docs/reference/config-schema) — full configuration reference  
 [Search](/docs/reference/search) — search engine API and index format  
