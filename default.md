@@ -12,25 +12,19 @@ A flat-file CMS built on [Deno](https://deno.land/) and [Fresh 2](https://fresh.
 
 ## Choose your path
 
-Dune serves content editors, webmasters, and developers equally. Pick your starting point:
+Dune serves content editors, webmasters, and developers equally. Pick the path that matches your role:
 
-### Content Editor
+### [Content Editor →](/docs/for-editors)
 
 Write pages in Markdown, organize with folders, tag with taxonomies. No code required.
 
-**Start with:** [Getting Started](/docs/getting-started) → [Content](/docs/content) → [Reference](/docs/reference)
-
-### Webmaster
+### [Webmaster →](/docs/for-webmasters)
 
 Configure, deploy, and manage a Dune site. YAML config, CLI tools, multiple environments.
 
-**Start with:** [Getting Started](/docs/getting-started) → [Configuration](/docs/configuration) → [Deployment](/docs/deployment)
+### [Developer →](/docs/for-developers)
 
-### Developer
-
-Build themes, write TSX content pages, create plugins, extend the engine.
-
-**Start with:** [Getting Started](/docs/getting-started) → [Content](/docs/content) → [Themes](/docs/themes) → [Extending](/docs/extending)
+Build themes, write TSX content pages, create plugins, extend the engine via API.
 
 ## Documentation Sections
 

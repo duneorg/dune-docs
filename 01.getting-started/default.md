@@ -18,23 +18,9 @@ collection:
 
 # Getting Started with Dune
 
-Dune is a flat-file CMS built on Deno Fresh. Your content lives as files on disk — Markdown for prose, TSX for interactive pages — organized in folders, configured with YAML frontmatter.
+Dune is a flat-file CMS built on Deno. Your content lives as files on disk — Markdown for prose, TSX for interactive pages — organized in folders, configured with YAML frontmatter.
 
-No database. Just files, a CLI, a fast server, and a built-in admin panel.
-
-## Who is this for?
-
-Dune is designed for three audiences:
-
-- **Content editors** who want to write in Markdown, organize with folders, and publish without touching code
-- **Webmasters** who need to configure, deploy, and maintain a content site across environments
-- **Developers** who want full control with TypeScript, JSX templates, interactive islands, and a plugin system
-
-Every page in this documentation is tagged with its audience. Follow a guided path for your role, or navigate freely through the sections:
-
-- [**Content Editor path →**](/docs/for-editors) — Markdown, frontmatter, media, workflow
-- [**Webmaster path →**](/docs/for-webmasters) — Configuration, deployment, administration
-- [**Developer path →**](/docs/for-developers) — Themes, extending, API, CLI
+No database. No admin panel (yet). Just files, a CLI, and a fast server.
 
 ## What you'll need
 
@@ -43,3 +29,10 @@ Every page in this documentation is tagged with its audience. Follow a guided pa
 - A terminal
 
 That's it. No Node.js, no npm, no build tools.
+
+## In this section
+
+- [Installation](/docs/getting-started/installation) — install Deno and Dune
+- [Quickstart](/docs/getting-started/quickstart) — your first site in five minutes
+- [Project Structure](/docs/getting-started/project-structure) — how files map to pages
+- [Migration](/docs/getting-started/migration) — moving from another CMS
