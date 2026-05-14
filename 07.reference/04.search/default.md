@@ -41,6 +41,110 @@ search:
 
 Custom field values are extracted during index build alongside the page body — no extra file I/O. String values and arrays of strings are both supported.
 
+## Configurable field weights
+
+Override the default relevance multipliers per field:
+
+```yaml
+# config/system.yaml
+search:
+  fields:
+    title:
+      weight: 5      # default: 3
+    summary:
+      weight: 3      # custom field — give it extra weight
+    body:
+      weight: 1      # default: 1
+```
+
+Any field name listed in `fields.` receives the given multiplier. Fields not listed use a default weight of `1`. The built-in title and taxonomy boosts are replaced by the values here when the key is present.
+
+## Facets
+
+Define facet fields to enable filtering by exact frontmatter values:
+
+```yaml
+# config/system.yaml
+search:
+  facets:
+    - field: "taxonomy.category"
+    - field: "template"
+    - field: "author"
+```
+
+Field paths use dot notation into the page's frontmatter structure. `taxonomy.category` extracts the `category` taxonomy values; `template` is the page template name.
+
+### Facet filtering via the API
+
+Pass `facet[{field}]={value}` query parameters to `/api/search`:
+
+```
+GET /api/search?q=deno&facet[taxonomy.category]=tutorial&facet[template]=post
+```
+
+Multiple values for the same facet are OR'd together:
+
+```
+GET /api/search?q=deno&facet[taxonomy.tag]=deno&facet[taxonomy.tag]=fresh
+```
+
+### Facet counts in response
+
+When facets are configured, the API response includes a `facets` map with occurrence counts for each configured field across the result set:
+
+```json
+{
+  "items": [...],
+  "total": 12,
+  "facets": {
+    "taxonomy.category": { "tutorial": 8, "guide": 4 },
+    "template": { "post": 10, "page": 2 }
+  }
+}
+```
+
+Use counts to build a facet sidebar that shows how many results each filter value would return.
+
+## Highlights
+
+By default, search results include a `highlights` array listing the query terms that matched (for use with `<mark>` tags). Highlights are enabled by default and can be turned off:
+
+```yaml
+search:
+  highlight: false       # default: true
+  excerpt_length: 200    # character length of the excerpt field (default: 160)
+```
+
+Result items include a `highlights` field when enabled:
+
+```json
+{
+  "route": "/blog/hello-world",
+  "title": "Hello World",
+  "excerpt": "…the <mark>Deno</mark> runtime makes it easy to…",
+  "highlights": ["deno"],
+  "score": 8.5
+}
+```
+
+The `excerpt` field already has match terms wrapped in `<mark>` tags when `highlight: true`.
+
+## Indexing Flex Objects
+
+Include Flex Object records in the search index alongside pages:
+
+```yaml
+# config/system.yaml
+search:
+  include_flex:
+    - products
+    - events
+```
+
+Flex Object records are indexed by their title-like field (first `text` field) and all other string fields. They appear in search results with a `route` of `/flex/{type}/{id}` and `template: "flex"`.
+
+The `type` field in the search result identifies the Flex Object type: `{ route: "/flex/products/abc123", template: "flex", type: "products", title: "Ceramic Mug", ... }`.
+
 ## Query syntax
 
 Queries are split into terms by whitespace. A term is a sequence of two or more non-punctuation characters. Single-character terms are ignored.

@@ -126,6 +126,9 @@ All blueprint commands accept `--json` for machine-readable output.
 | `dune migrate:from-markdown <src>` | Import a flat folder of markdown files. |
 | `dune migrate:from-hugo <src>` | Import a Hugo site from its `content/` folder. |
 | `dune migrate:flex [type]` | Apply pending schema migrations to Flex Object records. Omit `type` to migrate all types. |
+| `dune migrate:generate` | Diff `schemas/*.yaml` against the database and emit SQL migration files to `migrations/`. |
+| `dune migrate:run` | Apply all pending SQL migration files. |
+| `dune migrate:status` | Show which migrations have been applied and which are pending. |
 
 ### Migration options
 
@@ -164,6 +167,14 @@ Archives include `content/`, `data/`, `public/uploads/`, `site.yaml`, custom the
 `dune restore` validates the manifest before extracting and warns when the backup was created by a different major version of Dune.
 
 See [Backup & Restore](../../08.administration/06.backup-restore) for a full guide.
+
+## Code generation
+
+| Command | Description |
+|---------|-------------|
+| `dune codegen` | Generate TypeScript types (`src/db/types/`) and a repository index (`src/db/index.ts`) from `schemas/*.yaml`. Also generates REST API route handlers when schemas have an `api:` block. |
+
+See [Data Layer](../../16.for-developers/04.data-layer) for full documentation.
 
 ## Scaffolding
 

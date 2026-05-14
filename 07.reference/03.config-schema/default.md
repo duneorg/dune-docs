@@ -56,6 +56,81 @@ http_cache:
       stale_while_revalidate: 86400  # number — SWR override
     - pattern: "/search"
       no_store: true             # boolean — Emit Cache-Control: no-store (disables all caching)
+
+# ── Public site user authentication ─────────────────────────────────────────
+auth:
+  mode: "dune"                   # "dune" | "external-jwt" (default: "dune")
+  sessionLifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
+  providers:
+    github:
+      clientId: "$GITHUB_CLIENT_ID"
+      clientSecret: "$GITHUB_CLIENT_SECRET"
+    google:
+      clientId: "$GOOGLE_CLIENT_ID"
+      clientSecret: "$GOOGLE_CLIENT_SECRET"
+    discord:
+      clientId: "$DISCORD_CLIENT_ID"
+      clientSecret: "$DISCORD_CLIENT_SECRET"
+    magicLink:
+      enabled: true              # boolean — Enable magic-link email login
+  # external-jwt mode options (used when mode: "external-jwt")
+  jwt:
+    secret: "$JWT_SECRET"        # string — HMAC-SHA256 shared secret (HS256)
+    jwksUrl: "https://..."       # string — JWKS endpoint for RS256 (Clerk, Auth0, etc.)
+    userIdClaim: "sub"           # string — Claim containing user ID (default: "sub")
+    emailClaim: "email"          # string — Claim containing email (default: "email")
+    rolesClaim: "roles"          # string — Claim containing role(s) (default: "roles")
+
+# ── Transactional email ───────────────────────────────────────────────────────
+email:
+  provider: "console"            # "smtp" | "resend" | "postmark" | "sendgrid" | "console"
+  from: "hello@example.com"     # string — Default From address
+  # SMTP
+  smtp:
+    host: "smtp.example.com"
+    port: 587
+    secure: false                # true = implicit TLS (port 465); false = STARTTLS
+    user: "$SMTP_USER"
+    pass: "$SMTP_PASS"
+  # Resend
+  resend:
+    apiKey: "$RESEND_API_KEY"
+  # Postmark
+  postmark:
+    apiKey: "$POSTMARK_API_KEY"
+  # SendGrid
+  sendgrid:
+    apiKey: "$SENDGRID_API_KEY"
+
+# ── Public file uploads ───────────────────────────────────────────────────────
+uploads:
+  max_size_mb: 10               # number — Max upload size in MB (default: 10)
+  allowed_types:                # string[] — Permitted MIME types (server-derived from extension)
+    - "image/jpeg"
+    - "image/png"
+    - "image/webp"
+    - "image/gif"
+    - "image/avif"
+    - "application/pdf"
+  require_auth: false           # boolean — Require a logged-in SiteUser (default: false)
+
+# ── Payments ──────────────────────────────────────────────────────────────────
+payments:
+  provider: "stripe"            # "stripe" — only provider in this release
+  secret_key: "$STRIPE_SECRET_KEY"      # string — Stripe secret key
+  webhook_secret: "$STRIPE_WEBHOOK_SECRET"  # string — Stripe webhook signing secret
+  products:
+    - id: "membership"          # string — Site-defined product ID (used in checkout URL)
+      name: "Monthly Membership" # string — Human-readable name
+      price_id: "price_xxx"     # string — Stripe Price ID
+      role: "member"            # string — Role assigned to user on successful payment
+      mode: "subscription"      # "subscription" | "payment" (default: "subscription")
+
+# ── Feature flags ─────────────────────────────────────────────────────────────
+flags:
+  comments: true                # boolean — static value
+  new_editor: false
+  beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 ```
 
 ## system.yaml
@@ -97,6 +172,20 @@ typography:
 search:
   customFields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
+  highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
+  excerpt_length: 160           # number — Character length of returned excerpts (default: 160)
+  include_flex: []              # string[] — Flex Object type names to include in search index
+                                 #   e.g. ["products", "events"]
+  facets: []                    # Facet definitions for filtering search results
+    # - field: "taxonomy.category"   # dot-path into frontmatter
+    # - field: "template"
+  fields:                       # Per-field relevance weight multipliers (default weight: 1)
+    title:
+      weight: 3                 # number — Boost title matches (default: 3)
+    summary:
+      weight: 2                 # number — Boost summary/description matches
+    body:
+      weight: 1                 # number — Body text weight (default: 1)
 
 page_cache:
   enabled: false                 # boolean — Enable in-process rendered HTML cache (default: false)
