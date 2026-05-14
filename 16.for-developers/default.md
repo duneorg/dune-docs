@@ -33,7 +33,20 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 [Hooks](/docs/extending/hooks) — lifecycle hooks for content and routing  
 [Format Handlers](/docs/extending/format-handlers) — add new content formats  
 [MDX Content](/docs/extending/mdx-content) — JSX inside Markdown  
-[Plugins](/docs/extending/plugins) — packaging and distributing extensions
+[Plugins](/docs/extending/plugins) — packaging and distributing extensions  
+[Email](/docs/extending/email) — transactional email via `email.send()` with SMTP, Resend, Postmark, or SendGrid  
+[Payments](/docs/extending/payments) — Stripe checkout, webhooks, and billing portal
+
+### 3a. Build data-driven features
+
+[Data Layer](/docs/for-developers/data-layer) — schema-first data modelling, Repository API, KV/SQLite/PostgreSQL adapters, migrations  
+[UI Components](/docs/for-developers/ui-components) — `@dune/core/ui` Preact components for search, auth, profiles, and payments
+
+### 3b. Add user authentication
+
+[Authentication](/docs/authentication) — public site user auth overview  
+[Public Auth](/docs/authentication/public-auth) — OAuth (GitHub, Google, Discord), magic links, external JWT  
+[Content Gating](/docs/authentication/content-gating) — role-based page access, redirect and 403 behaviour
 
 ### 4. Work with AI agents
 

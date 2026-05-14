@@ -34,6 +34,7 @@ Build themes, write TSX content pages, create plugins, extend the engine via API
 | [Content](/docs/content) | Markdown, TSX, frontmatter, collections, taxonomies, media |
 | [Configuration](/docs/configuration) | Site config, system config, programmatic config |
 | [Themes](/docs/themes) | Templates, inheritance, layouts |
-| [Deployment](/docs/deployment) | Deno Deploy, traditional servers |
-| [Extending](/docs/extending) | Hooks, format handlers, plugins |
+| [Deployment](/docs/deployment) | Deno Deploy, traditional servers, CDN, graceful shutdown |
+| [Extending](/docs/extending) | Hooks, format handlers, plugins, email, payments |
+| [Authentication](/docs/authentication) | Public site user auth, OAuth, magic links, content gating |
 | [Reference](/docs/reference) | CLI commands, REST API, config schema |

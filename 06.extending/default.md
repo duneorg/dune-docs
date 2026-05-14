@@ -28,3 +28,5 @@ Dune is designed to be extended. The hook system lets you intercept and modify b
 | **Format handlers** | Add new content formats (beyond .md and .tsx) | Medium |
 | **Plugins** | Bundle hooks + config into reusable packages | Medium |
 | **Theme components** | Custom templates, layouts, islands | Low-Medium |
+| **Email** | Send transactional email from plugins via `email.send()` | Low |
+| **Payments** | Stripe checkout, webhooks, and billing portal via `PaymentProvider` | Medium |
