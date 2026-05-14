@@ -104,6 +104,41 @@ page_cache:
   ttl: 30                        # number — Seconds before an entry is re-rendered (default: 30)
   warm: false                    # boolean — Pre-resolve all pages at startup (default: false)
 
+logging:
+  format: "text"                 # "text" | "json" — Log output format (default: "text")
+                                 # "json" emits NDJSON lines for log aggregators (Loki, Datadog, etc.)
+                                 # Override with DUNE_LOG_FORMAT env var
+  level: "info"                  # "debug" | "info" | "warn" | "error" — Minimum level (default: "info")
+                                 # Override with DUNE_LOG_LEVEL env var
+
+cdn:
+  provider: "cloudflare"         # "cloudflare" | "fastly" | "bunny" | "custom"
+  enabled: true                  # boolean — Enable invalidation on rebuild (default: true)
+  batch_size: 30                 # number — Max URLs per invalidation request (default: 30)
+  batch_delay_ms: 100            # number — ms to wait before flushing a partial batch (default: 100)
+
+  # Cloudflare — set zone_id and api_token
+  zone_id: "$CF_ZONE_ID"
+  api_token: "$CF_API_TOKEN"
+
+  # Fastly — set service_id and api_key
+  service_id: "$FASTLY_SERVICE_ID"
+  api_key: "$FASTLY_API_KEY"
+
+  # BunnyCDN — set pull_zone_id and api_key
+  pull_zone_id: "$BUNNY_PULL_ZONE_ID"
+  api_key: "$BUNNY_API_KEY"
+
+  # Custom webhook — POST { urls: string[] } to url with Bearer token
+  url: "https://cdn.example.com/purge"
+  token: "$CDN_PURGE_TOKEN"
+
+tracing:
+  enabled: false                 # boolean — Enable distributed tracing (default: false)
+  endpoint: "http://localhost:4318/v1/traces"  # string — OTLP/HTTP collector URL
+  service_name: "dune"           # string — Service name in all spans (default: "dune")
+  sample_rate: 1.0               # number — 0.0–1.0 fraction of requests sampled (default: 1.0)
+
 debug: false                     # boolean
 timezone: "UTC"                  # string — IANA timezone
 ```

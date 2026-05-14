@@ -350,6 +350,83 @@ User-defined fields are stored alphabetically after the meta fields. The `_type`
 
 **FAQs** — fields: `question`, `answer` (markdown type), `category`. Query all FAQs with `@flex: faq` in a page collection, then group by `category` in the template.
 
+## Schema migrations
+
+When a Flex Object schema evolves — a field is renamed, a type changes, or a required field is added — existing records on disk no longer match the new schema. Dune's migration system handles this without data loss.
+
+### Versioning your schema
+
+Add a `version` integer to the schema file. Increment it whenever you make a breaking change:
+
+```yaml
+# flex-objects/products.yaml
+title: Products
+version: 2          # ← increment this when making breaking changes
+fields:
+  name:
+    type: text
+    required: true
+  category:          # renamed from "tag" in v1
+    type: select
+    options:
+      mugs: Mugs
+      prints: Prints
+```
+
+### Writing a migration
+
+Create a TypeScript file in `migrations/{type}/` named `NNN-description.ts` (zero-padded number, kebab description). Export a default object with `from`, `to`, and `up`:
+
+```ts
+// migrations/products/001-tag-to-category.ts
+import type { FlexMigration } from "@dune/core";
+
+export default {
+  from: 1,
+  to: 2,
+  up(record: Record<string, unknown>): Record<string, unknown> {
+    const { tag, ...rest } = record;
+    return { ...rest, category: tag ?? "mugs" };
+  },
+} satisfies FlexMigration;
+```
+
+Dune applies all migrations whose `from` version is ≥ the record's `_schemaVersion` and ≤ the schema's `version`, in order.
+
+### How migration runs
+
+**Lazy (automatic):** When a record is read (via the admin UI, API, or collection query) and its `_schemaVersion` is lower than the current schema version, Dune applies the pending migrations and writes the updated record back to disk. The migrated record is returned. No restart required.
+
+**Eager (CLI):** Run `dune migrate:flex` to migrate all records of all types up front — useful before a deploy or after a bulk schema change:
+
+```bash
+dune migrate:flex                # migrate all types
+dune migrate:flex products       # migrate one type
+dune migrate:flex products --dry-run  # preview without writing
+```
+
+The command prints a summary:
+
+```
+products: 48 records — 12 migrated (v1 → v2), 36 already current
+team:      7 records — 0 migrated, 7 already current
+```
+
+### Schema version on disk
+
+Migrated records get a `_schemaVersion` field written alongside the standard meta fields:
+
+```yaml
+_id: a3f2c19d0e8b
+_schemaVersion: 2
+_createdAt: 1741234567890
+_updatedAt: 1741998234100
+name: Ceramic Mug
+category: mugs
+```
+
+Records written before versioning was introduced have no `_schemaVersion` and are treated as version 0. Migration `from: 0` handles the initial transition.
+
 ## Filtering and sorting
 
 The `/api/flex/{type}` REST endpoint returns all records in creation order (newest first). For collection queries (`@flex`), the standard `order` and `filter` modifiers apply.

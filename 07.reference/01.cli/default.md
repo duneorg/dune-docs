@@ -125,15 +125,45 @@ All blueprint commands accept `--json` for machine-readable output.
 | `dune migrate:from-wordpress <src>` | Import a WordPress WXR export (`.xml` file). |
 | `dune migrate:from-markdown <src>` | Import a flat folder of markdown files. |
 | `dune migrate:from-hugo <src>` | Import a Hugo site from its `content/` folder. |
+| `dune migrate:flex [type]` | Apply pending schema migrations to Flex Object records. Omit `type` to migrate all types. |
 
 ### Migration options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--out <dir>` | `<root>/content` | Content directory to import into |
-| `--dry-run` | — | Report what would be imported without writing any files |
+| `--out <dir>` | `<root>/content` | Content directory to import into (import commands only) |
+| `--dry-run` | — | Report what would be imported/migrated without writing any files |
 | `--verbose` | — | Print each imported page |
 | `--trust-source` | — | Skip HTML sanitization — only use for sources you fully trust |
+
+See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full documentation on versioning schemas and writing migration files.
+
+## Backup & Restore
+
+| Command | Description |
+|---------|-------------|
+| `dune backup` | Create a compressed archive of all site data. |
+| `dune restore <file>` | Restore a site from a backup archive. |
+
+### `dune backup` options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--output <file>` | `backup-<timestamp>.tar.gz` | Output file path. |
+| `--root <dir>` | `.` | Site root to back up. |
+
+Archives include `content/`, `data/`, `public/uploads/`, `site.yaml`, custom themes, and local plugins. Excluded: `.dune/cache/`, `node_modules/`, build artifacts. A `manifest.json` inside the archive records the Dune version and timestamp.
+
+### `dune restore` options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--yes` | — | Skip the confirmation prompt when restoring into a non-empty directory. |
+| `--root <dir>` | `.` | Target site root to restore into. |
+
+`dune restore` validates the manifest before extracting and warns when the backup was created by a different major version of Dune.
+
+See [Backup & Restore](../../08.administration/06.backup-restore) for a full guide.
 
 ## Scaffolding
 
@@ -141,8 +171,22 @@ All blueprint commands accept `--json` for machine-readable output.
 |---------|-------------|
 | `dune new [name]` | Create a new Dune site with starter content and default theme. |
 | `dune new [name] --headless` | Create a headless Fresh+Dune site. No theme — you own all routes. See [Headless Mode](/docs/for-developers/headless-mode). |
+| `dune generate --list` | List all available generators. |
+| `dune generate:plugin <name>` | Scaffold a plugin at `plugins/{name}/index.ts`. |
+| `dune generate:route <name>` | Create a content page at `content/{name}.md`. Name may include path separators (`blog/archive`). |
+| `dune generate:form <name>` | Create a blueprint YAML at `schemas/{name}.yaml` with example fields. |
+| `dune generate:theme <name>` | Scaffold a theme at `themes/{name}/` with `theme.yaml`, a default template, and a CSS file. |
+| `dune generate:schema <name>` | Create a Flex Object schema at `flex-objects/{name}.yaml`. |
 | `dune deploy:init <target>` | Scaffold deployment config for the given target. |
 | `dune update:skills` | Reinstall AI agent skill files from the current package into `.claude/skills/`. |
+
+### Generator options
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing files. Without this flag, the command exits with an error if the target file already exists. |
+
+All generators slugify the given name (lowercase, spaces and underscores become hyphens) and derive a title from the slug for use in frontmatter and YAML fields. The output path is printed on success.
 
 ### `dune deploy:init` targets and options
 
