@@ -37,4 +37,5 @@ Build themes, write TSX content pages, create plugins, extend the engine via API
 | [Deployment](/docs/deployment) | Deno Deploy, traditional servers, CDN, graceful shutdown |
 | [Extending](/docs/extending) | Hooks, format handlers, plugins, email, payments |
 | [Authentication](/docs/authentication) | Public site user auth, OAuth, magic links, content gating |
+| [Authorization](/docs/authentication/authorization) | Role-based access control, polizy authz, route middleware |
 | [Reference](/docs/reference) | CLI commands, REST API, config schema |

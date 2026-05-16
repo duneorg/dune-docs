@@ -48,6 +48,10 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 [Public Auth](/docs/authentication/public-auth) — OAuth (GitHub, Google, Discord), magic links, external JWT  
 [Content Gating](/docs/authentication/content-gating) — role-based page access, redirect and 403 behaviour
 
+### 3c. Control access (authorization)
+
+[Authorization](/docs/authentication/authorization) — polizy-backed authz, `createDuneAuthSystem`, `authz.check()`, route middleware, external-JWT + local authz mode
+
 ### 4. Work with AI agents
 
 [AI Agent Integration](/docs/for-developers/agent-integration) — llms.txt, skill files, MCP server, and the change API  
