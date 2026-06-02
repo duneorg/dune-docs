@@ -153,3 +153,19 @@ const plugin: DunePlugin = {
 **SendGrid** — Uses the SendGrid Mail Send API. Requires API key with Mail Send permission.
 
 **SMTP** — Uses a raw SMTP connection. `secure: true` uses implicit TLS (port 465); `secure: false` upgrades with STARTTLS (port 587). Set `pass: "$SMTP_PASS"` to avoid committing credentials.
+
+## Dev-mode email preview
+
+In development (`DUNE_ENV=dev`), Dune intercepts all outgoing emails and writes them to `.dune/admin/dev-email/` as JSON files instead of sending them. This applies to all providers, including production ones — no emails escape to real recipients during local development.
+
+Browse intercepted emails in the admin panel under **Dev → Email Preview** (`/admin/email-preview`), or query the API directly:
+
+```
+GET /admin/api/email-preview
+→ { "emails": [ { "to", "subject", "template", "timestamp", "id" }, … ] }
+
+GET /admin/api/email-preview/{id}
+→ { "to", "subject", "html", "text", "template", "data", "timestamp" }
+```
+
+Both endpoints require admin authentication and return `404` outside of dev mode.

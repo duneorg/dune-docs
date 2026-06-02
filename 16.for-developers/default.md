@@ -40,7 +40,8 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 ### 3a. Build data-driven features
 
 [Data Layer](/docs/for-developers/data-layer) — schema-first data modelling, Repository API, KV/SQLite/PostgreSQL adapters, migrations  
-[UI Components](/docs/for-developers/ui-components) — `@dune/core/ui` Preact components for search, auth, profiles, and payments
+[UI Components](/docs/for-developers/ui-components) — `@dune/core/ui` Preact components for search, auth, profiles, and payments  
+[Background Jobs](/docs/for-developers/jobs) — cron-scheduled server-side tasks with access to content, email, and storage
 
 ### 3b. Add user authentication
 

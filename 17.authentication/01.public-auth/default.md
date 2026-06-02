@@ -108,6 +108,40 @@ auth:
 
 In external-JWT mode, there are no session cookies and no `/auth/*` login routes — your external provider handles the login UI. Clients pass tokens as `Authorization: Bearer {token}` headers. The auth middleware injects a synthetic `SiteUser` from the validated claims.
 
+## User store backends
+
+The `userStore` setting controls where `SiteUser` records are persisted:
+
+| Value | Description |
+|-------|-------------|
+| `"local"` | Default. Flat YAML files in `data/site-users/`. Committed to version control. Suitable for most sites. |
+| `"session"` | No server-side records. Identity is embedded in the session cookie from OAuth/magic-link claims. Roles assigned after login (e.g. via payment webhook) are not visible until the user logs out and back in. |
+| `"db"` | Records stored in the site's database (SQLite or PostgreSQL). Requires `DUNE_DB_PATH` or `DUNE_DB_URL`. Suitable for large user bases or multi-process deployments where flat-file contention is a concern. |
+
+```yaml
+auth:
+  userStore: "db"   # default: "local"
+```
+
+## IdP webhook (user deletion)
+
+When using `mode: external-jwt` with `authzStore: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
+
+```yaml
+auth:
+  mode: "external-jwt"
+  authzStore: local
+  webhook:
+    provider: "clerk"               # "clerk" | "auth0" | "generic"
+    secret: "$DUNE_CLERK_WEBHOOK_SECRET"
+```
+
+This activates `POST /auth/webhook`. On receiving a `user.deleted` event (provider-specific payload format), Dune revokes all authz tuples for that user. Role-change events are handled automatically by per-request fingerprint reconciliation and do not require a webhook.
+
+For `provider: "generic"`, the signature header defaults to `x-dune-signature`. Override with `signatureHeader: "x-my-sig"`.
+
+The webhook endpoint verifies the provider's HMAC signature before processing. Configure the webhook URL in your IdP's dashboard as `{site.url}/auth/webhook`.
+
 ## SiteUser
 
 Every logged-in visitor is represented as a `SiteUser`:

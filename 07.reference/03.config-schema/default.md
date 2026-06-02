@@ -73,6 +73,10 @@ auth:
       clientSecret: "$DISCORD_CLIENT_SECRET"
     magicLink:
       enabled: true              # boolean — Enable magic-link email login
+  authzStore: "local"            # "local" — Permission tuple storage.
+                               #   dune mode: defaults to "local".
+                               #   external-jwt mode: no default — omit for JWT-claims-only authz,
+                               #   set "local" to enable local polizy authz alongside the external IdP.
   # external-jwt mode options (used when mode: "external-jwt")
   jwt:
     secret: "$JWT_SECRET"        # string — HMAC-SHA256 shared secret (HS256)

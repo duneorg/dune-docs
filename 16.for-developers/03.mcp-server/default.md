@@ -60,6 +60,8 @@ Add the same entry under `mcpServers` in Cursor's MCP config file (`~/.cursor/mc
 
 Tools are callable functions that agents can invoke with parameters.
 
+### Read tools
+
 | Tool | Description |
 |------|-------------|
 | `list_pages` | List pages in the content index. Filter by template, published status, language, taxonomy, or date range. |
@@ -71,6 +73,24 @@ Tools are callable functions that agents can invoke with parameters.
 | `get_runtime_info` | Live snapshot of the engine state — page counts, content formats, sections, plugins, theme details. |
 | `list_templates` | List all templates and layouts available in the active theme. |
 | `list_blueprints` | List all blueprint (frontmatter schema) definitions. Returns field names, types, and validation rules per template. |
+
+### Write tools
+
+Write tools modify site content and configuration directly on disk. They are only available when `mcp:serve` is running against a local site (not a remote or read-only mount).
+
+| Tool | Description |
+|------|-------------|
+| `write_page` | Write or overwrite a content file. Accepts a path relative to the content dir and the full file content (frontmatter + body). Validates YAML frontmatter before writing. |
+| `delete_page` | Delete a content file by route (e.g. `/blog/hello`) or by path relative to the content dir. |
+| `update_frontmatter` | Patch frontmatter fields on an existing page. Pass `null` as a value to remove a field. Leaves the body unchanged. |
+| `update_config` | Merge fields into `site.yaml`. Accepts a partial config object; existing keys not in the patch are preserved. |
+| `install_plugin` | Add a plugin specifier to the `plugins:` list in `site.yaml`. No-op if already present. |
+| `scaffold_plugin` | Generate a plugin skeleton at `plugins/{name}/`. |
+| `scaffold_route` | Generate a TSX content page stub at `content/{path}.md`. |
+| `scaffold_form` | Generate a form/blueprint schema at `schemas/{name}.yaml` with example fields. |
+| `scaffold_theme` | Generate a minimal theme skeleton at `themes/{name}/`. |
+
+> **Note**: Scaffold tools (`scaffold_*`) invoke the same generators as `dune generate:*` CLI commands. The MCP server routes their output through `console.log` capture; standard output from the generator is surfaced in the tool result.
 
 ## Resources
 

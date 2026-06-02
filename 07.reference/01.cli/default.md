@@ -105,6 +105,12 @@ All blueprint commands accept `--json` for machine-readable output.
 | `--dry-run` | Preview what would be deleted without writing any changes. |
 | `--json` | Output result as JSON. |
 
+## Packages
+
+| Command | Description |
+|---------|-------------|
+| `dune add <package>` | Add an npm or JSR package to the site's `deno.json` import map. Accepts bare names (`polizy`), versioned names (`polizy@^2`), explicit specifiers (`npm:polizy@^2.0.0`), and JSR packages (`jsr:@scope/pkg`). |
+
 ## Plugins
 
 | Command | Description |
@@ -188,6 +194,7 @@ See [Data Layer](../../16.for-developers/04.data-layer) for full documentation.
 | `dune generate:form <name>` | Create a blueprint YAML at `schemas/{name}.yaml` with example fields. |
 | `dune generate:theme <name>` | Scaffold a theme at `themes/{name}/` with `theme.yaml`, a default template, and a CSS file. |
 | `dune generate:schema <name>` | Create a Flex Object schema at `flex-objects/{name}.yaml`. |
+| `dune generate:admin-route <name>` | Scaffold a custom admin panel route at `src/admin/routes/{name}/index.tsx` with a matching handler and basic auth guard. |
 | `dune deploy:init <target>` | Scaffold deployment config for the given target. |
 | `dune update:skills` | Reinstall AI agent skill files from the current package into `.claude/skills/`. |
 
