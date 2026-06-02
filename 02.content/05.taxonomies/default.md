@@ -110,6 +110,59 @@ custom:
 
 The `taxonomy-listing.tsx` template in your theme receives the full taxonomy map and renders links to each value.
 
+## Term pages
+
+Any published page can declare itself the editorial home for a taxonomy term — a dedicated page with its own content (description, image, featured posts) that is associated with that term in the index.
+
+```yaml
+---
+title: "Deno"
+template: tag-page
+termPageFor: deno          # shorthand → implies the "tag" vocabulary
+---
+
+Deno is a modern JavaScript runtime...
+```
+
+For non-tag vocabularies, use an explicit map:
+
+```yaml
+termPageFor:
+  category: tutorials      # this page is the home for the "tutorials" category
+```
+
+Only one page per term is recognised — if multiple pages declare the same term, the first one encountered during indexing wins.
+
+### Looking up term pages
+
+**In a template**, use `page.termPage(vocab, value)` to get the editorial page for a term:
+
+```tsx
+// In a taxonomy-listing template
+const denoPage = await page.termPage("tag", "deno");
+// → ResolvedPage | null
+```
+
+**Via the content API**:
+
+```ts
+import { content } from "@dune/core/content";
+const termPage = await content.termPage("category", "tutorials");
+```
+
+**In a collection**, `TaxonomyTerm.pageRoute` is populated automatically — useful when rendering a list of terms with links to their editorial pages:
+
+```tsx
+{tags.map((term) => (
+  <li>
+    <a href={term.pageRoute ?? `/tag/${term.value}`}>
+      {term.value}
+    </a>
+    {term.pageRoute && <span> — has editorial page</span>}
+  </li>
+))}
+```
+
 ## Custom taxonomies
 
 You're not limited to tags and categories. Any classification you need:
