@@ -41,6 +41,7 @@ In Claude Code, you can load `llms.txt` at the start of a session with:
 | Skill file | Topic |
 |------------|-------|
 | `dune-content.md` | Content conventions, frontmatter, file naming, ordered folders |
+| `dune-themes.md` | Theme structure, TSX templates, Preact islands, layout components |
 | `dune-schemas.md` | Data models — `store: local` and `store: db`, query interface |
 | `dune-plugin-authoring.md` | Plugin shape, hooks, admin routes, security guards |
 | `dune-auth.md` | Public user authentication, `ctx.state.user`, protecting routes |

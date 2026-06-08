@@ -44,8 +44,10 @@ my-site/
 │       │   ├── default.tsx
 │       │   ├── post.tsx
 │       │   └── blog.tsx
-│       ├── components/       # Shared layout components
+│       ├── components/       # Shared layout components (server-only)
 │       │   └── layout.tsx
+│       ├── islands/          # Preact islands (hydrated in the browser)
+│       │   └── NavToggle.tsx
 │       └── static/           # Theme assets (CSS, fonts)
 │           └── styles.css
 ├── plugins/                  # Local plugins
