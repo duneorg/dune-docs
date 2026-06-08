@@ -145,6 +145,55 @@ collection:
   // layout: false        → no wrapper — you control everything including <html>
 };`}</code></pre>
 
+      <h2>Request handlers</h2>
+
+      <p>
+        TSX content pages can export a <code>handler</code> object alongside the
+        default component — mirroring Fresh's{" "}
+        <code>export const handler: Handlers&lt;Data&gt;</code> idiom. When a
+        request hits the page, Dune dispatches it through the matching method
+        before rendering.
+      </p>
+
+      <pre><code>{`import type { Handlers, PageProps } from "@dune/core";
+
+interface Data {
+  items: string[];
+}
+
+export const handler: Handlers<Data> = {
+  async GET(req, ctx) {
+    const items = await loadItems();   // any async work
+    return ctx.render({ items });
+  },
+
+  async POST(req, ctx) {
+    const form = await req.formData();
+    await saveItem(form.get("name") as string);
+    return Response.redirect(req.url, 303);
+  },
+};
+
+export default function MyPage({ data }: PageProps<Data>) {
+  return (
+    <ul>
+      {data.items.map((item) => <li>{item}</li>)}
+    </ul>
+  );
+}`}</code></pre>
+
+      <p>
+        <code>ctx.render(data)</code> wraps the default component with the
+        provided data object. The component receives it as{" "}
+        <code>props.data</code>. The GET handler is optional — omitting it
+        renders the component with no data.
+      </p>
+
+      <p>
+        For POST and other mutating methods to reach the handler, the content
+        catch-all route accepts all HTTP methods. No extra configuration needed.
+      </p>
+
       <h2>What TSX pages can do</h2>
 
       <ul>
@@ -153,6 +202,7 @@ collection:
         <li>Import from npm and JSR packages</li>
         <li>Access co-located media via the <code>media</code> prop</li>
         <li>Use collections defined in their frontmatter</li>
+        <li>Handle form submissions and API requests via <code>handler</code></li>
         <li>Full TypeScript type safety</li>
       </ul>
 

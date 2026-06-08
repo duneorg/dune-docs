@@ -58,6 +58,27 @@ The `items` field determines WHERE to pull pages from:
 | `@taxonomy.category: ["tutorials", "guides"]` | Pages in either category |
 | `@taxonomy: { tag: "deno", category: "tutorials" }` | Pages matching ALL criteria |
 
+### Frontmatter array source
+
+Resolve collection items from an array field in the page's own frontmatter:
+
+```yaml
+---
+title: "Editor's Picks"
+posts:
+  - /blog/hello-world
+  - /blog/deep-dive
+  - slug: /blog/advanced-patterns
+collection:
+  items:
+    "@frontmatter": posts
+---
+```
+
+Each entry can be a slug string or an object with a `slug` property. Items are returned in the order they appear in the frontmatter array.
+
+This is useful for curated lists where an editor controls the exact selection and order — a featured posts section, a recommended reading list, or a hand-picked product showcase.
+
 ## Ordering
 
 ```yaml
