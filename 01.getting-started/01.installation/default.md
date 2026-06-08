@@ -53,9 +53,13 @@ my-site/
 │   ├── site.yaml           # Site identity (title, URL, taxonomies)
 │   └── system.yaml         # Engine behavior (cache, debug, languages)
 └── themes/
-    └── default/            # Starter theme with JSX templates
+    └── starter/            # Starter theme
         ├── templates/
         │   └── default.tsx
+        ├── components/
+        │   └── layout.tsx
+        ├── islands/        # Preact islands (hydrated in the browser)
+        │   └── NavToggle.tsx
         └── theme.yaml
 ```
 

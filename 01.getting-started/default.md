@@ -18,9 +18,9 @@ collection:
 
 # Getting Started with Dune
 
-Dune is a flat-file CMS built on Deno. Your content lives as files on disk — Markdown for prose, TSX for interactive pages — organized in folders, configured with YAML frontmatter.
+Dune is a flat-file CMS for Deno and Fresh. Content lives as files on disk — Markdown, MDX, or TSX — organized in folders, configured with YAML frontmatter. Start without a database and grow into a full web application when your project needs it.
 
-No database. No admin panel (yet). Just files, a CLI, and a fast server.
+No Node.js, no npm, no build pipeline. Just files, a CLI, and a Deno server.
 
 ## What you'll need
 

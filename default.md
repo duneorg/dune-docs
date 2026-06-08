@@ -8,7 +8,7 @@ metadata:
 
 # Documentation
 
-A flat-file CMS built on [Deno](https://deno.land/) and [Fresh 2](https://fresh.deno.dev/). Content is files. No database required.
+A flat-file CMS for [Deno](https://deno.land/) and [Fresh](https://fresh.deno.dev/) that grows from Markdown content to full-stack web apps. Start without a database — add auth, a data layer, background jobs, and Preact islands when your project needs them.
 
 ## Choose your path
 
@@ -24,7 +24,7 @@ Configure, deploy, and manage a Dune site. YAML config, CLI tools, multiple envi
 
 ### [Developer →](/docs/for-developers)
 
-Build themes, write TSX content pages, create plugins, extend the engine via API.
+Build themes with TSX templates and Preact islands, write plugins, add auth or a data layer, and extend the engine via API.
 
 ## Documentation Sections
 
@@ -33,7 +33,7 @@ Build themes, write TSX content pages, create plugins, extend the engine via API
 | [Getting Started](/docs/getting-started) | Installation, quickstart, project structure |
 | [Content](/docs/content) | Markdown, TSX, frontmatter, collections, taxonomies, media |
 | [Configuration](/docs/configuration) | Site config, system config, programmatic config |
-| [Themes](/docs/themes) | Templates, inheritance, layouts |
+| [Themes](/docs/themes) | Templates, Preact islands, inheritance, layouts |
 | [Deployment](/docs/deployment) | Deno Deploy, traditional servers, CDN, graceful shutdown |
 | [Extending](/docs/extending) | Hooks, format handlers, plugins, email, payments |
 | [Authentication](/docs/authentication) | Public site user auth, OAuth, magic links, content gating |
