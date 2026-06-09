@@ -22,6 +22,25 @@ dune mcp:serve
 
 The server reads from stdin and writes to stdout using newline-delimited JSON-RPC 2.0. It loads your site's content index at startup and serves requests from there — no HTTP port is opened.
 
+## Security model
+
+The MCP server is a **local-development tool** with no authentication of its own: any process that can write to its stdin can call every tool, including the write tools. The suggested configs below run it with `deno -A` (all permissions), so tools execute with your full user privileges — they can read and write files and reach the network.
+
+Keep these rules in mind:
+
+- Only connect the server to agents you trust, on machines you trust.
+- Never bridge its stdio to a network socket or any other untrusted transport — there is no session, token, or origin check.
+- `install_plugin` and `update_config` modify `site.yaml`, which controls what code your site executes later. Treat MCP tool access as equivalent to code execution.
+- To reduce blast radius, replace `-A` with the narrowest permission flags that work for your site, for example:
+
+```json
+"args": [
+  "run",
+  "--allow-read=.", "--allow-write=.", "--allow-env", "--allow-net=jsr.io",
+  "jsr:@dune/core/cli", "mcp:serve"
+]
+```
+
 ## Configuring Claude Code
 
 Add an entry to `.mcp.json` in your site root (or `~/.claude.json` for global access):
