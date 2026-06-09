@@ -35,7 +35,11 @@ Work through these sections in order, or jump to what you need.
 [Taxonomies](/docs/content/taxonomies) — tags, categories, and custom groupings  
 [Multilingual](/docs/content/i18n) — pages in more than one language
 
-### 4. Manage workflow
+### 4. Edit content inline
+
+[Inline editing](administration/inline-editing) — edit titles and body text directly in the page, without opening the admin panel
+
+### 5. Manage workflow
 
 [Workflow](/docs/content/workflow) — draft, review, publish states  
 [Page Builder](/docs/content/page-builder) — visual section-based page layout
