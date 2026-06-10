@@ -67,7 +67,9 @@ For precise control over which elements are editable and how, import the compone
 
 ### Installation
 
-The component kit is part of `@dune/core`. No additional package is needed.
+The component kit is part of `@dune/core`. However, the edit handles only activate when the admin bar is present — which requires `@dune/plugin-inline-edit` to be installed. Without the plugin the components render their children identically for all visitors, including admins.
+
+See [Inline editing](administration/inline-editing#installation) for how to install the plugin.
 
 Add the required import map entries to your site's `deno.json` if not already present (see [Islands](themes/islands#deno-json-import-map)):
 

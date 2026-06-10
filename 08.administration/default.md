@@ -62,7 +62,7 @@ On first startup, a default `admin` account is created automatically. Delete the
 
 | Feature | Description |
 |---------|-------------|
-| **Inline editing** | Edit page titles and body content directly in the public site view — click any title or body text while logged in. No admin panel required. See [Inline editing](administration/inline-editing). |
+| **Inline editing** | Edit page titles and body content directly in the public site view — click any title or body text while logged in. Requires the `@dune/plugin-inline-edit` plugin. See [Inline editing](administration/inline-editing). |
 | **Content editor** | Create, edit, and delete pages. Supports Markdown, MDX, and frontmatter editing. Blueprint-driven custom fields are auto-generated from `blueprints/{template}.yaml`. |
 | **Draft preview** | Save a draft and get a shareable preview URL that renders through the active theme. Reviewers don't need admin access. See [Draft preview](content/workflow#draft-preview). |
 | **Workflow** | Move pages through `draft → in_review → published → archived` states. |

@@ -12,13 +12,36 @@ metadata:
 
 # Inline Editing
 
-Inline editing lets logged-in admins edit page content directly in the public site view — no need to navigate to the admin panel, find the page, and use the full editor. Click a title to rename it in place. Click body text to rewrite it with a floating Save/Cancel toolbar.
+Inline editing lets logged-in admins edit page content directly in the public site view — no need to navigate to the admin panel, find the page, and use the full editor. Click a title to rename it in place. Click body text to rewrite it with a TipTap WYSIWYG editor backed by Y.js for real-time collaboration.
+
+## Installation
+
+Inline editing is provided by the `@dune/plugin-inline-edit` plugin. Add it to your site to enable the admin bar and all editing features.
+
+**1. Add the plugin to `site.yaml`:**
+
+```yaml
+plugins:
+  - src: "jsr:@dune/plugin-inline-edit"
+```
+
+**2. Add the import to your site's `deno.json`:**
+
+```json
+{
+  "imports": {
+    "@dune/plugin-inline-edit": "jsr:@dune/plugin-inline-edit@^1"
+  }
+}
+```
+
+Without the plugin, admins see no admin bar and no edit controls on the public site.
 
 ## How it activates
 
 Log in at `/admin`. From that point forward, every page you browse on your site gets an **admin bar** injected at the top — a thin fixed strip showing the page title, editing controls, and a link back to the full admin editor.
 
-No configuration required. No template changes needed. The admin bar is injected server-side into the response whenever a valid admin session is detected.
+No template changes needed. The admin bar is injected server-side into the response whenever a valid admin session is detected.
 
 Log out (or clear cookies) and the bar disappears immediately — anonymous visitors never see it.
 
@@ -48,17 +71,13 @@ The save is debounced — it writes to disk after you stop typing, not on every 
 
 ## Editing the body
 
-In edit mode, hover over the page body content — a dashed blue outline appears. Click anywhere in the body text to start editing:
+In edit mode, hover over the page body content — a dashed blue outline appears. Click anywhere in the body text to open a TipTap WYSIWYG editor:
 
-- The content becomes directly editable (like a rich text document)
 - A floating **Save / Cancel** toolbar appears, sticky below the admin bar as you scroll
-- Edit freely — type, delete, use browser formatting shortcuts (bold, italic, etc.)
-- **Save** converts your edits from HTML back to Markdown and writes them to disk, then reloads the page
-- **Cancel** or **Escape** restores the original content without saving
-
-The body element is located by matching the first substantial line of the page's markdown source against the rendered DOM — so the toolbar always appears right where the body text is, not at the top of the page container.
-
-> **Markdown round-trip**: the inline editor converts edited HTML back to Markdown on save. Common elements (headings, paragraphs, bold, italic, links, lists, code, blockquotes) survive the round-trip cleanly. Complex custom HTML in your content may not. For content with intricate formatting, use the full admin editor instead.
+- Edit freely — type, delete, use the formatting toolbar or browser shortcuts (bold, italic, etc.)
+- Changes are synced in real time via Y.js — multiple admins can edit the same page simultaneously without conflicts
+- **Save** writes the changes back to the Markdown source on disk, then reloads the page
+- **Cancel** or **Escape** discards unsaved changes
 
 ## What gets detected automatically
 
@@ -67,7 +86,7 @@ The auto-overlay scans each page for editable elements:
 | What | How detected | Edit behaviour |
 |------|-------------|----------------|
 | Page title | First `<h1>` on the page | Contenteditable in place, auto-saves on blur |
-| Body content | First `<article>` element, or first `<div>` with a standalone `content` CSS class | Contenteditable with floating Save/Cancel toolbar |
+| Body content | First `<article>` element, or first `<div>` with a standalone `content` CSS class | TipTap WYSIWYG with floating Save/Cancel toolbar |
 
 If neither is found, the auto-overlay does nothing — no controls appear. This is intentional: Dune does not guess at content it cannot confidently identify.
 
@@ -92,6 +111,5 @@ See [Inline editing in themes](themes/inline-editing) for how to use `EditableTe
 ## Limitations
 
 - **Auto-overlay is heuristic.** It works well for standard templates following semantic HTML conventions (`<article>` for content, `<h1>` for the title). Templates with unconventional structure may need explicit component kit annotations.
-- **Markdown round-trip.** Saving via the inline editor converts HTML → Markdown. Standard formatting survives cleanly; raw HTML blocks, custom shortcodes, and complex MDX components may not. Use the full admin editor for those pages.
 - **One page at a time.** The inline editor operates on the currently viewed page. There is no cross-page or bulk editing.
 - **Admin session required.** The admin bar and all editing controls are invisible to anonymous visitors and require an active admin session.
