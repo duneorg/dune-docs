@@ -155,14 +155,17 @@ export default function ArticleTemplate({ page, site, nav, Layout }: any) {
 }
 ```
 
-Anonymous visitors see the rendered article with a few inert data attributes. Admins (with the inline-edit plugin installed) see ✎ Edit handles on the title, date, and body.
+Anonymous visitors see the plain rendered article — Dune strips the marker attributes from their HTML. Admins (with the inline-edit plugin installed) see ✎ Edit handles on the title, date, and body.
 
 ## How it works
 
 The markers are the entire contract between themes and editor plugins:
 
-1. **Render time:** templates (or core's marker components) emit `data-dune-*` attributes. That is all that ever happens for anonymous visitors.
-2. **Admin requests only:** the editor plugin injects its admin bar script into the response.
-3. **In the browser, admin only:** the script finds the markers and mounts its editors on them. The TipTap stack loads only when an edit actually starts.
+1. **Render time:** templates (or core's marker components) emit `data-dune-*` attributes.
+2. **Serve time:** Dune scrubs all `data-dune-*` attributes from responses that don't belong to a logged-in editing session. Anonymous visitors and crawlers never see the markers — content source paths stay private and the HTML carries no editing fingerprint.
+3. **Admin requests only:** the markers stay in the HTML, and the editor plugin injects its admin bar script into the response.
+4. **In the browser, admin only:** the script finds the markers and mounts its editors on them. The TipTap stack loads only when an edit actually starts.
 
 Because plugins consume markers rather than being imported by templates, themes stay portable across sites with or without an editor plugin — and editor plugins are swappable without touching any template.
+
+> Because markers are stripped from public responses, never use `data-dune-*` attributes as CSS or JavaScript hooks for site styling or behaviour. To check your markers, view the page while logged in as an admin — an incognito window won't show them.
