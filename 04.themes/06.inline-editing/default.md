@@ -7,92 +7,65 @@ taxonomy:
   difficulty: [intermediate]
   topic: [themes, islands, editing]
 metadata:
-  description: "Support inline editing in your theme templates using the component kit, or rely on auto-overlay for zero-config editing"
+  description: "Support inline editing in your theme templates with the data-dune-body marker or the typed marker components"
 ---
 
 # Inline Editing in Themes
 
 Dune's inline editing works in two modes for theme developers:
 
-1. **Auto-overlay** — zero template changes. Dune detects editable elements automatically based on semantic HTML.
-2. **Component kit** — explicit, precise. Import `EditableText`, `EditableMarkdown`, etc. from `@dune/plugin-inline-edit/ui/editable` directly into your templates.
+1. **Body marker** — one attribute. Put `data-dune-body` on the element that wraps the rendered markdown body; the overlay handles title and body editing from there.
+2. **Marker components** — the same markers as typed components. Import `EditableText`, `EditableMarkdown`, etc. from `@dune/core/ui/editable` for per-field granularity and typed props.
 
-Both modes work simultaneously. The component kit takes precedence wherever it is used; auto-overlay handles everything else.
+These are two spellings of the same contract: the components render exactly the marker attributes, nothing more. Editor plugins consume the markers from the rendered HTML — templates never import from an editor plugin.
 
-## Auto-overlay: what themes get for free
+## Marking the body: `data-dune-body`
 
-When an admin is logged in, Dune scans the rendered HTML of each page and annotates:
+When an admin is logged in, the overlay annotates two things in the rendered HTML:
 
-- The first `<h1>` → title field (click-to-edit, auto-saves)
-- The first `<article>` element, or the first `<div>` with a standalone `content` CSS class → body content (click-to-edit, floating Save/Cancel)
+- The first `<h1>` → title field (detected automatically, auto-saves)
+- The element carrying `data-dune-body` → body content (floating Save/Cancel)
 
-**For a well-structured theme, this works without any changes.** An article template that renders:
+Editing starts from a floating **✎ Edit** button shown on hover — never from clicking the content itself, so links inside editable regions stay followable while browsing in edit mode.
+
+The body element is **never guessed** from page structure. A wrong guess — say, treating a blog listing's post cards as body content — would write template-generated HTML back into the Markdown source on save, so the theme must be explicit:
 
 ```tsx
 <article class="post">
   <h1>{fm.title}</h1>
-  <div class="body" dangerouslySetInnerHTML={{ __html: await page.html() }} />
+  <div data-dune-body dangerouslySetInnerHTML={{ __html: await page.html() }} />
 </article>
 ```
 
-gets title and body editing automatically, with the edit controls positioned precisely at the `<h1>` and the body `<div>`.
+Rules:
 
-### Helping the auto-overlay
+- Put `data-dune-body` on exactly the element that wraps the rendered markdown body (`page.html()` / `{children}`) — nothing more, nothing less.
+- **Listing and landing templates must not carry the attribute.** A blog index that renders post cards has no editable markdown body — leave it unmarked and body editing is simply unavailable there.
+- Only the first marked element on a page is used.
 
-Follow semantic HTML conventions and the overlay works without any explicit annotation:
+If you are converting a template from another system, the marker belongs on the converted equivalent of Grav's `{{ page.content }}`, Hugo's `.Content`, or WordPress's `the_content()`.
 
-- Use `<article>` for the main content container
-- Use `<h1>` for the page title (one per page)
-- Avoid naming layout wrappers with `content` in their CSS class (e.g. prefer `content-header` over a standalone `content` class on navigation)
+### Opting the title out
 
-### Opting elements out
-
-If your layout contains elements that match the auto-detection rules but are not editable (e.g. a layout `<main>` wrapper that includes navigation), add `data-dune-no-edit`:
+The `<h1>` title detection is automatic. If your layout renders an `<h1>` that is not the page title (e.g. a site logo), add `data-dune-no-edit` to it:
 
 ```tsx
-<main class="site-layout" data-dune-no-edit>
-  {/* Dune skips this and continues scanning inward */}
-  <article class="page-content">
-    <h1>{fm.title}</h1>
-    ...
-  </article>
-</main>
+<h1 class="site-logo" data-dune-no-edit>My Site</h1>
 ```
 
-The scanner skips any element with `data-dune-no-edit` and continues to the next candidate. This is preferable to relying on class names — it is explicit and does not break if you rename your CSS classes.
+## Marker components
 
-## Component kit
+Hand-written attributes and the typed marker components from `@dune/core/ui/editable` are **interchangeable** — the components are server-only sugar that render exactly the marker attributes. They ship no JavaScript, imply no specific editor, and the page renders identically whether or not an editor plugin is installed. Use them when you want typed props and per-field granularity; use raw attributes when one line is enough.
 
-For precise control over which elements are editable and how, import the component kit islands into your templates. Components render their children identically for anonymous visitors — zero overhead, no JS shipped. Editing controls only activate when an admin session is present.
-
-### Installation
-
-The component kit ships with `@dune/plugin-inline-edit` (since core v0.17 — through v0.16 it lived in `@dune/core/ui/editable`). The same plugin provides the admin bar and the editing backend, so one installation covers everything.
-
-See [Inline editing](administration/inline-editing#installation) for how to add the plugin to your site's `site.yaml`.
-
-Add the required import map entries to your site's `deno.json` if not already present (see [Islands](themes/islands#deno-json-import-map)):
-
-```json
-{
-  "imports": {
-    "@dune/plugin-inline-edit": "jsr:@dune/plugin-inline-edit@^1",
-    "preact": "npm:preact@^10",
-    "preact/hooks": "npm:preact@^10/hooks",
-    "preact/jsx-runtime": "npm:preact@^10/jsx-runtime",
-    "preact/jsx-dev-runtime": "npm:preact@^10/jsx-dev-runtime"
-  }
-}
-```
+No plugin import, no island setup, and no Preact import-map entries are required — the components come with `@dune/core`, which your theme already depends on.
 
 ### EditableText
 
-Makes a frontmatter field editable in place. Click to edit, auto-saves on blur.
+Marks an inline frontmatter field. With the inline-edit plugin installed, admins get in-place text editing that auto-saves to the named frontmatter key.
 
 ```tsx
-import { EditableText } from "@dune/plugin-inline-edit/ui/editable";
+import { EditableText } from "@dune/core/ui/editable";
 
-// In your template:
 <h1>
   <EditableText field="title" sourcePath={page.sourcePath}>
     {fm.title}
@@ -110,85 +83,48 @@ import { EditableText } from "@dune/plugin-inline-edit/ui/editable";
 |------|------|-------------|
 | `field` | `string` | Frontmatter key to patch on save |
 | `sourcePath` | `string` | Page source path (`page.sourcePath`) |
+| `as` | `string` | Wrapper element tag (default `span`) |
 | `children` | `ComponentChildren` | Current value — rendered as-is for all visitors |
+
+Renders `<span data-dune-field="…" data-dune-source="…">`.
 
 ### EditableMarkdown
 
-Full WYSIWYG body editing using TipTap, backed by Y.js for real-time collaboration. Multiple admins can edit the same page simultaneously — changes are merged without conflicts.
+Marks the rendered markdown body — identical to writing `data-dune-body` by hand, plus the source path.
 
 ```tsx
-import { EditableMarkdown } from "@dune/plugin-inline-edit/ui/editable";
+import { EditableMarkdown } from "@dune/core/ui/editable";
 
-<article class="post-body">
-  <EditableMarkdown sourcePath={page.sourcePath} />
-</article>
+<EditableMarkdown sourcePath={page.sourcePath}>
+  <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
+</EditableMarkdown>
 ```
 
-The component renders the page's HTML body for anonymous visitors. For admins in edit mode it activates a TipTap editor with a formatting toolbar.
+With the inline-edit plugin installed, admins get a TipTap WYSIWYG editor over the page's markdown source. The editor loads lazily (admin sessions only) and serialises back to markdown losslessly — the rendered HTML is never reverse-engineered into markdown.
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `sourcePath` | `string` | Page source path |
+### EditableField, EditableDate, EditableImage
 
-> `EditableMarkdown` requires a WebSocket connection to `/admin/collab/edit-ws` for Y.js sync. Make sure the admin panel is enabled (`admin.enabled: true`).
-
-### EditableImage
-
-A media picker for image frontmatter fields. Displays the current image; clicking opens the media library to select a replacement.
+Typed field markers. They add a `data-dune-field-type` hint so editor plugins can mount a type-appropriate editor:
 
 ```tsx
-import { EditableImage } from "@dune/plugin-inline-edit/ui/editable";
-
-<EditableImage
-  field="cover"
-  sourcePath={page.sourcePath}
-  src={fm.cover}
-  alt={fm.title}
-  class="post-cover"
-/>
-```
-
-### EditableDate
-
-A date picker for date frontmatter fields.
-
-```tsx
-import { EditableDate } from "@dune/plugin-inline-edit/ui/editable";
+import { EditableDate, EditableImage, EditableField } from "@dune/core/ui/editable";
 
 <time>
-  <EditableDate field="date" sourcePath={page.sourcePath}>
-    {formatDate(fm.date)}
-  </EditableDate>
+  <EditableDate field="date" sourcePath={page.sourcePath}>{formatDate(fm.date)}</EditableDate>
 </time>
+
+<EditableField field="rating" type="star_rating" sourcePath={page.sourcePath}>
+  {fm.rating}
+</EditableField>
 ```
 
-### EditableField (generic)
-
-Looks up the right editor component by field type from the registry. Useful for custom field types registered by plugins.
-
-```tsx
-import { EditableField } from "@dune/plugin-inline-edit/ui/editable";
-
-<EditableField field="rating" sourcePath={page.sourcePath} value={fm.rating} />
-```
-
-### Custom field editors
-
-Register a Preact island component as the editor for a custom field type:
-
-```ts
-// themes/my-theme/islands/StarRating.tsx
-import { registerFieldEditor } from "@dune/plugin-inline-edit/ui/editable";
-registerFieldEditor("star_rating", StarRatingIsland);
-```
-
-Any `EditableField` with a matching field type will use your component.
+> The current inline-edit plugin edits all field markers as plain text; type-specific editors (date picker, media picker, custom types) are consumed from the `data-dune-field-type` hint as the plugin grows. The markers are forward-compatible — annotate now, richer editors arrive without template changes.
 
 ## Full example: article template
 
 ```tsx
 /** @jsxImportSource preact */
-import { EditableText, EditableMarkdown } from "@dune/plugin-inline-edit/ui/editable";
+import { EditableText, EditableMarkdown } from "@dune/core/ui/editable";
 
 export default function ArticleTemplate({ page, site, nav, Layout }: any) {
   if (!Layout) return null;
@@ -210,33 +146,23 @@ export default function ArticleTemplate({ page, site, nav, Layout }: any) {
           </time>
         </header>
 
-        {/* Body: full WYSIWYG with Y.js real-time collaboration */}
-        <EditableMarkdown sourcePath={page.sourcePath} />
+        <EditableMarkdown sourcePath={page.sourcePath}>
+          <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
+        </EditableMarkdown>
       </article>
     </Layout>
   );
 }
 ```
 
-Anonymous visitors see the rendered article. Admins see click-to-edit controls on the title and date, and a TipTap editor on the body.
+Anonymous visitors see the rendered article with a few inert data attributes. Admins (with the inline-edit plugin installed) see ✎ Edit handles on the title, date, and body.
 
-## Auto-overlay vs component kit
+## How it works
 
-| | Auto-overlay | Component kit |
-|---|---|---|
-| Template changes required | None | Yes |
-| Precision | Heuristic | Exact |
-| Body editing | HTML → Markdown round-trip | TipTap WYSIWYG (no round-trip) |
-| Real-time collaboration | No | Yes (Y.js) |
-| Custom fields | No | Yes (registry) |
-| Works on any template | Yes | Requires explicit wiring |
+The markers are the entire contract between themes and editor plugins:
 
-Use the auto-overlay as the default. Add component kit components where you need precision, richer editing, or real-time collaboration.
+1. **Render time:** templates (or core's marker components) emit `data-dune-*` attributes. That is all that ever happens for anonymous visitors.
+2. **Admin requests only:** the editor plugin injects its admin bar script into the response.
+3. **In the browser, admin only:** the script finds the markers and mounts its editors on them. The TipTap stack loads only when an edit actually starts.
 
-## How islands are discovered
-
-Component kit components are Preact islands. Dune discovers them automatically — you do not need to register them explicitly:
-
-- Files in `themes/{name}/islands/` are bundled at startup by `collectThemeIslands()`
-- Imports from `@dune/plugin-inline-edit/ui/editable` resolve to islands inside the `@dune/plugin-inline-edit` package, which are collected the same way
-- See [Islands](themes/islands) for the full discovery and bundling details
+Because plugins consume markers rather than being imported by templates, themes stay portable across sites with or without an editor plugin — and editor plugins are swappable without touching any template.
