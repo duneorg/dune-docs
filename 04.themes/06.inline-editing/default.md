@@ -15,7 +15,7 @@ metadata:
 Dune's inline editing works in two modes for theme developers:
 
 1. **Auto-overlay** — zero template changes. Dune detects editable elements automatically based on semantic HTML.
-2. **Component kit** — explicit, precise. Import `EditableText`, `EditableMarkdown`, etc. from `@dune/core/ui/editable` directly into your templates.
+2. **Component kit** — explicit, precise. Import `EditableText`, `EditableMarkdown`, etc. from `@dune/plugin-inline-edit/ui/editable` directly into your templates.
 
 Both modes work simultaneously. The component kit takes precedence wherever it is used; auto-overlay handles everything else.
 
@@ -67,15 +67,16 @@ For precise control over which elements are editable and how, import the compone
 
 ### Installation
 
-The component kit is part of `@dune/core`. However, the edit handles only activate when the admin bar is present — which requires `@dune/plugin-inline-edit` to be installed. Without the plugin the components render their children identically for all visitors, including admins.
+The component kit ships with `@dune/plugin-inline-edit` (since core v0.17 — through v0.16 it lived in `@dune/core/ui/editable`). The same plugin provides the admin bar and the editing backend, so one installation covers everything.
 
-See [Inline editing](administration/inline-editing#installation) for how to install the plugin.
+See [Inline editing](administration/inline-editing#installation) for how to add the plugin to your site's `site.yaml`.
 
 Add the required import map entries to your site's `deno.json` if not already present (see [Islands](themes/islands#deno-json-import-map)):
 
 ```json
 {
   "imports": {
+    "@dune/plugin-inline-edit": "jsr:@dune/plugin-inline-edit@^1",
     "preact": "npm:preact@^10",
     "preact/hooks": "npm:preact@^10/hooks",
     "preact/jsx-runtime": "npm:preact@^10/jsx-runtime",
@@ -89,7 +90,7 @@ Add the required import map entries to your site's `deno.json` if not already pr
 Makes a frontmatter field editable in place. Click to edit, auto-saves on blur.
 
 ```tsx
-import { EditableText } from "@dune/core/ui/editable";
+import { EditableText } from "@dune/plugin-inline-edit/ui/editable";
 
 // In your template:
 <h1>
@@ -116,7 +117,7 @@ import { EditableText } from "@dune/core/ui/editable";
 Full WYSIWYG body editing using TipTap, backed by Y.js for real-time collaboration. Multiple admins can edit the same page simultaneously — changes are merged without conflicts.
 
 ```tsx
-import { EditableMarkdown } from "@dune/core/ui/editable";
+import { EditableMarkdown } from "@dune/plugin-inline-edit/ui/editable";
 
 <article class="post-body">
   <EditableMarkdown sourcePath={page.sourcePath} />
@@ -136,7 +137,7 @@ The component renders the page's HTML body for anonymous visitors. For admins in
 A media picker for image frontmatter fields. Displays the current image; clicking opens the media library to select a replacement.
 
 ```tsx
-import { EditableImage } from "@dune/core/ui/editable";
+import { EditableImage } from "@dune/plugin-inline-edit/ui/editable";
 
 <EditableImage
   field="cover"
@@ -152,7 +153,7 @@ import { EditableImage } from "@dune/core/ui/editable";
 A date picker for date frontmatter fields.
 
 ```tsx
-import { EditableDate } from "@dune/core/ui/editable";
+import { EditableDate } from "@dune/plugin-inline-edit/ui/editable";
 
 <time>
   <EditableDate field="date" sourcePath={page.sourcePath}>
@@ -166,7 +167,7 @@ import { EditableDate } from "@dune/core/ui/editable";
 Looks up the right editor component by field type from the registry. Useful for custom field types registered by plugins.
 
 ```tsx
-import { EditableField } from "@dune/core/ui/editable";
+import { EditableField } from "@dune/plugin-inline-edit/ui/editable";
 
 <EditableField field="rating" sourcePath={page.sourcePath} value={fm.rating} />
 ```
@@ -177,7 +178,7 @@ Register a Preact island component as the editor for a custom field type:
 
 ```ts
 // themes/my-theme/islands/StarRating.tsx
-import { registerFieldEditor } from "@dune/core/ui/editable";
+import { registerFieldEditor } from "@dune/plugin-inline-edit/ui/editable";
 registerFieldEditor("star_rating", StarRatingIsland);
 ```
 
@@ -187,7 +188,7 @@ Any `EditableField` with a matching field type will use your component.
 
 ```tsx
 /** @jsxImportSource preact */
-import { EditableText, EditableMarkdown } from "@dune/core/ui/editable";
+import { EditableText, EditableMarkdown } from "@dune/plugin-inline-edit/ui/editable";
 
 export default function ArticleTemplate({ page, site, nav, Layout }: any) {
   if (!Layout) return null;
@@ -237,5 +238,5 @@ Use the auto-overlay as the default. Add component kit components where you need
 Component kit components are Preact islands. Dune discovers them automatically — you do not need to register them explicitly:
 
 - Files in `themes/{name}/islands/` are bundled at startup by `collectThemeIslands()`
-- Imports from `@dune/core/ui/editable` resolve to islands inside the `@dune/core` package, which are collected the same way
+- Imports from `@dune/plugin-inline-edit/ui/editable` resolve to islands inside the `@dune/plugin-inline-edit` package, which are collected the same way
 - See [Islands](themes/islands) for the full discovery and bundling details

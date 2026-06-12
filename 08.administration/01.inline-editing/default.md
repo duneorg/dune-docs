@@ -104,7 +104,7 @@ The scanner skips any element with `data-dune-no-edit` and continues looking for
 
 ## Explicit inline editing with the component kit
 
-The auto-overlay is a best-effort heuristic. For precise control — specific frontmatter fields, custom field types, real-time collaborative editing — use the component kit from `@dune/core/ui/editable` directly in your theme templates.
+The auto-overlay is a best-effort heuristic. For precise control — specific frontmatter fields, custom field types, real-time collaborative editing — use the component kit from `@dune/plugin-inline-edit/ui/editable` directly in your theme templates.
 
 See [Inline editing in themes](themes/inline-editing) for how to use `EditableText`, `EditableMarkdown`, and the other component kit components.
 
