@@ -111,6 +111,23 @@ Override with the `template` frontmatter field:
 template: landing   # uses templates/landing.tsx instead
 ```
 
+### Template names affect routing
+
+Template names do more than select a component — they also determine how Dune routes content in plain (non-numeric) folders. When Dune builds the page index, if a content file's stem matches a template defined in `templates/`, the parent folder is treated as a **page folder** and the folder's path becomes the route:
+
+```
+blog/my-post/post.md   →  /blog/my-post   (because templates/post.tsx exists)
+news/launch/article.md →  /news/launch    (because templates/article.tsx exists)
+```
+
+Files whose stems don't match any template — and aren't reserved stems (`default`, `index`) — are treated as flat content files at their own routes:
+
+```
+articles/first.md      →  /articles/first  (no templates/first.tsx)
+```
+
+This means adding a new template to your theme can change how existing content files are routed. Keep template names purposeful: verbs and nouns that describe the content type (`post`, `article`, `project`, `event`), not structural words that might collide with content filenames.
+
 ### Reserved template names
 
 The following template names are used by Dune's built-in routes:
