@@ -7,61 +7,44 @@ taxonomy:
   difficulty: [intermediate]
   topic: [themes, islands, editing]
 metadata:
-  description: "Support inline editing in your theme templates with the data-dune-body marker or the typed marker components"
+  description: "Mark editable regions in your theme templates using typed components from @dune/core/ui/editable"
 ---
 
 # Inline Editing in Themes
 
-Dune's inline editing works in two modes for theme developers:
+Dune's inline editing is driven by **marker components** — server-only components from `@dune/core/ui/editable` that annotate editable regions in your templates. They render `data-dune-*` attributes into the HTML, which editor plugins (like `@dune/plugin-inline-edit`) consume to mount their editors.
 
-1. **Body marker** — one attribute. Put `data-dune-body` on the element that wraps the rendered markdown body; the overlay handles title and body editing from there.
-2. **Marker components** — the same markers as typed components. Import `EditableText`, `EditableMarkdown`, etc. from `@dune/core/ui/editable` for per-field granularity and typed props.
-
-These are two spellings of the same contract: the components render exactly the marker attributes, nothing more. Editor plugins consume the markers from the rendered HTML — templates never import from an editor plugin.
-
-## Marking the body: `data-dune-body`
-
-When an admin is logged in, the overlay annotates two things in the rendered HTML:
-
-- The first `<h1>` → title field (detected automatically, auto-saves)
-- The element carrying `data-dune-body` → body content (floating Save/Cancel)
-
-Editing starts from a floating **✎ Edit** button shown on hover — never from clicking the content itself, so links inside editable regions stay followable while browsing in edit mode.
-
-The body element is **never guessed** from page structure. A wrong guess — say, treating a blog listing's post cards as body content — would write template-generated HTML back into the Markdown source on save, so the theme must be explicit:
-
-```tsx
-<article class="post">
-  <h1>{fm.title}</h1>
-  <div data-dune-body dangerouslySetInnerHTML={{ __html: await page.html() }} />
-</article>
-```
-
-Rules:
-
-- Put `data-dune-body` on exactly the element that wraps the rendered markdown body (`page.html()` / `{children}`) — nothing more, nothing less.
-- **Listing and landing templates must not carry the attribute.** A blog index that renders post cards has no editable markdown body — leave it unmarked and body editing is simply unavailable there.
-- Only the first marked element on a page is used.
-
-If you are converting a template from another system, the marker belongs on the converted equivalent of Grav's `{{ page.content }}`, Hugo's `.Content`, or WordPress's `the_content()`.
-
-### Opting the title out
-
-The `<h1>` title detection is automatic. If your layout renders an `<h1>` that is not the page title (e.g. a site logo), add `data-dune-no-edit` to it:
-
-```tsx
-<h1 class="site-logo" data-dune-no-edit>My Site</h1>
-```
+The components ship no JavaScript, imply no specific editor, and the page renders identically whether or not an editor plugin is installed. Markers are stripped from HTML served to anonymous visitors — only logged-in admins with a valid editing session see them.
 
 ## Marker components
 
-Hand-written attributes and the typed marker components from `@dune/core/ui/editable` are **interchangeable** — the components are server-only sugar that render exactly the marker attributes. They ship no JavaScript, imply no specific editor, and the page renders identically whether or not an editor plugin is installed. Use them when you want typed props and per-field granularity; use raw attributes when one line is enough.
+Import from `@dune/core/ui/editable`. Your theme already depends on `@dune/core`, so no additional dependency is needed.
 
-No plugin import, no island setup, and no Preact import-map entries are required — the components come with `@dune/core`, which your theme already depends on.
+### EditableMarkdown
+
+Marks the rendered Markdown body. The editor mounts a WYSIWYG over the page's Markdown source; changes are serialised back to Markdown losslessly — the rendered HTML is never reverse-engineered.
+
+```tsx
+import { EditableMarkdown } from "@dune/core/ui/editable";
+
+<EditableMarkdown sourcePath={page.sourcePath}>
+  <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
+</EditableMarkdown>
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `sourcePath` | `string` | Page source path (`page.sourcePath`) |
+| `as` | `string` | Wrapper element tag (default `div`) |
+| `children` | `ComponentChildren` | The rendered body — shown as-is to all visitors |
+
+Renders `<div data-dune-body data-dune-source="…">`. The `<h1>` title on the page is detected automatically and linked to the `title` frontmatter field — no additional marker needed for it.
+
+**Only mark one body region per template.** Listing and landing templates with no editable Markdown body should not carry the marker — leave it out and body editing is simply unavailable for those pages.
 
 ### EditableText
 
-Marks an inline frontmatter field. With the inline-edit plugin installed, admins get in-place text editing that auto-saves to the named frontmatter key.
+Marks an inline frontmatter field for in-place text editing.
 
 ```tsx
 import { EditableText } from "@dune/core/ui/editable";
@@ -88,29 +71,15 @@ import { EditableText } from "@dune/core/ui/editable";
 
 Renders `<span data-dune-field="…" data-dune-source="…">`.
 
-### EditableMarkdown
-
-Marks the rendered markdown body — identical to writing `data-dune-body` by hand, plus the source path.
-
-```tsx
-import { EditableMarkdown } from "@dune/core/ui/editable";
-
-<EditableMarkdown sourcePath={page.sourcePath}>
-  <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
-</EditableMarkdown>
-```
-
-With the inline-edit plugin installed, admins get a TipTap WYSIWYG editor over the page's markdown source. The editor loads lazily (admin sessions only) and serialises back to markdown losslessly — the rendered HTML is never reverse-engineered into markdown.
-
-### EditableField, EditableDate, EditableImage
+### EditableDate and EditableField
 
 Typed field markers. They add a `data-dune-field-type` hint so editor plugins can mount a type-appropriate editor:
 
 ```tsx
-import { EditableDate, EditableImage, EditableField } from "@dune/core/ui/editable";
+import { EditableDate, EditableField } from "@dune/core/ui/editable";
 
 <time>
-  <EditableDate field="date" sourcePath={page.sourcePath}>{formatDate(fm.date)}</EditableDate>
+  <EditableDate field="date" sourcePath={page.sourcePath}>{fm.date}</EditableDate>
 </time>
 
 <EditableField field="rating" type="star_rating" sourcePath={page.sourcePath}>
@@ -118,20 +87,30 @@ import { EditableDate, EditableImage, EditableField } from "@dune/core/ui/editab
 </EditableField>
 ```
 
-> The current inline-edit plugin edits all field markers as plain text; type-specific editors (date picker, media picker, custom types) are consumed from the `data-dune-field-type` hint as the plugin grows. The markers are forward-compatible — annotate now, richer editors arrive without template changes.
+> The current inline-edit plugin edits all field markers as plain text. Type-specific editors (date picker, media picker, custom types) are read from the `data-dune-field-type` hint as the plugin grows — annotate now and richer editors arrive without template changes.
+
+### Opting an element out of editing
+
+Add `data-dune-no-edit` to any element that should not become an edit target — for example, a site logo that happens to be an `<h1>`:
+
+```tsx
+<h1 class="site-logo" data-dune-no-edit>My Site</h1>
+```
 
 ## Full example: article template
 
 ```tsx
 /** @jsxImportSource preact */
 import { EditableText, EditableMarkdown } from "@dune/core/ui/editable";
+import type { TemplateProps } from "@dune/core/types";
+import Layout from "../components/layout.tsx";
 
-export default function ArticleTemplate({ page, site, nav, Layout }: any) {
-  if (!Layout) return null;
+export default function ArticleTemplate({ page, site, nav, Layout: DynamicLayout, children }: TemplateProps) {
+  const LayoutComponent = DynamicLayout ?? Layout;
   const fm = page?.frontmatter ?? {};
 
   return (
-    <Layout site={site} page={page} nav={nav}>
+    <LayoutComponent site={site} page={page} nav={nav}>
       <article class="article">
         <header>
           <h1>
@@ -150,22 +129,42 @@ export default function ArticleTemplate({ page, site, nav, Layout }: any) {
           <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
         </EditableMarkdown>
       </article>
-    </Layout>
+    </LayoutComponent>
   );
 }
 ```
 
-Anonymous visitors see the plain rendered article — Dune strips the marker attributes from their HTML. Admins (with the inline-edit plugin installed) see ✎ Edit handles on the title, date, and body.
+Anonymous visitors see the plain rendered article. Admins (with the inline-edit plugin installed) see ✎ Edit handles on the title, date, and body.
+
+## Raw attributes
+
+The marker components render `data-dune-*` HTML attributes — you can write those attributes directly when you need precise control over the element (e.g. you want `<article data-dune-body>` rather than a wrapping `<div>`):
+
+```tsx
+<article data-dune-body data-dune-source={page.sourcePath}>
+  <div dangerouslySetInnerHTML={{ __html: await page.html() }} />
+</article>
+```
+
+The full attribute vocabulary:
+
+| Attribute | Set by component | Meaning |
+|-----------|-----------------|---------|
+| `data-dune-body` | `EditableMarkdown` | Marks the Markdown body region |
+| `data-dune-field="key"` | `EditableText`, `EditableDate`, `EditableField` | Frontmatter key to patch |
+| `data-dune-field-type="type"` | `EditableDate`, `EditableField` | Type hint for the editor |
+| `data-dune-source="path"` | All components | Content file source path |
+| `data-dune-no-edit` | — | Excludes an element from edit detection |
+
+Prefer the components in new templates. Raw attributes are useful for wrapping elements with semantic meaning, or when integrating with a design system where the wrapper element matters.
 
 ## How it works
 
-The markers are the entire contract between themes and editor plugins:
-
-1. **Render time:** templates (or core's marker components) emit `data-dune-*` attributes.
-2. **Serve time:** Dune scrubs all `data-dune-*` attributes from responses that don't belong to a logged-in editing session. Anonymous visitors and crawlers never see the markers — content source paths stay private and the HTML carries no editing fingerprint.
-3. **Admin requests only:** the markers stay in the HTML, and the editor plugin injects its admin bar script into the response.
-4. **In the browser, admin only:** the script finds the markers and mounts its editors on them. The TipTap stack loads only when an edit actually starts.
+1. **Render time** — marker components emit `data-dune-*` attributes into the page HTML.
+2. **Serve time** — Dune scrubs all `data-dune-*` attributes from responses that don't belong to a validated editing session. Anonymous visitors and crawlers never see them.
+3. **Admin requests** — markers stay in the HTML, and the editor plugin injects its script into the response.
+4. **In the browser, admin only** — the script finds the markers and mounts its editors. The TipTap stack loads only when an edit actually starts.
 
 Because plugins consume markers rather than being imported by templates, themes stay portable across sites with or without an editor plugin — and editor plugins are swappable without touching any template.
 
-> Because markers are stripped from public responses, never use `data-dune-*` attributes as CSS or JavaScript hooks for site styling or behaviour. To check your markers, view the page while logged in as an admin — an incognito window won't show them.
+> Never use `data-dune-*` attributes as CSS or JavaScript hooks for public site styling. They are stripped from public responses and their presence is not guaranteed. To inspect your markers, view the page logged in as an admin.
