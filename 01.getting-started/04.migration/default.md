@@ -204,3 +204,55 @@ dune content:check
 # 4. Start the dev server and review
 dune dev
 ```
+
+---
+
+## Upgrading Dune
+
+### v0.19 → v0.20: trailing-slash URLs for page-folder pages
+
+v0.20 changes the canonical URL form for folder-based pages. A page at `02.blog/01.my-post/default.md` now serves at `/blog/my-post/` (trailing slash) instead of `/blog/my-post`. Flat-file pages (`articles/my-article.md`) are unaffected — they keep the no-slash form.
+
+**Automatic (nothing to do):** Dune issues a 301 redirect when a visitor arrives at the wrong slash form. Existing bookmarks, search engine entries, and external links all continue to resolve. Co-located media (`./photo.jpg`) and relative cross-page links (`./related/`) now resolve correctly in browsers without server-side rewriting.
+
+**Manual audit recommended:**
+
+1. **Hardcoded links in content files** — search for root-relative links that point to folder pages:
+   ```
+   grep -r '](/[a-z]' content/
+   ```
+   Change `/about` → `/about/`, `/blog/my-post` → `/blog/my-post/`, etc. The 301s mean this is optional, but eliminating the redirect hop is cleaner.
+
+2. **Hardcoded hrefs in theme templates** — any `href="/contact"` or `href="/blog"` pointing to folder pages should gain a trailing slash. Dynamic links using `page.route` or nav items from the content index are already correct.
+
+3. **`site.yaml` redirects** — if your `redirects:` section targets folder pages, update the target URLs:
+   ```yaml
+   # Before
+   redirects:
+     /old-path: /new-section
+
+   # After
+   redirects:
+     /old-path: /new-section/
+   ```
+
+4. **Theme `homeRoute`** — if your layout derives the home route from `site.home`, add the trailing slash:
+   ```tsx
+   // Before
+   const homeRoute = site?.home ? `/${site.home}` : "/";
+
+   // After
+   const homeRoute = site?.home ? `/${site.home}/` : "/";
+   ```
+   Without this, the active-state highlight on the home nav item breaks.
+
+5. **`isActiveRoute` in themes** — if your layout checks whether the current route is inside a section, update the prefix check to handle routes that already end with `/`:
+   ```tsx
+   // Before
+   return currentRoute === route || currentRoute.startsWith(route + "/");
+
+   // After
+   const prefix = route.endsWith("/") ? route : route + "/";
+   return currentRoute === route || currentRoute.startsWith(prefix);
+   ```
+   Without this, a nav item for `/blog/` would not show as active when browsing a child post at `/blog/my-post/`.

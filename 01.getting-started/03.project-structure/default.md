@@ -58,17 +58,19 @@ my-site/
 
 | Pattern | Meaning | URL |
 |---------|---------|-----|
-| `01.name/` | Ordered folder page | `/name` (number stripped) |
-| `name/` | Unordered folder page | `/name` |
-| `01.name.md` | Ordered flat-file page (no folder) | `/name` (number stripped) |
+| `01.name/` | Ordered folder page | `/name/` (number stripped, trailing slash) |
+| `name/` | Unordered folder page | `/name/` (trailing slash) |
+| `01.name.md` | Ordered flat-file page (no folder) | `/name` (number stripped, no slash) |
 | `_name/` | Modular section, non-routable | Not accessible by URL |
 | `_drafts/` | Draft container | Nothing inside is accessible |
 
 ### Folder pages vs flat-file pages
 
-The standard approach is one folder per page (`01.about/default.md`). Folders are required when a page has co-located media, child pages, or module parts.
+Folder pages (`01.about/default.md`) serve at trailing-slash URLs (`/about/`). The trailing slash signals that this is a directory — co-located media, child pages, and module parts live inside. Relative links in the page content (`./photo.jpg`, `./sub-page/`) resolve correctly in the browser because the page's URL already ends at the folder boundary.
 
-Flat-file pages (`01.about.md` directly inside the parent folder) are a lighter alternative for simple leaf pages with no media or children. The numeric prefix works identically for ordering. When both a folder and a flat file produce the same route, the folder wins.
+Flat-file pages (`01.about.md` directly in the parent folder, or `articles/my-article.md` in a plain folder) serve without a trailing slash (`/about` or `/articles/my-article`). They are a lighter alternative for simple leaf pages with no media or children.
+
+**Canonical redirects** — if a visitor arrives at the wrong slash form (e.g. `/about` for a folder page, or `/about/` for a flat file), Dune issues a 301 redirect to the correct canonical URL. This means bookmarks, old links, and external references resolve cleanly.
 
 ### Ordering without filename prefixes
 

@@ -168,3 +168,17 @@ Prefer the components in new templates. Raw attributes are useful for wrapping e
 Because plugins consume markers rather than being imported by templates, themes stay portable across sites with or without an editor plugin — and editor plugins are swappable without touching any template.
 
 > Never use `data-dune-*` attributes as CSS or JavaScript hooks for public site styling. They are stripped from public responses and their presence is not guaranteed. To inspect your markers, view the page logged in as an admin.
+
+## Relative links in content
+
+Folder pages serve at trailing-slash URLs (`/blog/my-post/`), so relative links written directly in Markdown resolve correctly without server-side rewriting:
+
+```markdown
+![Photo](./photo.jpg)          → /blog/my-post/photo.jpg  ✓
+[Related post](./related/)     → /blog/my-post/related/   ✓
+[Up to blog](../)              → /blog/                    ✓
+```
+
+This is the same convention browsers use for HTML documents in directories. No special syntax is required — standard Markdown relative links just work.
+
+In multilingual sites, relative links are resolved at render time and then passed through the internal link rewriter, which adds the language prefix (`/de/blog/my-post/`). Cross-language links still need to be root-relative (`/de/other-page/`).
