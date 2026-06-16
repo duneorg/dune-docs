@@ -57,6 +57,25 @@ Add `--json` for machine-parseable output.
 
 See [Static Site Generation](../deployment/static) for full documentation.
 
+## Lockfile
+
+A site's `deno.lock` only gains entries for a plugin's dependencies (and, via the client-bundling step, its browser-side npm packages) the first time `serve` actually starts after that plugin or a version bump is installed — until then, the running process resolves them itself against an unfrozen lockfile, which is what silently dirties `deno.lock` on a server's working tree after a deploy.
+
+| Command | Description |
+|---------|-------------|
+| `dune lockfile:check` | Read-only: exits non-zero if `deno.lock` is missing entries the current plugins/imports need, or if a sync would be unable to add them safely. Never writes. Suitable as a pre-restart gate (e.g. an `ExecStartPre=` step in a systemd unit) so a deploy never gets partway through restarting before discovering the lockfile is stale. |
+| `dune lockfile:sync` | Resolves the current plugin/import graph ahead of time and writes the result, but **only ever adds genuinely missing entries** — an already-pinned entry that would resolve to a different value (e.g. the registry now serves a newer match for an already-locked semver range) is left exactly as committed. |
+
+Both commands support `--json` for machine-readable output.
+
+### `dune lockfile:sync` options
+
+| Option | Description |
+|--------|-------------|
+| `--upgrade <specifier>` | Allow an already-pinned entry to change. Repeatable, or comma-separated. Get the exact key to pass from the "left unchanged" list printed by `check`/`sync`. |
+
+Occasionally an addition introduces a second, different version range for an already-shared dependency, and another existing entry referencing it ambiguously needs disambiguating too — `sync` can't safely apply that on its own (it would be indistinguishable from unwanted drift), so it refuses to write and reports exactly which entries are blocked and why. Rerunning with `--upgrade` for one of the reported keys applies it.
+
 ## Configuration
 
 | Command | Description |
