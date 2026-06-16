@@ -68,6 +68,20 @@ A site's `deno.lock` only gains entries for a plugin's dependencies (and, via th
 
 Both commands support `--json` for machine-readable output.
 
+### Using `lockfile:check` as a production gate
+
+When you run Dune via the pinned remote specifier (`deno run ... jsr:@dune/core@X/cli ...`, the default `serve` task), Deno resolves that entry script's own module graph against the site's `deno.lock` *before* the command's code runs — and absent a flag, it will write any updates to that lockfile as a side effect. For a read-only gate you don't want that. Pass **`--no-lock`** on the outer `deno run` to disable Deno's automatic lockfile discovery for the launcher: the gate can't touch `deno.lock`, and unlike `--frozen` it doesn't fail fast, so `lockfile:check`'s own diagnostics (the missing-entry list, the `--upgrade` hints) still print:
+
+```ini
+# systemd unit
+ExecStartPre=/usr/bin/deno run -A --no-lock --config=deno.json jsr:@dune/core@0.21.6/cli lockfile:check --root .
+ExecStart=/usr/bin/deno run -A --frozen --config=deno.json jsr:@dune/core@0.21.6/cli serve --root .
+```
+
+Use `--frozen` (not `--no-lock`) on the actual `serve` task: there you *want* to enforce a complete lockfile and fail loudly if anything's missing, rather than silently resolving it. The gate ensures that never happens in normal operation; `--frozen serve` is the safety net.
+
+The most robust model is to treat `deno.lock` as a build artifact: run `lockfile:sync` in a controlled place (locally or in CI), commit the result alongside the version bump, and deploy it read-only. The gate above then only ever passes — it exists to catch the case where that discipline slips.
+
 ### `dune lockfile:sync` options
 
 | Option | Description |
