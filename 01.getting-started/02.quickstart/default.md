@@ -20,7 +20,7 @@ If you haven't already, start the development server so you can see changes in r
 deno task dev
 ```
 
-The server starts at `http://localhost:8000` with hot-reload — every content or theme change is picked up automatically.
+The server starts at `http://localhost:3000` with hot-reload — every content or theme change is picked up automatically.
 
 ## Create a blog section
 

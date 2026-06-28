@@ -57,13 +57,26 @@ parent: default             # optional: inherit from another theme
 
 ## Using a theme
 
-Set the active theme in `config/site.yaml` (via the `theme` config section) or in `dune.config.ts`:
+Set the active theme in `config/site.yaml` under the `theme` key:
 
 ```yaml
-# In your site's config, the theme section controls which theme is active
+theme:
+  name: my-theme
 ```
 
-Or programmatically in `dune.config.ts`:
+> **Common mistake**: `theme:` belongs in `config/site.yaml`, not `config/system.yaml`. Putting it in `system.yaml` silently has no effect — the theme won't load.
+
+Optionally pass theme-specific settings under `custom:`:
+
+```yaml
+theme:
+  name: my-theme
+  custom:
+    primaryColor: "#1a1a2e"
+    showSidebar: true
+```
+
+Or set it programmatically in `dune.config.ts`:
 
 ```typescript
 export default {

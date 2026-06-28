@@ -69,7 +69,7 @@ my-site/
 dune dev
 ```
 
-Open `http://localhost:8000`. You should see your homepage.
+Open `http://localhost:3000`. You should see your homepage.
 
 The dev server watches for changes — edit `content/01.home/default.md` and your browser will refresh automatically.
 
@@ -79,3 +79,15 @@ The dev server watches for changes — edit `content/01.home/default.md` and you
 2. It loaded `config/site.yaml` and `config/system.yaml`, merging them with defaults
 3. It started a Fresh 2 server. GET requests for content pages are routed through Fresh's `ctx.render()`, which handles the response and injects Fresh's client bootstrap script into every HTML page — enabling island hydration once you add interactive components
 4. When you visited `/`, Dune found `01.home/default.md`, loaded its Markdown, rendered it to HTML, passed it to your theme's `default.tsx` template, and returned the result via Fresh
+
+## Troubleshooting
+
+**Template changes not appearing after server restart**
+
+Deno caches compiled `.tsx` files on disk. In rare cases the cached version survives a server restart and serves stale output. Force a clean compile with:
+
+```bash
+DENO_DIR=$(mktemp -d) dune dev
+```
+
+This uses a fresh Deno compile cache for the session. You can safely delete the stale cache manually from `~/Library/Caches/deno/gen/` (macOS) or `~/.cache/deno/gen/` (Linux) if you prefer a permanent fix.

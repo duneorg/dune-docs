@@ -100,7 +100,7 @@ export default function Layout({ page, site, children }: LayoutProps) {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{page.frontmatter.title} | {site.title}</title>
-        <link rel="stylesheet" href="/theme/styles.css" />
+        <link rel="stylesheet" href="/themes/my-theme/static/styles.css" />
       </head>
       <body>
         <header>
@@ -137,12 +137,16 @@ export default function DefaultTemplate({ page, site, config, nav, Layout, child
 
 ## 6. Add static assets
 
-Place CSS, fonts, and other static files in `themes/my-theme/static/`. They're served under `/theme/`:
+Place CSS, fonts, and other static files in `themes/my-theme/static/`. They're served at their full namespaced path:
 
 ```
-themes/my-theme/static/styles.css  →  GET /theme/styles.css
-themes/my-theme/static/fonts/Inter.woff2  →  GET /theme/fonts/Inter.woff2
+themes/my-theme/static/styles.css       →  GET /themes/my-theme/static/styles.css
+themes/my-theme/static/fonts/Inter.woff2  →  GET /themes/my-theme/static/fonts/Inter.woff2
 ```
+
+The namespace ensures themes don't clobber each other's assets. Reference files using the full path in your layout — e.g. `href="/themes/my-theme/static/styles.css"`. Use your theme's `name` from `theme.yaml` for the segment.
+
+The site-level `static/` directory is separate: files there are served directly at `/` without namespacing (`static/favicon.ico` → `/favicon.ico`).
 
 ## 7. Add a navigation component
 
