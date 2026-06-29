@@ -222,7 +222,7 @@ Theme templates receive the sections HTML as their `children` prop, exactly like
 Custom section types can be registered at startup by calling `sectionRegistry.register(def)` from a plugin:
 
 ```typescript
-import { sectionRegistry } from "dune/sections";
+import { sectionRegistry } from "@dune/core/sections";
 
 sectionRegistry.register({
   type: "banner",

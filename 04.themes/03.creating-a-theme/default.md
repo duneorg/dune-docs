@@ -42,7 +42,7 @@ All fields except `name` are optional. Set `parent: default` to inherit template
 
 `themes/my-theme/templates/default.tsx`:
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 
 export default function DefaultTemplate({ page, children, site }: TemplateProps) {
   return (
@@ -86,7 +86,7 @@ Extract shared HTML into a layout to avoid repetition across templates:
 
 `themes/my-theme/components/layout.tsx`:
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 import type { ComponentChildren } from "preact";
 
 interface LayoutProps extends Omit<TemplateProps, "children"> {
@@ -119,7 +119,7 @@ export default function Layout({ page, site, children }: LayoutProps) {
 Then use it in templates via the `Layout` prop (loaded dynamically for hot-reload) with a static import as fallback:
 
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 import StaticLayout from "../components/layout.tsx";
 
 export default function DefaultTemplate({ page, site, config, nav, Layout, children }: TemplateProps) {
@@ -183,7 +183,7 @@ For listing pages (blog index, docs index, etc.), use the `collection` prop:
 
 ```tsx
 // themes/my-theme/templates/blog.tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 import StaticLayout from "../components/layout.tsx";
 
 export default function BlogTemplate({ page, site, config, nav, Layout, collection, children }: TemplateProps) {

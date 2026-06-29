@@ -333,7 +333,7 @@ The standalone fallback includes inline JavaScript that debounces queries agains
 Add a `templates/search.tsx` to your theme to control the layout:
 
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 
 export default function SearchTemplate({ searchQuery, searchResults, site, Layout, ...props }: TemplateProps) {
   return (
@@ -366,7 +366,7 @@ export default function SearchTemplate({ searchQuery, searchResults, site, Layou
 The [Theme SDK](../themes/theme-sdk) provides `getSearchUrl` to build links to the search page:
 
 ```ts
-import { getSearchUrl } from "dune/theme-helpers";
+import { getSearchUrl } from "@dune/core/theme-helpers";
 
 getSearchUrl("deno")               // → "/search?q=deno"
 getSearchUrl("hello world")        // → "/search?q=hello%20world"

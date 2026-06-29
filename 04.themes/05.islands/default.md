@@ -75,7 +75,7 @@ Import the island component into a server-side template. Fresh detects the impor
 
 `themes/my-theme/templates/default.tsx`:
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 import Counter from "../islands/Counter.tsx";
 
 export default function DefaultTemplate({ page, site }: TemplateProps) {

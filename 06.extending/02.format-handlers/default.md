@@ -41,7 +41,7 @@ Three methods, each with a clear responsibility:
 ## Example: AsciiDoc handler
 
 ```typescript
-import type { ContentFormatHandler, Page, PageFrontmatter, RenderContext } from "dune/types";
+import type { ContentFormatHandler, Page, PageFrontmatter, RenderContext } from "@dune/core";
 
 export class AsciiDocHandler implements ContentFormatHandler {
   extensions = [".adoc", ".asciidoc"];

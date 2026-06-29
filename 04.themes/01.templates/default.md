@@ -19,7 +19,7 @@ Templates are JSX/TSX components that receive a page object and render it. Each 
 Every template receives `TemplateProps`:
 
 ```tsx
-import type { TemplateProps } from "dune/types";
+import type { TemplateProps } from "@dune/core";
 import StaticLayout from "../components/layout.tsx";
 
 export default function PostTemplate({ page, pageTitle, site, config, nav, Layout, children }: TemplateProps) {
