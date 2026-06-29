@@ -66,6 +66,15 @@ Hooks let you run code at specific points in Dune's lifecycle — when a page lo
 | `onRebuild` | After a successful `engine.rebuild()` | Clear downstream caches, notify search index |
 | `onThemeSwitch` | When the active theme changes | Purge theme-specific caches, notify CDN |
 
+### Search hooks
+
+Fired during bootstrap when the search engine is created. They let a plugin add documents to the index or replace the engine entirely. See [Search](../../reference/search) for the end-to-end picture.
+
+| Hook | When it fires | Use case |
+|------|--------------|----------|
+| `onSearchRecordsCollect` | Before the search index is built | Inject extra records (e.g. extracted PDF text) into the index |
+| `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch) |
+
 ### Content mutation hooks
 
 Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../webhooks).
@@ -186,6 +195,17 @@ The `data` field in `HookContext` is typed per event. Here is what each hook rec
 |------|--------------|-------------|
 | `onRebuild` | `{}` | Fired at the end of a successful `engine.rebuild()` |
 | `onThemeSwitch` | `{ from: string, to: string }` | Fired when the active theme changes (old and new theme names) |
+
+### Search hooks
+
+The payload objects are mutable — handlers populate them in place (push records, or assign `engine`). The bootstrap reads the result back.
+
+| Hook | `data` shape | Description |
+|------|--------------|-------------|
+| `onSearchRecordsCollect` | `{ records: InjectedSearchRecord[] }` | Push records to index them alongside content pages. Each record carries its own result `route` and is indexed from memory (no file read). |
+| `onSearchEngineCreate` | `{ engine, pages, injectedRecords, storage, contentDir, config, formats, loadText }` | Assign `engine` to replace the built-in engine. `loadText(page)` returns a page's plain-text body so an alternative engine can index the same text. Leaving `engine` unset keeps the built-in engine. |
+
+`InjectedSearchRecord` is `{ route: string, title: string, body: string, fields?: Record<string, string>, template?: string }`.
 
 ### Content mutation hooks
 

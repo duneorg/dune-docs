@@ -372,3 +372,40 @@ getSearchUrl("deno")               // → "/search?q=deno"
 getSearchUrl("hello world")        // → "/search?q=hello%20world"
 getSearchUrl("deno", "/en/search") // → "/en/search?q=deno"  (multilingual sites)
 ```
+
+## Pluggable search backends
+
+The search engine is replaceable. Two plugin hooks let plugins extend or swap it (see [Hooks](../../extending/hooks)):
+
+- **`onSearchRecordsCollect`** — contribute extra records (with their own result `route`) to index alongside content pages. Indexed from memory, no content file needed.
+- **`onSearchEngineCreate`** — provide an alternative `SearchEngine` (e.g. a Meilisearch backend) in place of the built-in in-memory engine.
+
+### PDF text search — `@dune/plugin-pdf`
+
+Serves PDFs and indexes their extracted text into search. Enable from `site.yaml`:
+
+```yaml
+plugins:
+  - src: "jsr:@dune/plugin-pdf"
+    config:
+      dir: "static/pdfs"   # directory of PDF files (default: static/pdfs)
+      route: "/pdf"        # URL prefix to serve them at (default: /pdf)
+      index: true          # extract + index PDF text (default: true)
+```
+
+Each PDF is served at `{route}/{filename}` and appears in search results linking to that URL. The browser viewer is available as an auto-mounting bundle at `/plugins/pdf/viewer.js`.
+
+### Meilisearch backend — `@dune/plugin-meilisearch`
+
+Replaces the built-in engine with [Meilisearch](https://www.meilisearch.com) for typo tolerance, stemming, synonyms, and a persistent index. Requires a running Meilisearch instance.
+
+```yaml
+plugins:
+  - src: "jsr:@dune/plugin-meilisearch"
+    config:
+      url: "http://127.0.0.1:7700"   # or env MEILI_URL
+      apiKey: "${MEILI_API_KEY}"      # or env MEILI_API_KEY
+      index: "content"                # default: content
+```
+
+Dune indexes full page bodies (via the host's `loadText` helper) and re-syncs on content changes. Records injected by other plugins — including `@dune/plugin-pdf` — are indexed into Meilisearch too.
