@@ -286,6 +286,65 @@ export default {
 
 The page appears in the admin sidebar under the label and icon you provide. The `handler` receives a Fresh `FreshContext` and must return a response via `ctx.render()`.
 
+## Search plugins
+
+Two hooks let a plugin extend or replace site search. Both fire once during startup when the search engine is created. See the [hook reference](../hooks#search-hooks) for the exact payload shapes and [Search](../../reference/search) for the end-to-end picture.
+
+### Injecting records
+
+`onSearchRecordsCollect` lets you add documents to the index alongside content pages — useful for indexing text that doesn't live in a Markdown file (extracted PDF text, an external API, a database table). Each record carries its own result `route` and is indexed from memory, so there's no file read.
+
+```typescript
+import type { DunePlugin } from "../../src/hooks/types.ts";
+
+export default {
+  name: "changelog-index",
+  version: "1.0.0",
+  hooks: {
+    onSearchRecordsCollect: async ({ data, storage }) => {
+      const raw = await storage.readText("data/changelog.json").catch(() => "[]");
+      for (const entry of JSON.parse(raw) as Array<{ slug: string; title: string; notes: string }>) {
+        data.records.push({
+          route: `/changelog#${entry.slug}`,
+          title: entry.title,
+          body: entry.notes,
+        });
+      }
+    },
+  },
+} satisfies DunePlugin;
+```
+
+An `InjectedSearchRecord` is `{ route, title, body, fields?, template? }`. Anything in `fields` is indexed as searchable text but not displayed. Records survive index rebuilds.
+
+### Replacing the engine
+
+`onSearchEngineCreate` lets you swap the built-in in-memory engine for an alternative backend. Assign `ctx.data.engine` to any object implementing the `SearchEngine` interface (`build`, `rebuild`, `search`, `suggest`). Leave it unset to keep the built-in engine. The context also provides the page list, any records collected by `onSearchRecordsCollect`, and a `loadText(page)` helper that returns a page's plain-text body — so an alternative engine can index the same text the built-in engine would.
+
+```typescript
+import type { DunePlugin } from "../../src/hooks/types.ts";
+import { createMyEngine } from "./engine.ts";
+
+export default function mylSearch(config: { url?: string } = {}): DunePlugin {
+  return {
+    name: "my-search",
+    version: "1.0.0",
+    hooks: {
+      onSearchEngineCreate: ({ data }) => {
+        data.engine = createMyEngine(
+          { url: config.url ?? Deno.env.get("MY_SEARCH_URL") },
+          data.pages,
+          { loadText: data.loadText, injectedRecords: data.injectedRecords },
+        );
+      },
+    },
+  };
+}
+mylSearch.pluginName = "my-search";
+```
+
+The official [`@dune/plugin-pdf`](https://github.com/duneorg/plugin-pdf) (record injection) and [`@dune/plugin-meilisearch`](https://github.com/duneorg/plugin-meilisearch) (engine replacement) are working references for both patterns.
+
 ## Static assets
 
 If your plugin needs to serve CSS, JavaScript, images, or other static files, place them in an `assets/` subdirectory next to your plugin's `mod.ts`:

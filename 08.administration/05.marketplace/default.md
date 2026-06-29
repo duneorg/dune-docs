@@ -50,7 +50,7 @@ The install adds a minimal entry:
 
 ```yaml
 plugins:
-  - src: "jsr:@dune/plugin-analytics@^1.0.0"
+  - src: "jsr:@dune/plugin-pdf@^0.3.0"
 ```
 
 After the restart, configure the plugin at **Admin → Plugins** if it exposes settings.
@@ -115,7 +115,7 @@ These endpoints return the same JSON files bundled with Dune. The registry is up
 To list a plugin or theme in the official Marketplace:
 
 1. Publish your plugin to [JSR](https://jsr.io) (`dune plugin:publish`) or host a theme ZIP on GitHub Releases.
-2. Open a pull request against the [dune-cms/registry](https://github.com/dune-cms/registry) repository adding your entry.
+2. Open a pull request against the [duneorg/dune](https://github.com/duneorg/dune) repository adding your entry to `src/admin/registry/`.
 3. The Dune Team will review and, if approved, include it in the next registry update.
 
 See the [Plugin Development](../reference/plugin-api) and [Theme Development](../themes/creating-a-theme) guides for packaging requirements.
