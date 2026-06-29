@@ -90,7 +90,7 @@ Fired by the admin panel after CRUD operations. Useful for triggering external s
 
 ```typescript
 // plugins/my-hooks.ts
-import type { DunePlugin } from "dune/types";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "my-hooks",

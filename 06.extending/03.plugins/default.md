@@ -60,7 +60,7 @@ Use this when your plugin does not need configuration:
 
 ```typescript
 // plugins/logger/mod.ts
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "logger",
@@ -83,7 +83,7 @@ Use this when your plugin needs to read its config at initialization time. The f
 
 ```typescript
 // plugins/analytics/mod.ts
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export interface AnalyticsConfig {
   provider?: "plausible" | "umami";
@@ -148,7 +148,7 @@ The handler receives a `HookContext<Request>` with the following properties:
 ### Custom API endpoint
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "my-api",
@@ -210,7 +210,7 @@ If `setData()` is not called (or the new value is not a `Response`), the request
 `publicRoutes` is the preferred way to add custom endpoints to the public site. Each entry is a proper Fresh route registered before the content catch-all, so it takes priority over content pages and the `onRequest` hook.
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "my-api",
@@ -260,7 +260,7 @@ Use `onRequest` when:
 Plugins can contribute pages to the admin panel via `adminPages`. Each entry adds a route under `/admin/` that is rendered inside the admin shell (sidebar, header, auth) automatically.
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "my-plugin",
@@ -295,7 +295,7 @@ Two hooks let a plugin extend or replace site search. Both fire once during star
 `onSearchRecordsCollect` lets you add documents to the index alongside content pages — useful for indexing text that doesn't live in a Markdown file (extracted PDF text, an external API, a database table). Each record carries its own result `route` and is indexed from memory, so there's no file read.
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default {
   name: "changelog-index",
@@ -322,7 +322,7 @@ An `InjectedSearchRecord` is `{ route, title, body, fields?, template? }`. Anyth
 `onSearchEngineCreate` lets you swap the built-in in-memory engine for an alternative backend. Assign `ctx.data.engine` to any object implementing the `SearchEngine` interface (`build`, `rebuild`, `search`, `suggest`). Leave it unset to keep the built-in engine. The context also provides the page list, any records collected by `onSearchRecordsCollect`, and a `loadText(page)` helper that returns a page's plain-text body — so an alternative engine can index the same text the built-in engine would.
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 import { createMyEngine } from "./engine.ts";
 
 export default function mylSearch(config: { url?: string } = {}): DunePlugin {
@@ -411,7 +411,7 @@ setup: ({ hooks }) => {
 When `configSchema` is defined, the admin panel renders a typed form for the plugin's settings. Users can edit config values without touching `site.yaml`. Changes are saved to `data/plugins/{name}.json` and loaded at the next startup.
 
 ```typescript
-import type { DunePlugin } from "../../src/hooks/types.ts";
+import type { DunePlugin } from "@dune/core/plugins";
 
 export default function createSeo(config = {}): DunePlugin {
   return {
