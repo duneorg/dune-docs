@@ -89,12 +89,15 @@ Type=simple
 User=www-data
 WorkingDirectory=/path/to/my-site
 Environment=DUNE_ENV=production
-ExecStart=/home/user/.deno/bin/deno run -A --config=deno.json jsr:@dune/core/cli serve --root . --port 8000
+ExecStart=deno run -A --config=deno.json jsr:@dune/core@0.22.0/cli serve --frozen
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+The `--frozen` flag tells Dune to refuse startup if `deno.lock` is incomplete — preventing silent lockfile drift on the server. Before deploying, run `dune lockfile sync` locally and commit the result. See [Invocation Patterns](deployment/invocation-patterns) for the full workflow and an alternative using the installed binary.
 
 ## Updating content
 
