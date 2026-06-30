@@ -510,6 +510,52 @@ export default function createCache(config: CacheConfig = {}): DunePlugin {
 }
 ```
 
+## The `mount()` function
+
+`mount()` is called after `setup()`, once the Fresh `App` instance is ready. It is the correct place to register Fresh routes, middleware, and admin pages that require an `App` reference.
+
+```typescript
+interface MountApi {
+  /** The Fresh App instance — register routes, middleware, layouts here */
+  app: App<any>;
+  /** Bootstrap result — content engine, config, storage, etc. */
+  bootstrap: BootstrapResult;
+  /** Merged admin services collected from all plugins (content editor, inline edit, etc.) */
+  adminServices: AdminServices;
+}
+```
+
+Most plugins do not need `mount()` — hooks and `setup()` cover the vast majority of use cases. Use `mount()` only when your plugin genuinely needs to mount Fresh routes:
+
+```typescript
+import type { App } from "jsr:@fresh/core";
+import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
+
+export default function createMyPlugin(): DunePlugin {
+  return {
+    name: "my-api-plugin",
+    version: "1.0.0",
+
+    async mount({ app, bootstrap }: MountApi) {
+      // Register a custom API route
+      app.get("/api/my-plugin/status", (_req) => {
+        return Response.json({ ok: true, pages: bootstrap.engine.pages.length });
+      });
+    },
+
+    hooks: {},
+  };
+}
+```
+
+`setup()` and `mount()` lifecycle relative to app startup:
+
+| Phase | When | What's available |
+|-------|------|-----------------|
+| `setup()` | During `bootstrap()` | `hooks`, `config`, `storage` |
+| `mount()` | After `createDuneApp()` | `app`, `bootstrap`, `adminServices` |
+| Hook events | Per-request / per-rebuild | Full runtime context |
+
 ## Accessing plugin config in hooks
 
 Plugin config is always available in hook handlers via `config.plugins["plugin-name"]`. Config comes from three merged sources (last wins):

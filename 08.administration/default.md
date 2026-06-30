@@ -44,6 +44,8 @@ admin:
   enabled: false
 ```
 
+> **Headless / API-only deployments:** setting `admin.enabled: false` in `system.yaml` fully suppresses the admin panel — no routes, no admin user pool, no related overhead. The admin panel is implemented as `@dune/plugin-admin`, a separate JSR package that Dune registers automatically. Advanced users can replace it with a custom admin implementation by providing their own `DunePlugin` that calls `mountDuneAdmin` internally.
+
 ## Roles and permissions
 
 Three roles control what each user can do:
