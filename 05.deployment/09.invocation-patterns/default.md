@@ -19,7 +19,7 @@ There are two ways to run Dune in production. Both are fully supported; which on
 ### JSR-URL (version in deno.json)
 
 ```bash
-deno run -A jsr:@dune/core@0.22.0/cli serve
+deno run -A jsr:@dune/core@0.26.0/cli serve
 ```
 
 The version is pinned in `deno.json` alongside your site's other imports. Upgrading core is a one-line edit to that file. This is what `dune new` generates and what `dune upgrade` manages.
@@ -41,7 +41,7 @@ The version is pinned in `deno.json` alongside your site's other imports. Upgrad
 ### Installed binary (version at install time)
 
 ```bash
-deno install -g -n dune -A jsr:@dune/core@0.22.0/cli
+deno install -g -n dune -A jsr:@dune/core@0.26.0/cli
 dune serve
 ```
 
@@ -67,7 +67,7 @@ Type=simple
 User=www-data
 WorkingDirectory=/srv/my-site
 Environment=DUNE_ENV=production
-ExecStart=deno run -A --config=deno.json jsr:@dune/core@0.22.0/cli serve --frozen
+ExecStart=deno run -A --config=deno.json jsr:@dune/core@0.26.0/cli serve --frozen
 Restart=on-failure
 RestartSec=5
 
@@ -83,6 +83,19 @@ The `--frozen` flag tells Dune to treat a stale lockfile as a hard error rather 
 ```
 
 This prevents silent drift on the server. See [Lockfile as build artifact](#lockfile-as-build-artifact) for how to keep the lockfile correct.
+
+#### Optional: `ExecStartPre` pre-flight gate
+
+Add a pre-flight `lockfile:check` before the server starts so systemd refuses to launch with a stale lockfile, and you get a human-readable diagnosis instead of a raw Deno error:
+
+```ini
+ExecStartPre=/usr/bin/deno run -A --no-lock --config=deno.json jsr:@dune/core@0.26.0/cli lockfile:check --root .
+ExecStart=deno run -A --config=deno.json jsr:@dune/core@0.26.0/cli serve --frozen
+```
+
+The `--no-lock` flag on `ExecStartPre` is important: without it, Deno would write any missing entries to `deno.lock` while loading the entry script — defeating the purpose of the check. `--no-lock` disables automatic lockfile discovery for that process only, so `lockfile:check`'s own diagnostic output (the missing-entry list and `--upgrade` hints) still prints correctly. Unlike `--frozen`, it does not fail fast before the command runs.
+
+Use `--frozen` (not `--no-lock`) on `ExecStart`: there you want the server to refuse to start if the lockfile is incomplete, not just report it.
 
 ### Installed binary pattern
 
