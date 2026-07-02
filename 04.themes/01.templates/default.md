@@ -53,6 +53,8 @@ export default function PostTemplate({ page, pageTitle, site, config, nav, Layou
 | `site` | `SiteConfig` | Site configuration (title, URL, metadata) |
 | `config` | `DuneConfig` | Full merged configuration |
 | `nav` | `PageIndex[]` | Top-level navigation pages |
+| `navAll` | `PageIndex[]?` | Full site navigation for the page's language — every page in the index with `depth`, `order`, `parentPath` (same data as `/api/nav`) |
+| `translations` | `PageTranslation[]?` | Languages the current page exists in, with the URL for each — for language switchers and `hreflang` links (see below) |
 | `Layout` | `Component?` | Dynamically loaded layout component (see below) |
 | `collection` | `Collection?` | Collection results if page defines one |
 | `children` | `Element?` | Pre-rendered content (HTML wrapped in a div) |
@@ -78,6 +80,40 @@ export default function MyTemplate({ Layout, ...props }: TemplateProps) {
 ```
 
 If a template only uses `import Layout from "../components/layout.tsx"` directly, layout file changes won't appear until the server restarts. Dune logs a warning when it detects this pattern during development.
+
+### Language switchers and hreflang links
+
+On multilingual sites (more than one entry in `config.system.languages.supported`), templates receive a `translations` prop: one entry per language the *current page* actually exists in. Each entry has:
+
+| Field | Description |
+|-------|-------------|
+| `lang` | Language code, e.g. `"de"` |
+| `route` | Canonical route shared across languages, e.g. `"/about/"` |
+| `url` | Root-relative URL for that language, e.g. `"/de/about/"` |
+
+URLs respect `config.system.languages.include_default_in_url` — the default language is unprefixed unless that option is set. The list includes the page's own language; mark it active or filter it out. On single-language sites `translations` is an empty array, so switchers naturally render nothing.
+
+A language switcher:
+
+```tsx
+{translations && translations.length > 1 && (
+  <nav class="lang-switcher">
+    {translations.map((t) => (
+      <a href={t.url} class={t.lang === page.language ? "active" : ""}>
+        {t.lang.toUpperCase()}
+      </a>
+    ))}
+  </nav>
+)}
+```
+
+Hreflang alternate links in the document `<head>` (prefix with `site.url` for absolute URLs, as search engines expect):
+
+```tsx
+{translations?.map((t) => (
+  <link rel="alternate" hreflang={t.lang} href={site.url + t.url} />
+))}
+```
 
 ### What's in `Page`
 
