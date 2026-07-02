@@ -276,14 +276,24 @@ Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` 
 
 ## theme config
 
-Set in `dune.config.ts` or via config:
+Set in `config/site.yaml` (or `dune.config.ts`):
 
 ```yaml
+# Registered theme packages (JSR/npm or local path)
+themes:
+  - name: paper                    # string — Logical name (URLs, inheritance, activation)
+    src: jsr:@dune/theme-paper@1.0.0  # string — Pinned jsr:/npm: specifier or ./path
+
 theme:
   name: "default"                # string — Active theme name
-  parent: null                   # string | null — Parent theme for inheritance
-  custom: {}                     # Record<string, unknown> — Theme-specific settings
+  src: null                      # string | null — When set, active theme loads from this package
+  parent: null                   # string | null — Parent for inheritance (overrides theme.yaml on active theme)
+  custom: {}                     # Record<string, unknown> — Theme-specific settings (admin Theme tab)
 ```
+
+`themes:` is the install registry — it records which packages are available on the site. `theme.name` selects which theme is active. A local folder at `themes/{name}/` and a registered package can share the same logical name: use `theme.src` when the active theme should come from the package, or leave `src` unset to use the local folder (with optional `parent:` pointing at a package).
+
+Package specifiers must pin an exact version. Import-map aliases in `deno.json` are resolved when loading.
 
 ## plugins config
 

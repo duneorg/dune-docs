@@ -66,6 +66,30 @@ theme:
 
 > **Common mistake**: `theme:` belongs in `config/site.yaml`, not `config/system.yaml`. Putting it in `system.yaml` silently has no effect — the theme won't load.
 
+## Package themes (JSR/npm)
+
+Themes can be installed as version-pinned packages instead of copying files into `themes/`. Register packages under `themes:` and activate by name:
+
+```yaml
+themes:
+  - name: paper
+    src: jsr:@dune/theme-paper@1.0.0
+
+theme:
+  name: paper
+  src: jsr:@dune/theme-paper@1.0.0   # when the active theme *is* the package
+```
+
+Install from the CLI:
+
+```bash
+dune theme:install jsr:@dune/theme-paper@1.0.0 --activate
+```
+
+This writes the `themes:` entry, adds the import to `deno.json`, and syncs `deno.lock`. Package themes are resolved from the module graph — they are not extracted into `themes/`.
+
+**Local overrides** stay in `themes/my-brand/` with `parent:` pointing at a registered package name or pinned specifier. See [Theme Inheritance](themes/inheritance).
+
 Optionally pass theme-specific settings under `custom:`:
 
 ```yaml

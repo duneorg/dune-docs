@@ -25,6 +25,26 @@ version: 1.0.0
 parent: default     # inherits from themes/default/
 ```
 
+You can also set `parent` on the active theme in `config/site.yaml` — it overrides `theme.yaml` for the active theme only:
+
+```yaml
+theme:
+  name: my-brand
+  parent: paper     # local themes/my-brand/ extends package "paper"
+```
+
+Parents can be a **local theme name**, an **import-map alias**, or a **pinned package specifier**:
+
+```yaml
+themes:
+  - name: paper
+    src: jsr:@dune/theme-paper@1.0.0
+
+theme:
+  name: my-brand
+  parent: jsr:@dune/theme-paper@1.0.0
+```
+
 ## Resolution order
 
 When Dune looks for a template, it checks:
@@ -65,6 +85,8 @@ Result:
 ## Static assets
 
 Static assets also follow the inheritance chain. If your child theme provides `static/styles.css`, it overrides the parent's. If it doesn't, the parent's is served.
+
+For package-backed themes, static files live in the package's `static/` directory and are served at `/themes/{name}/static/...` without copying them into your site tree.
 
 ## Practical use cases
 

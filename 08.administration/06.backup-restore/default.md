@@ -26,7 +26,7 @@ metadata:
 | Local plugins (`plugins/`) | |
 | A `manifest.json` with version and timestamp | |
 
-Plugins and themes installed from JSR or npm are excluded — they are re-fetched on next startup from their specifiers in `deno.json`.
+Plugins and themes installed from JSR or npm are excluded — they are re-fetched from their pinned specifiers in `config/site.yaml` (`plugins:` / `themes:`) and your `deno.json` import map. Commit `deno.lock` alongside config changes so restores resolve the same versions.
 
 ## Creating a backup
 

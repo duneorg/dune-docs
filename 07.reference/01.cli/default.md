@@ -156,6 +156,19 @@ All blueprint commands accept `--json` for machine-readable output.
 | `dune plugin:search <query>` | Search JSR for Dune-compatible plugins. |
 | `dune plugin:update [name]` | Update a JSR or npm plugin to its latest version. Omit name to update all. |
 
+## Themes
+
+| Command | Description |
+|---------|-------------|
+| `dune theme:list` | List local themes in `themes/` and registered package themes from `site.yaml`. |
+| `dune theme:install <src>` | Register a theme package (`jsr:`, `npm:`, or local path). Adds to `themes:` and `deno.json`, syncs the lockfile. |
+| `dune theme:install <src> --name <slug>` | Override the derived theme name. |
+| `dune theme:install <src> --activate` | Also set `theme.name` / `theme.src` as the active theme. |
+| `dune theme:remove <name>` | Remove a theme from the `themes:` registry (does not delete local `themes/{name}/`). |
+| `dune theme:publish [dir]` | Publish a theme package to JSR (`deno publish` in the package directory). |
+
+Remote specifiers must pin an exact semver (`jsr:@scope/theme-name@1.0.0`). After install, run `dune dev` or restart the server to load the theme.
+
 ## Migration
 
 | Command | Description |
