@@ -88,6 +88,19 @@ Static assets also follow the inheritance chain. If your child theme provides `s
 
 For package-backed themes, static files live in the package's `static/` directory and are served at `/themes/{name}/static/...` without copying them into your site tree.
 
+## Locale strings
+
+Theme UI strings in `locales/{lang}.json` are merged **per key** across the inheritance chain: parent keys are applied first, child keys last, so a child theme can override or add individual strings without copying the parent's whole locale file. For languages other than `en`, the chain-merged `en` locale is layered underneath as a fallback for missing keys.
+
+For example, to relabel a language in a language switcher, a stub child theme only needs:
+
+```json
+// themes/my-theme/locales/en.json
+{ "de": "German" }
+```
+
+All other keys from the parent's `en.json` remain available via `t(key)`.
+
 ## Practical use cases
 
 **Branding customization.** Start from a well-tested base theme, override just the layout and styles.
