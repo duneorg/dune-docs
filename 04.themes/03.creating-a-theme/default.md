@@ -44,7 +44,7 @@ All fields except `name` are optional. Set `parent: default` to inherit template
 ```tsx
 import type { TemplateProps } from "@dune/core";
 
-export default function DefaultTemplate({ page, children, site }: TemplateProps) {
+export default async function DefaultTemplate({ page, children, site }: TemplateProps) {
   return (
     <html lang="en">
       <head>
@@ -63,7 +63,9 @@ export default function DefaultTemplate({ page, children, site }: TemplateProps)
 }
 ```
 
-`children` contains the pre-rendered page HTML as a JSX element. You can also call `await page.html()` directly if you need the raw string.
+`children` contains the pre-rendered page HTML as a JSX element — using it keeps the template synchronous. You can also call `await page.html()` directly if you need the raw string, but then the template must be declared `async function`, as above.
+
+Only the top-level template component may be async: Dune awaits the template itself before rendering, but everything it returns renders synchronously. Nested components — including the `Layout` a template wraps itself in — must stay synchronous, and an async template cannot use hooks.
 
 ## 4. Activate the theme
 

@@ -105,7 +105,7 @@ import { EditableText, EditableMarkdown } from "@dune/core/ui/editable";
 import type { TemplateProps } from "@dune/core/types";
 import Layout from "../components/layout.tsx";
 
-export default function ArticleTemplate({ page, site, nav, Layout: DynamicLayout, children }: TemplateProps) {
+export default async function ArticleTemplate({ page, site, nav, Layout: DynamicLayout, children }: TemplateProps) {
   const LayoutComponent = DynamicLayout ?? Layout;
   const fm = page?.frontmatter ?? {};
 

@@ -96,6 +96,10 @@ If a template only uses `import Layout from "../components/layout.tsx"` directly
 
 Note: `html()`, `children()`, `parent()`, and `siblings()` are lazy — they only load data when called.
 
+### Async templates
+
+These lazy accessors return Promises, so a template that calls them must be declared `async function`. Dune awaits the top-level template component before rendering; everything the template returns renders synchronously. Two constraints follow: nested components (including `Layout`) must be synchronous, and an async template cannot use hooks. If you only need the rendered body, prefer the `children` prop — it's the pre-rendered HTML and keeps the template synchronous.
+
 ## Template naming convention
 
 | Content file | Template used |
