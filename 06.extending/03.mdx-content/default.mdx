@@ -160,6 +160,45 @@ formats.register(new MdxHandler({ components: registry }));
 
 Any component name not in the registry falls back to the equivalent HTML element, or renders nothing if there is no matching HTML tag.
 
+## Output sanitisation
+
+Rendered MDX output goes through the same HTML sanitiser as raw HTML in Markdown (unless `trusted_html: true` is set site-wide or per page — see [Site Configuration](../../configuration/site-config)). The default allowlist covers common prose markup, which means component markup that uses less common tags (`<aside>`, inline `<svg>`, custom elements) or ARIA attributes would normally be stripped.
+
+### Theme-declared sanitizer allowances
+
+Instead of requiring sites to set `trusted_html: true`, a theme can declare the extra tags and attributes its MDX components emit via a named `sanitize` export in `mdx-components.ts`:
+
+```ts
+// themes/my-theme/mdx-components.ts
+import { Alert, Tabs } from "./components/user-components.tsx";
+
+export default { Alert, Tabs };
+
+export const sanitize = {
+  tags: ["aside", "svg", "path", "my-tabs"],
+  attributes: {
+    "*": ["role", "aria-*", "data-*", "tabindex", "hidden"],
+    svg: ["viewBox", "width", "height", "fill", "style"],
+    path: ["d", "fill", "fill-rule", "clip-rule"],
+  },
+};
+```
+
+- **`tags`** — extra element names allowed in sanitised output, in addition to the default allowlist.
+- **`attributes`** — extra attributes per tag name; the `"*"` key applies to all tags. Entries ending in `*` are prefix wildcards (`aria-*`, `data-*`).
+
+The allowances are additive and bounded: they widen the allowlist but cannot reopen the sanitiser's hard rules. Event handler attributes (`on*`), `is`, and `xmlns` are always stripped regardless of what a theme declares; `style` is only allowed on a tag where it is listed literally — wildcards never match it. `<script>` and unsafe URL schemes stay blocked.
+
+Because the allowances come from the theme author (who also writes the components), authors of `.mdx` content still can't inject scripts or event handlers — the trust boundary stays with the theme, not the content.
+
+For programmatic setups, pass the same shape to `MdxHandler` directly:
+
+```ts
+new MdxHandler({ components: registry, sanitize: { tags: [...], attributes: {...} } });
+```
+
+The type is exported as `MdxSanitizeExtension` from `@dune/core`.
+
 ## When to Use MDX
 
 Choose MDX when you need the simplicity of Markdown for most of your content but want to embed interactive elements or custom components in specific sections.

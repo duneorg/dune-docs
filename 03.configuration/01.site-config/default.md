@@ -120,6 +120,8 @@ trusted_html: true
 
 Individual pages can also opt out via `trusted_html: true` in their frontmatter without changing this global setting.
 
+If the sanitiser is only stripping markup emitted by a theme's MDX components, prefer the theme's `sanitize` export over disabling sanitisation — see [MDX Content](../../extending/mdx-content).
+
 ### `auto_discover_plugins`
 
 By default, Dune does **not** automatically load TypeScript files found in `plugins/*.ts`. Plugins must be explicitly listed in `site.yaml` under `plugins:`. Set this to `true` to re-enable auto-discovery (legacy behaviour):
