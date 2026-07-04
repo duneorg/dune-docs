@@ -50,7 +50,7 @@ The install adds a minimal entry:
 
 ```yaml
 plugins:
-  - src: "jsr:@dune/plugin-pdf@^0.3.0"
+  - src: "jsr:@dune/plugin-pdf@^1.0.0"
 ```
 
 After the restart, configure the plugin at **Admin → Plugins** if it exposes settings.
