@@ -77,10 +77,17 @@ app.use(staticFiles());
 // 3. Admin panel + public API (contact forms, webhooks)
 await mountDuneAdmin(app, ctx);
 
-// 4. Your routes — Fresh discovers them from routes/ automatically
+// 4. Make the content API available to your own routes via ctx.state —
+// no global state, works the same in tests and multi-site setups.
+app.use((freshCtx) => {
+  freshCtx.state.contentApi = ctx.contentApi;
+  return freshCtx.next();
+});
+
+// 5. Your routes — Fresh discovers them from routes/ automatically
 app.fsRoutes("./routes");
 
-// 5. Bundle islands — yours + admin islands
+// 6. Bundle islands — yours + admin islands
 const builder = new Builder({
   root: "./",
   islandDir: "./islands",
@@ -89,7 +96,7 @@ const builder = new Builder({
 const applySnapshot = await builder.build({ mode: "production", snapshot: "memory" });
 applySnapshot(app);
 
-// 6. Serve
+// 7. Serve
 Deno.serve({ port: 3000, handler: app.handler() });
 ```
 
@@ -109,13 +116,7 @@ Returns absolute paths to all island `.tsx` files bundled with Dune's admin pane
 
 ## Reading content in routes
 
-Use `getContent()` from `@dune/core/content` to query the content index from any Fresh route handler.
-
-```ts
-import { getContent } from "@dune/core/content";
-```
-
-`getContent()` returns a `ContentApi` object initialized by `bootstrap()`. It is synchronous — no await needed.
+`ctx.contentApi` (a `ContentApi`) is threaded into every request's `ctx.state.contentApi` by the middleware registered in `main.ts` above — read it from there in any Fresh route handler. There's no global/singleton to import.
 
 ### `pages(options?)`
 
@@ -124,11 +125,12 @@ List pages with optional filtering and ordering:
 ```ts
 // routes/blog/index.tsx
 import type { FreshContext, PageProps } from "fresh";
-import { getContent } from "@dune/core/content";
+import type { ContentApi } from "@dune/core/content";
 import type { PageIndex } from "@dune/core";
 
 export function handler(_req: Request, ctx: FreshContext) {
-  const posts = getContent().pages({
+  const contentApi = ctx.state.contentApi as ContentApi;
+  const posts = contentApi.pages({
     orderBy: "date",
     orderDir: "desc",
     limit: 20,
@@ -166,10 +168,11 @@ Resolve a single page by route path. Returns a `ResolvedPage` with the full HTML
 ```ts
 // routes/blog/[slug].tsx
 import type { FreshContext, PageProps } from "fresh";
-import { getContent, type ResolvedPage } from "@dune/core/content";
+import type { ContentApi, ResolvedPage } from "@dune/core/content";
 
 export async function handler(req: Request, ctx: FreshContext) {
-  const page = await getContent().page(`/blog/${ctx.params.slug}`);
+  const contentApi = ctx.state.contentApi as ContentApi;
+  const page = await contentApi.page(`/blog/${ctx.params.slug}`);
   if (!page) return ctx.next();
   return ctx.render(page);
 }
@@ -201,7 +204,7 @@ export default function Post({ data }: PageProps<ResolvedPage>) {
 Full-text search across all indexed pages. Returns synchronously.
 
 ```ts
-const results = getContent().search("deno deploy", 10);
+const results = contentApi.search("deno deploy", 10);
 // results: Array<{ route, title, score, excerpt }>
 ```
 
@@ -210,7 +213,7 @@ const results = getContent().search("deno deploy", 10);
 Get all values for a taxonomy (e.g. tags, categories) with their page counts.
 
 ```ts
-const tags = getContent().taxonomy("tag");
+const tags = contentApi.taxonomy("tag");
 // tags: Array<{ name, slug, count }>
 ```
 
@@ -228,7 +231,7 @@ interface PostFM {
   hero?: string;
 }
 
-const post = await getContent().page<PostFM>(`/blog/${slug}`);
+const post = await contentApi.page<PostFM>(`/blog/${slug}`);
 // post.frontmatter.tags is string[] | undefined
 ```
 
@@ -252,6 +255,5 @@ The admin panel is fully functional in headless mode: create and edit pages, man
 
 ## Limitations
 
-- **`getContent()` is a singleton** — it is initialized once by `bootstrap()`. In a single-process multi-site setup, only the last `bootstrap()` call's content index is accessible via `getContent()`. Use the `engine` object from `BootstrapResult` directly if you need per-site isolation.
 - **No `/*` catch-all** — unlike full Dune mode, there is no automatic content routing. Every public URL must be handled by one of your Fresh routes or it will 404.
 - **Static file serving** — theme static files and `/static/*` are not automatically mounted. Add `app.use(staticFiles())` and serve your own `static/` directory.
