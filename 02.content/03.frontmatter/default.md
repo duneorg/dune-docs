@@ -124,6 +124,44 @@ collection:
 
 Declarative content queries. See the [Collections](../04.collections) page for full details.
 
+### Named collections
+
+```yaml
+collections:
+  featured:
+    items:
+      "@self.children": true
+    filter:
+      custom.featured: true
+    limit: 3
+  recent:
+    items:
+      "@self.children": true
+    order:
+      by: date
+      dir: desc
+    limit: 5
+```
+
+`collections` (plural) declares several independent named collections on one page — useful for landing pages that show more than one list at once (e.g. featured items alongside recent posts). Each entry under the map is a full collection definition, using the same fields as the singular `collection:` field above. Templates receive the resolved results as `props.collections`, keyed by the same names:
+
+```tsx
+{props.collections?.featured?.items.map((item) => ...)}
+{props.collections?.recent?.items.map((item) => ...)}
+```
+
+Unlike `collection:` (singular), `collections:` is per-page only — it isn't inherited by descendant pages.
+
+### Theme config override
+
+```yaml
+theme_config:
+  primary_color: "#c9622a"
+  show_author: false
+```
+
+Overrides theme config (from `data/theme-config.json`) for this page and, when set on a section, for all of its descendants. Shallow-merged over the site-level config and any ancestor section's own `theme_config`, with the closest override winning key-by-key. See [Theme Config](../../04.themes/07.theme-config) for the full resolution model.
+
 ### Media
 
 | Field | Type | Default | Description |
