@@ -16,7 +16,7 @@ The admin panel lets you preview what your site looks like with a different them
 
 ## Previewing a theme
 
-The Theme tab of the [configuration editor](../administration) (`/admin/config` → Theme tab) has a **Preview** button next to the theme dropdown.
+The [Themes page](../administration) (`/admin/themes`) has a **Preview** button next to the theme dropdown.
 
 1. Select a theme from the dropdown
 2. Click **Preview** — an iframe opens showing your site rendered in that theme (without switching)
@@ -30,15 +30,15 @@ The preview renders a real page through the selected theme's templates and layou
 
 ## Theme marketplace
 
-The marketplace is at `/admin/themes` (also reachable from the "Browse more themes →" link at the bottom of the Theme tab).
+The marketplace is reachable via the **Browse Marketplace** link on the [Themes page](../administration) (`/admin/themes`).
 
 ### Installed themes
 
 The **Installed** section shows every theme in your `themes/` directory:
 
 - The currently active theme is marked with an **Active** badge
-- **Preview** opens the config editor with that theme pre-selected in the preview panel
-- **Set Active** switches the active theme (same as the Theme tab dropdown)
+- **Preview** opens the Themes page with that theme pre-selected in the preview panel
+- **Set Active** switches the active theme (same as the Themes page dropdown)
 
 ### Available from registry
 

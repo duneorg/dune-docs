@@ -288,7 +288,7 @@ theme:
   name: "default"                # string — Active theme name
   src: null                      # string | null — When set, active theme loads from this package
   parent: null                   # string | null — Parent for inheritance (overrides theme.yaml on active theme)
-  custom: {}                     # Record<string, unknown> — Theme-specific settings (admin Theme tab)
+  custom: {}                     # Record<string, unknown> — Theme-specific settings (admin Themes page)
 ```
 
 `themes:` is the install registry — it records which packages are available on the site. `theme.name` selects which theme is active. A local folder at `themes/{name}/` and a registered package can share the same logical name: use `theme.src` when the active theme should come from the package, or leave `src` unset to use the local folder (with optional `parent:` pointing at a package).

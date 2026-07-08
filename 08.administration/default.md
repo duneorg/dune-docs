@@ -87,9 +87,9 @@ Changes are written back to the config files and take effect on next request (fo
 
 ## Themes
 
-The **Theme tab** of the configuration editor lets you switch the active theme and preview alternatives before committing. Select a theme from the dropdown and click **Preview** to see an iframe rendering of your site in that theme; click **Apply this theme** to make the switch.
+The **Themes page** (`/admin/themes`) lets you switch the active theme, preview alternatives before committing, and edit that theme's own settings. Select a theme from the dropdown and click **Preview** to see an iframe rendering of your site in that theme; click **Apply this theme** to make the switch. Below the switcher, **Theme settings** shows a schema-driven form for the active theme's own configuration (colors, layout options, etc., as defined by the theme).
 
-For a full theme browser, go to `/admin/themes` (also linked from the bottom of the Theme tab). The marketplace shows your installed themes and a curated registry of community themes. You can install a theme directly from the registry — no restart required. See [Theme Preview & Marketplace](themes/preview-and-marketplace) for details.
+From the same page, **Browse Marketplace** takes you to the full theme browser — your installed themes and a curated registry of community themes. You can install a theme directly from the registry — no restart required. See [Theme Preview & Marketplace](themes/preview-and-marketplace) for details.
 
 ## Revision history
 

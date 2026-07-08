@@ -25,7 +25,7 @@ config_schema:
   show_author:   { type: toggle, label: "Show post author", default: true }
 ```
 
-The admin UI renders a form from this schema (Theme tab) and persists submitted values to `data/theme-config.json`. Fields not declared in the schema are stripped on save.
+The admin UI renders a form from this schema (Themes page, `/admin/themes`) and persists submitted values to `data/theme-config.json`. Fields not declared in the schema are stripped on save.
 
 ## Namespacing by theme
 
