@@ -101,14 +101,19 @@ Community entries without the badge may still work correctly but have not been f
 
 ## Registry API
 
-The bundled registry JSON is accessible without authentication at:
+Available to any authenticated admin user with `config.read`:
 
 | Endpoint | Description |
 |---|---|
 | `GET /admin/api/registry/plugins` | Full plugin registry |
 | `GET /admin/api/registry/themes` | Full theme registry |
 
-These endpoints return the same JSON files bundled with Dune. The registry is updated with each Dune release.
+The plugin registry is a curated list bundled with `@dune/plugin-admin`.
+The theme registry is fetched live from
+[duneorg/dune-themes](https://github.com/duneorg/dune-themes)'s own
+`registry.json` (cached in-process for a few minutes) — always
+reflects that repo's current releases, not tied to `@dune/plugin-admin`'s
+own release cadence.
 
 ## Publishing to the Marketplace
 

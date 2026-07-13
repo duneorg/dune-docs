@@ -42,7 +42,7 @@ The **Installed** section shows every theme in your `themes/` directory:
 
 ### Available from registry
 
-The **Available** section lists themes from the bundled registry:
+The **Available** section lists themes from the live theme registry:
 
 - Each card shows the name, description, tags, author, and version
 - **Demo** links open the theme's demo site in a new tab
@@ -53,9 +53,9 @@ The **Available** section lists themes from the bundled registry:
 
 After installation you can immediately preview the new theme using the Preview button, then switch to it when ready.
 
-### The bundled registry
+### The theme registry
 
-Dune ships with a curated `src/admin/registry/themes.json` that lists community themes. The registry is updated with each Dune release. Support for custom registry URLs is planned for a future release.
+The Themes page fetches [duneorg/dune-themes](https://github.com/duneorg/dune-themes)'s own `registry.json` live (cached in-process for a few minutes), rather than a copy bundled with `@dune/plugin-admin` — new theme releases show up here without needing a plugin-admin update. Support for custom registry URLs is planned for a future release.
 
 The registry API is available at `GET /admin/api/registry/themes` for programmatic access (admin auth required).
 
@@ -64,7 +64,7 @@ The registry API is available at `GET /admin/api/registry/themes` for programmat
 The install endpoint (`POST /admin/api/themes/install`) enforces:
 
 - Theme slugs must match `/^[a-z0-9][a-z0-9_-]*$/` — no path traversal via the slug
-- Themes are resolved **only** from the bundled registry (`slug` lookup) — caller-supplied URLs are not accepted
+- Themes are resolved **only** from the theme registry (`slug` lookup) — caller-supplied URLs are not accepted
 - **JSR installs:** `jsr` in the registry entry must be pinned to an exact semver; writes `themes:` + `deno.json`
 - **ZIP installs:** `downloadUrl` is fetched via SSRF-hardened `safeFetch`; optional `sha256` integrity check
 - ZIP entries with path traversal components (`../`) are rejected; files are written to `themes/{slug}/` only
