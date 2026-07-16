@@ -84,6 +84,8 @@ The `--frozen` flag tells Dune to treat a stale lockfile as a hard error rather 
 
 This prevents silent drift on the server. See [Lockfile as build artifact](#lockfile-as-build-artifact) for how to keep the lockfile correct.
 
+As of Dune 0.29, `--frozen` is `serve`'s default — the flag in the examples above is now belt-and-braces rather than required. Opt out with `--no-frozen` or `DUNE_FROZEN=0` if you need a server to start with an incomplete lockfile (not recommended); other commands (`dev`, `build`, …) default to unenforced and can opt in with `--frozen` or `DUNE_FROZEN=1`.
+
 #### Optional: `ExecStartPre` pre-flight gate
 
 Add a pre-flight `lockfile:check` before the server starts so systemd refuses to launch with a stale lockfile, and you get a human-readable diagnosis instead of a raw Deno error:
