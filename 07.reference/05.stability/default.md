@@ -45,7 +45,7 @@ The following sub-module exports are also available:
 
 | Import path | Contents |
 |---|---|
-| `@dune/core/plugins` | `PLUGIN_API_VERSION`, `loadPlugins`, `loadPluginAdminConfigs` |
+| `@dune/core/plugins` | `PLUGIN_API_VERSION`, `CORE_VERSION`, `CORE_INSTANCE`, `loadPlugins`, `loadPluginAdminConfigs` |
 | `@dune/core/sections` | `SectionRegistry`, `sectionRegistry`, `renderSections`, section types |
 | `@dune/core/theme-helpers` | `paginate`, `formatDate`, `getCanonicalUrl`, `getSearchUrl`, `sortPages`, `groupByYear`, `truncate`, `buildPageTitle`, template/config types |
 | `@dune/core/content` | `ContentApi`, `createContentApi()` — content query API for headless Fresh routes, obtained via `BootstrapResult.contentApi` |
@@ -97,6 +97,20 @@ import { PLUGIN_API_VERSION } from "@dune/core/plugins";
 if (PLUGIN_API_VERSION !== "0.7") {
   console.warn(`[my-plugin] expected plugin API 0.7, got ${PLUGIN_API_VERSION}`);
 }
+```
+
+### Core-instance identity (since 0.31)
+
+`CORE_VERSION` and `CORE_INSTANCE` identify which `@dune/core` module instance your plugin's own dependency resolution landed on. `CORE_INSTANCE` is a reference sentinel (not a version string) — Dune compares it against its own by identity (`===`) after loading your plugin, to detect the case where a plugin resolved a *different copy* of core than the host site (a stale or too-narrow `@dune/core` version range is the usual cause). Re-export both from your plugin's own entrypoint (read them via the namespace object, not named imports, so linking still succeeds against cores older than 0.31) and Dune will warn — never fail the boot — when it detects a split.
+
+```ts
+import * as corePlugins from "@dune/core/plugins";
+
+const _core = corePlugins as unknown as { CORE_INSTANCE?: unknown; CORE_VERSION?: string };
+
+// undefined on cores older than 0.31 — that's expected, not an error
+export const resolvedCoreSentinel: unknown = _core.CORE_INSTANCE;
+export const resolvedCoreVersion: string | undefined = _core.CORE_VERSION;
 ```
 
 Use a `!==` check only if you need an exact version; prefer a `<` or `>` comparison when checking for minimum capability.
