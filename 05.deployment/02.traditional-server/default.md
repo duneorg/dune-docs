@@ -89,7 +89,7 @@ Type=simple
 User=www-data
 WorkingDirectory=/path/to/my-site
 Environment=DUNE_ENV=production
-ExecStart=deno run -A --config=deno.json jsr:@dune/core@0.22.0/cli serve --frozen
+ExecStart=deno run -A main.ts serve
 Restart=on-failure
 RestartSec=5
 
@@ -97,7 +97,7 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-The `--frozen` flag tells Dune to refuse startup if `deno.lock` is incomplete — preventing silent lockfile drift on the server. Before deploying, run `dune lockfile sync` locally and commit the result. See [Invocation Patterns](deployment/invocation-patterns) for the full workflow and an alternative using the installed binary.
+This is the `main.ts` entrypoint pattern — what `dune new` scaffolds and what `dune migrate:entrypoint` moves existing sites onto. Pass `--frozen` (or set `DUNE_FROZEN=1`) to make Dune refuse startup if `deno.lock` is incomplete, preventing silent lockfile drift on the server; run `dune lockfile sync` locally and commit the result before deploying either way. See [Invocation Patterns](deployment/invocation-patterns) for the full workflow, `--frozen`'s current status, and the legacy JSR-URL/installed-binary patterns for sites that haven't migrated yet.
 
 ## Updating content
 
