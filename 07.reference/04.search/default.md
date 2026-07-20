@@ -402,11 +402,19 @@ plugins:
   - src: "jsr:@dune/plugin-pdf"
     config:
       dir: "static/pdfs"   # directory of PDF files (default: static/pdfs)
-      route: "/pdf"        # URL prefix to serve them at (default: /pdf)
+      route: "/pdf"        # URL prefix to serve the raw file at (default: /pdf)
+      linkRoute: "/issues" # URL prefix for search-result links (default: route)
       index: true          # extract + index PDF text (default: true)
 ```
 
-Each PDF is served at `{route}/{filename}` and appears in search results linking to that URL. The browser viewer is available as an auto-mounting bundle at `/plugins/pdf/viewer.js`.
+Each PDF is served at `{route}/{filename}`. Text is indexed **one record per
+extracted page** (not one per document) — a query match links straight to the
+page it was found on, `{linkRoute}/{filename-without-extension}#page={n}`
+(falls back to `{route}/{filename}#page={n}` when `linkRoute` is unset).
+Each page record carries `subtype: "pdf"` in its facet fields, so PDF content
+participates in a `type=pdf` facet filter alongside other content types. The
+browser viewer is available as an auto-mounting bundle at
+`/plugins/pdf/viewer.js`.
 
 ### Meilisearch backend — `@dune/plugin-meilisearch`
 
