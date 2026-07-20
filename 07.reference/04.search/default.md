@@ -189,11 +189,19 @@ Query parameters:
 | `from` | string (`YYYY-MM-DD`) | — | Filter pages with `date ≥ from` |
 | `to` | string (`YYYY-MM-DD`) | — | Filter pages with `date ≤ to` |
 | `taxonomy[{name}][]` | string | — | Filter by taxonomy value — repeatable |
+| `sort` | `"relevance"` \| `"date"` | `"relevance"` | Result ordering |
+| `type` | string | — | Filter by a facet value on the `subtype` field (`"all"` or omitted = no filter) |
 | `limit` | number | 20 (max 100) | Maximum results to return |
 
 Taxonomy filters use bracket notation and can be repeated:
 ```
 GET /api/search?q=deno&taxonomy[tag][]=deno&taxonomy[tag][]=fresh&taxonomy[category][]=tutorial
+```
+
+`sort=date` and `type` require a `subtype` facet field declared via `system.search.facets` in `site.yaml` — see [Facets](#facets):
+
+```
+GET /api/search?q=deno&sort=date&type=tutorial
 ```
 
 Response:
@@ -216,9 +224,14 @@ Response:
   "filters": {
     "template": null,
     "taxonomy": { "tag": ["deno"] }
+  },
+  "facets": {
+    "subtype": { "tutorial": 8, "guide": 4 }
   }
 }
 ```
+
+`facets` is populated whenever the active search engine implements `facetCounts()` (the built-in engine and `@dune/plugin-meilisearch` both do); it's an empty object otherwise.
 
 The `excerpt` field is a 120-character window around the first term match in the page body.
 
@@ -323,7 +336,7 @@ Dune also serves a public `/search` page that renders search results server-side
 
 1. A visitor opens `/search?q=deno`
 2. Dune checks whether your active theme has a `templates/search.tsx` template
-3. **If found** — the search template is rendered with the results injected as `searchQuery` and `searchResults` in `TemplateProps` (see [Templates](../themes/templates))
+3. **If found** — the search template is rendered with the results injected as `searchQuery`, `searchResults`, `searchFacetCounts`, `searchSort`, and `searchType` in `TemplateProps` (see [Templates](../themes/templates)). `searchType` accepts either a `type=` query param or the legacy `facet[subtype]=` form.
 4. **If not found** — Dune falls back to a built-in standalone page with minimal styling
 
 The standalone fallback includes inline JavaScript that debounces queries against `/api/search` and updates the result list live as the user types, without a full page reload.
