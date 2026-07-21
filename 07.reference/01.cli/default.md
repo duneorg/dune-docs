@@ -22,6 +22,10 @@ All commands are run with `dune` (or `deno task dune`).
 | `dune serve` | Start production server. Uses pre-built content index. |
 | `dune serve --port 3000` | Serve on a specific port. |
 | `dune serve --root my-site` | Serve a site in a subdirectory without `cd`-ing into it first. |
+| `dune dev --env-file` | Load `.env` from the site root into the process environment before plugins/config are read. |
+| `dune dev --env-file=path/to/file` | Same, from an explicit path (relative to the site root, or absolute). |
+
+`--env-file` is off by default — nothing auto-loads secrets from disk on a plain `dune dev`/`serve`. It parses simple `KEY=VALUE` lines (blank lines and `#` comments skipped, surrounding quotes stripped); a key already set in the environment always wins over the file. An explicitly-requested file that doesn't exist is a hard error, not a silent no-op. Also accepted by `dune serve`.
 
 ## Build & Cache
 

@@ -191,7 +191,8 @@ Query parameters:
 | `taxonomy[{name}][]` | string | — | Filter by taxonomy value — repeatable |
 | `sort` | `"relevance"` \| `"date"` | `"relevance"` | Result ordering |
 | `type` | string | — | Filter by a facet value on the `subtype` field (`"all"` or omitted = no filter) |
-| `limit` | number | 20 (max 100) | Maximum results to return |
+| `limit` | number | `system.search.page_size` or 20 (max 500) | Maximum results to return |
+| `offset` | number | 0 | Number of results to skip — page through a result set alongside `limit` |
 
 Taxonomy filters use bracket notation and can be repeated:
 ```
@@ -202,6 +203,20 @@ GET /api/search?q=deno&taxonomy[tag][]=deno&taxonomy[tag][]=fresh&taxonomy[categ
 
 ```
 GET /api/search?q=deno&sort=date&type=tutorial
+```
+
+Page through results with `limit`/`offset`:
+
+```
+GET /api/search?q=deno&limit=20&offset=20
+```
+
+Set a site-wide default page size instead of relying on the built-in fallback (20 for `/api/search`, 50 for the SSR `/search` page):
+
+```yaml
+# config/system.yaml
+search:
+  page_size: 30
 ```
 
 Response:
@@ -227,11 +242,13 @@ Response:
   },
   "facets": {
     "subtype": { "tutorial": 8, "guide": 4 }
-  }
+  },
+  "hasMore": true,
+  "offset": 0
 }
 ```
 
-`facets` is populated whenever the active search engine implements `facetCounts()` (the built-in engine and `@dune/plugin-meilisearch` both do); it's an empty object otherwise.
+`facets` is populated whenever the active search engine implements `facetCounts()` (the built-in engine and `@dune/plugin-meilisearch` both do); it's an empty object otherwise. `hasMore` tells you whether another page exists at `offset + limit`, without a separate total-count query.
 
 The `excerpt` field is a 120-character window around the first term match in the page body.
 
@@ -336,7 +353,7 @@ Dune also serves a public `/search` page that renders search results server-side
 
 1. A visitor opens `/search?q=deno`
 2. Dune checks whether your active theme has a `templates/search.tsx` template
-3. **If found** — the search template is rendered with the results injected as `searchQuery`, `searchResults`, `searchFacetCounts`, `searchSort`, and `searchType` in `TemplateProps` (see [Templates](../themes/templates)). `searchType` accepts either a `type=` query param or the legacy `facet[subtype]=` form.
+3. **If found** — the search template is rendered with the results injected as `searchQuery`, `searchResults`, `searchFacetCounts`, `searchSort`, `searchType`, `searchHasMore`, `searchOffset`, and `searchLimit` in `TemplateProps` (see [Templates](../themes/templates)). `searchType` accepts either a `type=` query param or the legacy `facet[subtype]=` form. `searchLimit` reflects `system.search.page_size` when set, falling back to 50 for this SSR page.
 4. **If not found** — Dune falls back to a built-in standalone page with minimal styling
 
 The standalone fallback includes inline JavaScript that debounces queries against `/api/search` and updates the result list live as the user types, without a full page reload.
