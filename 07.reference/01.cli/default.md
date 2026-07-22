@@ -173,6 +173,8 @@ All blueprint commands accept `--json` for machine-readable output.
 
 Remote specifiers must pin an exact semver (`jsr:@scope/theme-name@1.0.0`). After install, run `dune dev` or restart the server to load the theme.
 
+If the installed theme declares a `parent:` in its `theme.yaml` (see [Theme Inheritance](../../04.themes/02.inheritance)), `theme:install` walks the parent chain and installs any ancestor not already registered or present under `themes/`, recursing through multi-level chains. There's no recorded "install source" for a parent slug, so it's derived by convention: for a local path install, a sibling package directory (`theme-{parent}` next to the child's own package dir); for a `jsr:` install, a same-scope `theme-{parent}` package, resolved to its latest published version. Installing fails with an actionable error if the sibling directory doesn't exist or the JSR parent package isn't published yet — install it manually first in either case.
+
 ## Migration
 
 | Command | Description |

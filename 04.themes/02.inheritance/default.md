@@ -33,6 +33,8 @@ theme:
   parent: paper     # local themes/my-brand/ extends package "paper"
 ```
 
+`dune theme:install` auto-installs a declared parent that isn't already registered — see [`theme:install`](../../07.reference/01.cli#theme-install-src) for how it derives an install source for the parent and what happens when that resolution fails.
+
 Parents can be a **local theme name**, an **import-map alias**, or a **pinned package specifier**:
 
 ```yaml
