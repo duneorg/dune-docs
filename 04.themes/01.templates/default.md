@@ -53,6 +53,7 @@ export default function PostTemplate({ page, pageTitle, site, config, nav, Layou
 | `site` | `SiteConfig` | Site configuration (title, URL, metadata) |
 | `config` | `DuneConfig` | Full merged configuration |
 | `nav` | `PageIndex[]` | Top-level navigation pages |
+| `t` | `(key: string, fallback?: string) => string` | Theme UI-string translator, built from the theme chain's merged `locales/{lang}.json` (see [Theme Inheritance](../02.inheritance#locale-strings)). `t(key)` returns the key itself if missing — a visible, debuggable signal outside production, an empty string when `DUNE_ENV=production` — and warns once per distinct missing key. `t(key, fallback)` returns `fallback` instead when the key is missing, with no warning; this is the normal path while a locale file is incrementally filled in, not an error. |
 | `navAll` | `PageIndex[]?` | Full site navigation for the page's language — every page in the index with `depth`, `order`, `parentPath` (same data as `/api/nav`) |
 | `translations` | `PageTranslation[]?` | Languages the current page exists in, with the URL for each — for language switchers and `hreflang` links (see below) |
 | `Layout` | `Component?` | Dynamically loaded layout component (see below) |
