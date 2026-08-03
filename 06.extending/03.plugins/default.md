@@ -553,8 +553,86 @@ export default function createMyPlugin(): DunePlugin {
 | Phase | When | What's available |
 |-------|------|-----------------|
 | `setup()` | During `bootstrap()` | `hooks`, `config`, `storage` |
+| `adminServices()` | After core infra, before admin routes mount | `storage`, `config`, `dataDir`, `contentDir`, `history`, `hooks` |
 | `mount()` | After `createDuneApp()` | `app`, `bootstrap`, `adminServices` |
 | Hook events | Per-request / per-rebuild | Full runtime context |
+
+## Registering admin services
+
+`adminServices()` is a factory a plugin exports to contribute services into the admin panel — most notably a custom inline-edit manager or a replacement page editor. It's called during bootstrap, after core infrastructure (storage, history) is ready but before admin routes are mounted:
+
+```typescript
+interface DunePlugin {
+  adminServices?(ctx: AdminServicesContext): Promise<AdminServices> | AdminServices;
+}
+```
+
+Core collects every plugin's `adminServices()` output, in registration order, into a single merged object — later plugins win on key conflicts, so a user plugin can replace the built-in inline-edit manager. The merged result is exposed as `adminServices` on both `MountApi` (see above) and `bootstrap.adminServices`.
+
+### `AdminServicesContext` shape
+
+```typescript
+interface AdminServicesContext {
+  /** Storage adapter for the site (reads/writes content and data files). */
+  storage: StorageAdapter;
+  /** Merged site configuration. */
+  config: DuneConfig;
+  /** Absolute data directory path (e.g. ".dune/data"). */
+  dataDir: string;
+  /** Content directory path relative to site root (e.g. "content"). */
+  contentDir: string;
+  /** History engine for recording content revisions. */
+  history: HistoryEngine;
+  /** The engine's hook registry — see below for why services need this. */
+  hooks: HookRegistry;
+}
+```
+
+### `AdminServices` shape
+
+```typescript
+interface AdminServices {
+  /** Inline editing manager — the service behind the inline-edit admin endpoints. */
+  inlineEdit?: InlineEditManager;
+  /** Custom page editor — replaces the built-in block editor when set. */
+  contentEditor?: ContentEditorPlugin;
+}
+```
+
+### Firing hooks from a service
+
+Services instantiated through `adminServices()` write content outside the standard admin CRUD routes (`/admin/api/pages/...`), which are what normally fire `onPageCreate`/`onPageUpdate`/`onPageDelete` after a successful write. A service built this way has no other path to those events — if it writes a page directly through `storage`, it must fire the matching hook itself using the `hooks` field on `AdminServicesContext`:
+
+```typescript
+import type { AdminServices, AdminServicesContext, DunePlugin } from "jsr:@dune/core/hooks";
+
+function createAutosaveService(ctx: AdminServicesContext) {
+  const { storage, hooks } = ctx;
+
+  return {
+    async save(sourcePath: string, content: string) {
+      await storage.write(sourcePath, content);
+      // The admin CRUD route fires this inline on a normal save; this
+      // service writes directly through storage, so it must fire it too —
+      // otherwise search indexes, webhooks, and cache invalidation miss the write.
+      await hooks.fire("onPageUpdate", { sourcePath });
+    },
+  };
+}
+
+export default function createAutosavePlugin(): DunePlugin {
+  return {
+    name: "autosave",
+    version: "1.0.0",
+
+    adminServices(ctx: AdminServicesContext): AdminServices {
+      return { inlineEdit: createAutosaveService(ctx) };
+    },
+
+    hooks: {},
+  };
+}
+```
 
 ## Accessing plugin config in hooks
 
