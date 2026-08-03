@@ -31,8 +31,11 @@ All four commands accept the same set of options:
 | `--dry-run` | off | Print what would be created without writing any files |
 | `--verbose` | off | Print each file as it is processed |
 | `--root <dir>` | `.` | Dune site root (if running from outside the site directory) |
+| `--fire-hooks` | off | Fire `onPageCreate` per imported page |
 
 Always do a **dry run** first and review the output before writing files to your live content directory.
+
+`--fire-hooks` is off by default — a bulk import running per-page hooks (webhooks, derived-content regeneration) is far more likely to be an unwanted surprise than a wanted feature during a large import. Pass it if you have plugins that need to react to each imported page individually.
 
 ---
 

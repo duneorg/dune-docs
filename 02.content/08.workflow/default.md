@@ -208,7 +208,7 @@ In practice, use `status` for editorial tracking and use `published: false` for 
 
 ## Scheduling
 
-The admin panel supports scheduled publish and unpublish actions. These are stored as scheduled actions and applied by the Dune scheduler at the configured time.
+The admin panel supports scheduled publish and unpublish actions. These are stored as scheduled actions and applied by the Dune scheduler at the configured time — this requires a running `dune serve` process; scheduled actions don't execute during one-shot commands like `dune build`.
 
 Frontmatter equivalents:
 

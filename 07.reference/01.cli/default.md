@@ -44,6 +44,7 @@ All commands are run with `dune` (or `deno task dune`).
 - All `template:` values in frontmatter resolve to an existing theme template
 - Schema files under `schemas/` have a `store:` field
 - Content integrity: missing titles, duplicate routes, future dates
+- Content files that failed to parse (e.g. malformed YAML frontmatter) — these are otherwise silently dropped from routing, search, and the sitemap with no other signal
 
 Add `--json` for machine-parseable output.
 
@@ -107,7 +108,7 @@ Occasionally an addition introduces a second, different version range for an alr
 | Command | Description |
 |---------|-------------|
 | `dune content:list` | List all pages with their routes, templates, and publish status. |
-| `dune content:check` | Validate all content: broken links, missing templates, orphaned media. |
+| `dune content:check` | Validate all content: broken links, missing templates, orphaned media, content files that failed to parse. |
 | `dune content:i18n-status` | Report translation coverage across all configured languages. |
 | `dune content:create <route>` | Scaffold a new content page at the given route. |
 | `dune content:delete <route>` | Delete a content page by route. Requires `--confirm` or `--dry-run`. |
@@ -134,6 +135,8 @@ All blueprint commands accept `--json` for machine-readable output.
 | `--publish` | — | Mark the page as `published: true` (default is draft). |
 | `--json` | — | Output result as JSON. |
 
+Fires `onPageCreate` — the same hook the admin panel fires when creating a page through the UI.
+
 ### `dune content:delete` options
 
 | Option | Description |
@@ -141,6 +144,8 @@ All blueprint commands accept `--json` for machine-readable output.
 | `--confirm` | Confirm deletion without an interactive prompt. |
 | `--dry-run` | Preview what would be deleted without writing any changes. |
 | `--json` | Output result as JSON. |
+
+Fires `onPageDelete` — the same hook the admin panel fires when deleting a page through the UI.
 
 ## Packages
 
