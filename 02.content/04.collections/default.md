@@ -98,6 +98,8 @@ collection:
 | `random` | Randomized on each request |
 | `custom.fieldname` | Any field in frontmatter `custom` |
 
+`dir` can be omitted. The default depends on `by`: `date` defaults to `desc` (newest first); `title`, `order`, and everything else default to `asc`.
+
 ## Filtering
 
 Narrow results with filters:
