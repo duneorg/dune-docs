@@ -241,7 +241,7 @@ export default {
 | Field | Type | Description |
 |-------|------|-------------|
 | `path` | `string` | URL path pattern — supports Fresh param syntax (`:id`, `*`) |
-| `method` | `"GET" \| "POST" \| "PUT" \| "DELETE" \| "all"` | HTTP method. Defaults to `"GET"`. Use `"all"` to match any method. |
+| `method` | `"GET" \| "POST" \| "PUT" \| "DELETE" \| "ALL"` | HTTP method. Defaults to `"GET"`. Use `"ALL"` to match any method. |
 | `handler` | `(fc: FreshContext) => Response \| Promise<Response>` | Request handler |
 
 ### `publicRoutes` vs `onRequest`
@@ -268,7 +268,7 @@ export default {
   hooks: {},
   adminPages: [
     {
-      path: "/admin/my-plugin",
+      path: "/my-plugin", // relative to the admin prefix — registers at /admin/my-plugin
       label: "My Plugin",
       icon: "🔌",
       handler: async (ctx) => {
@@ -358,12 +358,12 @@ plugins/my-plugin/
     logo.svg
 ```
 
-Dune detects the `assets/` directory automatically at startup and serves its contents at `/__plugins/{name}/`. No config required.
+Dune detects the `assets/` directory automatically at startup and serves its contents at `/plugins/{name}/`. No config required.
 
 ```html
 <!-- Reference plugin assets from your theme templates -->
-<link rel="stylesheet" href="/__plugins/my-plugin/widget.css">
-<script src="/__plugins/my-plugin/widget.js" defer></script>
+<link rel="stylesheet" href="/plugins/my-plugin/widget.css">
+<script src="/plugins/my-plugin/widget.js" defer></script>
 ```
 
 Assets are served directly — no bundling or transformation.
