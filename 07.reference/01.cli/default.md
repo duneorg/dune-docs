@@ -108,7 +108,7 @@ Occasionally an addition introduces a second, different version range for an alr
 | Command | Description |
 |---------|-------------|
 | `dune content:list` | List all pages with their routes, templates, and publish status. |
-| `dune content:check` | Validate all content: broken links, missing templates, orphaned media, content files that failed to parse. |
+| `dune content:check` | Validate all content: broken links, missing templates, orphaned media, content files that failed to parse. Frontmatter-only by default — pass `--render` to also compile every `.md`/`.mdx` page body and catch render failures (e.g. an MDX syntax error) that indexing alone can't see. |
 | `dune content:i18n-status` | Report translation coverage across all configured languages. |
 | `dune content:create <route>` | Scaffold a new content page at the given route. |
 | `dune content:delete <route>` | Delete a content page by route. Requires `--confirm` or `--dry-run`. |
@@ -302,6 +302,7 @@ See [MCP Server](/docs/for-developers/mcp-server) for full documentation and con
 | `--port <n>` | Server port for `dev` and `serve` (default: `3000`). |
 | `--debug` | Enable verbose debug output. |
 | `--json` | Output result as machine-readable JSON (supported by `build`, `validate`, `content:list`, `content:check`, `content:create`, `content:delete`, `config:show`, `config:validate`, `blueprint:*`). |
+| `--render` | (`content:check` only) Compile every `.md`/`.mdx` page body and report pages that fail to render, not just frontmatter issues. Off by default — slower since it renders the whole site. |
 
 ### Diagnosing local vs JSR installs
 
