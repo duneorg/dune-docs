@@ -42,9 +42,9 @@ In Claude Code, you can load `llms.txt` at the start of a session with:
 |------------|-------|
 | `dune-content.md` | Content conventions, frontmatter, file naming, ordered folders |
 | `dune-themes.md` | Theme structure, TSX templates, Preact islands, layout components |
-| `dune-schemas.md` | Data models — `store: local` and `store: db`, query interface |
-| `dune-plugin-authoring.md` | Plugin shape, hooks, admin routes, security guards |
-| `dune-auth.md` | Public user authentication, `ctx.state.user`, protecting routes |
+| `dune-schemas.md` | DB data layer (`schemas/*.yaml`), typed Repository API, migrations |
+| `dune-plugin-authoring.md` | Plugin shape, hooks, admin pages, `mount()` |
+| `dune-auth.md` | Public user authentication, `ctx.state.siteUser`, protecting routes |
 | `dune-authz.md` | Authorization via polizy, `authz.check()`, content gating |
 | `dune-email.md` | Transactional email, `email.send()`, template formats |
 | `dune-jobs.md` | Background jobs, cron schedules, `JobContext` |
@@ -58,7 +58,7 @@ dune update:skills
 
 ## MCP server
 
-The MCP server gives an agent live access to the content index, config, plugins, and blueprints — without a running web server. See [MCP Server](/docs/for-developers/mcp-server) for setup and the full tools and resources reference.
+The MCP server gives an agent live access to the content index, config, plugins, and blueprints — without a running web server. It isn't read-only: alongside the read tools, it registers a set of write/scaffold tools by default (write/delete a page, patch frontmatter, merge `site.yaml`, install a plugin, scaffold a plugin/route/form/theme) that mutate the filesystem directly, no admin server required. See [MCP Server](/docs/for-developers/mcp-server) for setup, the full tools/resources reference, and its security model (the server has no authentication of its own).
 
 Start it with:
 
@@ -78,5 +78,5 @@ See [REST API — Apply batched mutations](/docs/reference/api#apply-batched-mut
 |-------|-----------------|-------------|
 | `llms.txt` | Static conventions, gotchas, patterns | Start of session; one-time ingestion |
 | Skill files | Domain-specific background in `.claude/skills/` | Loaded automatically by Claude Code |
-| MCP server | Live site state — content tree, config, templates | Querying before generating or editing |
+| MCP server | Live site state, plus direct write/scaffold tools | Querying and writing without a running admin server |
 | Change API | Validated writes back to the site | Applying batched changes with feedback |
