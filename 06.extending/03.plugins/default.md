@@ -144,6 +144,7 @@ The handler receives a `HookContext<Request>` with the following properties:
 | `data` | `Request` | The incoming request |
 | `config` | `DuneConfig` | Full merged site config (read-only) |
 | `storage` | `StorageAdapter` | Read/write access to site storage |
+| `content` | `ContentApi` | Content query API (`.pages()`, `.page()`, `.search()`, `.taxonomy()`). `onRequest` fires well after bootstrap completes, so this is always populated here — see [Hooks](../01.hooks) for the events where it can be `undefined`. |
 | `setData(value)` | `fn` | Replace `data` — pass a `Response` to short-circuit routing |
 | `stopPropagation()` | `fn` | Prevent subsequent `onRequest` handlers from running |
 

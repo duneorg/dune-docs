@@ -61,11 +61,14 @@ The job's `name` is derived from the filename stem (`weekly-digest.ts` → `"wee
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `content` | `DuneEngine` | Full access to the content index and site engine. |
+| `content` | `DuneEngine` | The raw content engine. `.pages` is a plain array property (not a method), `.loadPage(sourcePath)` loads one full page. |
+| `contentApi` | `ContentApi` | The friendlier query API — `.pages()`, `.page()`, `.search()`, `.taxonomy()` — the same instance `bootstrap()` returns as `contentApi`. Always present, since jobs only run after bootstrap has fully completed. Added in 0.31.7. |
 | `config` | `DuneConfig` | Merged site and system configuration. |
 | `storage` | `StorageAdapter` | Raw storage adapter for plugin-specific reads/writes. |
 | `logger` | `JobLogger` | Structured logger. Entries include the job name automatically. |
 | `email` | `EmailClient` | Transactional email client. Present when an email provider is configured. Guard with `ctx.config.site.email?.provider` if email may not be set up. |
+
+`content` and `contentApi` are two different objects, not one renamed — kept deliberately separate so existing jobs relying on `content`'s exact array-property shape don't break. Prefer `contentApi` for anything beyond iterating every page; `.search()`/`.taxonomy()`/filtered `.pages()` aren't available on the raw engine.
 
 ## Enabling jobs in site.yaml
 

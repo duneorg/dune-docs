@@ -135,12 +135,16 @@ interface HookContext<T> {
   storage: StorageAdapter;    // storage access
   stopPropagation(): void;    // stop further hooks for this event
   setData(data: T): void;     // replace event data
+  jobs?: { run(name: string): Promise<void> }; // only set while the job scheduler is running
+  content?: ContentApi;       // only set once bootstrap() has built it — see below
 }
 ```
 
 `stopPropagation()` prevents subsequent hooks from running for this event. Use it when a hook fully handles something (like a custom 404 page or an auth redirect).
 
 `setData()` replaces the data flowing through the hook chain. The next hook receives the modified data.
+
+`content` (added in 0.31.7) is the same content query API (`.pages()`, `.page()`, `.search()`, `.taxonomy()`) that `bootstrap()` returns as `contentApi`. It's `undefined` for the handful of hooks that fire before that API is built — `onConfigLoaded`, `onStorageReady`, `onContentIndexReady`, `onSearchRecordsCollect`, `onSearchEngineCreate` — and for the lightweight, standalone hook registries `content:create` and `migrate:*` (with `--fire-hooks`) build outside a full `bootstrap()`. It's present for every other live hook. Guard with `ctx.content?.` unless you've confirmed your handler only ever fires post-bootstrap.
 
 ## Event data shapes
 
