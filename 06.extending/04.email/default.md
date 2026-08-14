@@ -82,10 +82,10 @@ The one place a pre-built client is handed to you automatically is inside a back
 | Field | Type | Description |
 |-------|------|-------------|
 | `to` | `string \| string[]` | Recipient address(es). Required. |
-| `subject` | `string` | Email subject. Required unless `template` supplies its own. |
+| `subject` | `string` | Email subject. Required unless `template` supplies its own. When both are present, the explicit `subject:` passed to `send()` wins — the template's own subject is only used as a fallback. |
 | `from` | `string` | Override the default From address. |
 | `replyTo` | `string` | Reply-To address. |
-| `text` | `string` | Plain-text body. Auto-generated from `html` if omitted. |
+| `text` | `string` | Plain-text body. Auto-generated from the rendered output only when using `template:` — a template renderer strips its own HTML into a text fallback. Sending raw `html` without a `template` does **not** auto-generate text if you omit it; no provider does this either. Pass `text:` explicitly for a non-template send if you want one. |
 | `html` | `string` | HTML body. Ignored if `template` is also given. |
 | `template` | `string` | Template name — loads from `emails/` directory (see below). |
 | `data` | `Record<string, unknown>` | Data passed to the template renderer. |
