@@ -17,7 +17,7 @@ Dune runs two completely separate authentication systems on the same server:
 | System | Who it's for | Sessions stored at | Cookie name |
 |--------|--------------|--------------------|-------------|
 | **Admin auth** | Content editors, admins | `admin.runtimeDir/sessions/` | `dune-admin-session` |
-| **Public auth** | Site visitors | `admin.runtimeDir/site-sessions/` | `dune-site-session` |
+| **Public auth** | Site visitors | `admin.runtimeDir/site-sessions/` | `dune_auth` |
 
 The two systems share no state, no user records, and no session cookies. An admin user is not a site user, and vice versa.
 

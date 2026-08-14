@@ -14,6 +14,8 @@ metadata:
 
 Dune's public auth system lets site visitors register and log in — completely separate from the admin panel. Login methods: OAuth (GitHub, Google, Discord), magic link (passwordless email), and external JWT (Clerk, Auth0, etc.).
 
+**As of this writing, `mountDuneAuth()` has no public export path at all** — `src/auth/mount.ts` isn't listed under any `@dune/core/*` subpath in `deno.json`, and the root `@dune/core` doesn't re-export it either. Everything below describes what the implementation does, but there is currently no supported way for a site to import and call it. `dune serve` and the generated `main.ts` entrypoint never call it automatically either, so `auth:` config in `site.yaml` has no effect on its own today. Treat this page as documenting an in-progress feature rather than something you can wire into a site right now.
+
 ## Configuration
 
 ```yaml
@@ -42,7 +44,7 @@ Only configure the providers you need. Each OAuth provider requires a registered
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET` | `/auth/login` | Default login page (renders `LoginForm` or theme's `auth/login.tsx`) |
-| `POST` | `/auth/logout` | Destroy session cookie and redirect to `/` |
+| `GET` | `/auth/logout` | Destroy session cookie and redirect to `/` (GET, not POST) |
 | `GET` | `/auth/me` | Return current `SiteUser` as JSON, or `401` if not logged in |
 | `GET` | `/auth/github` | Start GitHub OAuth flow |
 | `GET` | `/auth/github/callback` | GitHub OAuth callback |
@@ -50,8 +52,8 @@ Only configure the providers you need. Each OAuth provider requires a registered
 | `GET` | `/auth/google/callback` | Google OAuth callback |
 | `GET` | `/auth/discord` | Start Discord OAuth flow |
 | `GET` | `/auth/discord/callback` | Discord OAuth callback |
-| `POST` | `/auth/magic-link/send` | Send a magic link to `email` (form param) |
-| `GET` | `/auth/magic-link/verify` | Verify magic link token and create session |
+| `POST` | `/auth/magic/send` | Send a magic link to `email` (form param) |
+| `GET` | `/auth/magic` | Verify magic link token and create session |
 
 Routes for unconfigured providers return `404`.
 
@@ -63,7 +65,7 @@ Each OAuth provider follows the standard authorization code flow:
 2. GitHub redirects back to `/auth/github/callback?code=...&state=...`
 3. Dune exchanges the code for an access token, fetches the user profile
 4. Dune upserts a `SiteUser` record (creates on first login, updates on subsequent)
-5. Session cookie `dune-site-session` is set; user is redirected to `?next=` or `/`
+5. Session cookie `dune_auth` is set; user is redirected to `?next=` or `/`
 
 ### OAuth app setup
 
@@ -77,8 +79,8 @@ Each OAuth provider follows the standard authorization code flow:
 
 The magic link flow is passwordless:
 
-1. User enters their email at `/auth/login` (or any form POSTing to `/auth/magic-link/send`)
-2. Dune generates a token (HMAC-SHA256 signed, 15-minute TTL), sends an email with a link to `/auth/magic-link/verify?token=...`
+1. User enters their email at `/auth/login` (or any form POSTing to `/auth/magic/send`)
+2. Dune generates a token (HMAC-SHA256 signed, 15-minute TTL), sends an email with a link to `/auth/magic?token=...`
 3. User clicks the link → Dune verifies the token, upserts the user, sets the session cookie
 
 Magic link requires the [email module](../../06.extending/04.email) to be configured — without it, the link is logged to stdout (development only).
@@ -153,13 +155,13 @@ interface SiteUser {
   name?: string;        // Display name (from OAuth profile)
   avatarUrl?: string;   // Avatar URL (from OAuth profile)
   roles: string[];      // Assigned roles (e.g. ["member"])
-  provider: string;     // "github" | "google" | "discord" | "magic" | "jwt"
+  provider: string;     // "github" | "google" | "discord" | "magic" | "external-jwt"
   providerId?: string;  // Provider's user ID (for OAuth)
   createdAt: number;    // Unix timestamp (ms)
 }
 ```
 
-Users are stored as flat YAML files in `data/site-users/` (controlled by `admin.dataDir`). The directory should be committed to version control — site user records are site data, not ephemeral runtime state.
+Users are stored as flat JSON files in `data/site-users/` (controlled by `admin.dataDir`). The directory should be committed to version control — site user records are site data, not ephemeral runtime state.
 
 An email-based index in `data/site-users/by-email/` allows O(1) lookups by email address for login flows.
 
@@ -171,7 +173,7 @@ An email-based index in `data/site-users/by-email/` allows O(1) lookups by email
 const siteUser = ctx.state.siteUser as SiteUser | null;
 ```
 
-**In TSX page handlers** — the middleware injects a JSON-encoded `SiteUser` in the `x-dune-site-user` request header, which Dune automatically parses and makes available as `page.siteUser` in `TemplateProps`.
+**In generated CRUD route handlers** (from `dune codegen`) and other code that only has a raw `Request`, not a Fresh context — `mountDuneAuth()`'s middleware also serializes the resolved user into an internal `x-dune-site-user` request header (JSON, stripped at the edge). `requireAuth(req, mode)` from `@dune/core/auth/api-guard` reads it. **Hand-written TSX content pages get no automatic `page.siteUser` prop** — `TemplateProps` has no such field; read the header yourself the same way `api-guard.ts` does if you need the user there.
 
 **Via the API:**
 
