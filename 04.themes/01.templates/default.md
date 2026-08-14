@@ -61,6 +61,7 @@ export default function PostTemplate({ page, pageTitle, site, config, nav, Layou
 | `children` | `Element?` | Pre-rendered content (HTML wrapped in a div) |
 | `searchQuery` | `string?` | Set when rendering the `/search` page. The raw query string from `?q=`. |
 | `searchResults` | `SearchResult[]?` | Set when rendering the `/search` page. Ranked results from the search engine. |
+| `content` | `ContentApi?` | The content query API (`.pages()`, `.page()`, `.search()`, `.taxonomy()`) — the same instance `bootstrap.contentApi` exposes. Optional on the type, but populated on every normal render; only the bare-HTML fallback used when no theme resolves at all omits it. Added in 0.31.7. |
 
 ### Using the Layout prop
 

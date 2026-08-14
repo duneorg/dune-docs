@@ -201,6 +201,7 @@ export default function MyPage({ data }: PageProps<Data>) {
         <li>Import theme components (layouts, partials, design tokens)</li>
         <li>Import from npm and JSR packages</li>
         <li>Access co-located media via the <code>media</code> prop</li>
+        <li>Query the content index via the <code>content</code> prop — <code>.pages()</code>, <code>.page()</code>, <code>.search()</code>, <code>.taxonomy()</code></li>
         <li>Use collections defined in their frontmatter</li>
         <li>Handle form submissions and API requests via <code>handler</code></li>
         <li>Full TypeScript type safety</li>
