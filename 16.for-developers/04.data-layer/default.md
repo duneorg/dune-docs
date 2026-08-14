@@ -82,12 +82,14 @@ Run `dune codegen` to generate TypeScript types and a repository index from your
 ```bash
 dune codegen
 # Generated 3 file(s):
-#   src/db/types/Comment.ts
-#   src/db/types/Post.ts
+#   src/db/types/comment.ts
+#   src/db/types/post.ts
 #   src/db/index.ts
 ```
 
-`src/db/types/Comment.ts` (example output):
+Filenames are `camelCase(model)`, not the model name verbatim — a multi-word model like `BlogPost` generates `src/db/types/blogPost.ts`, not `BlogPost.ts`.
+
+`src/db/types/comment.ts` (example output):
 
 ```ts
 // GENERATED — do not edit. Run `dune codegen` to regenerate.
