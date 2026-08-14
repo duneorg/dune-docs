@@ -148,14 +148,14 @@ Two backends are available via `authzStore`:
 
 ### `authzStore: local` (default)
 
-Tuples are stored as HMAC-signed JSON files:
+Tuples are stored as JSON files, one per tuple:
 
 ```
 data/permissions/
-  {uuid}.json   →  { id, subject, relation, object, sig }
+  {uuid}.json   →  { id, subject: {type, id}, relation, object: {type, id}, condition?, hmac? }
 ```
 
-The in-memory index is rebuilt from files on restart. Each file is signed with a per-installation HMAC key (stored in `data/permissions/.key`) — tampered or externally-written files are rejected on load. Do not edit these files directly; use `authz.allow()`, `authz.addMember()`, `authz.disallowAllMatching()`.
+The in-memory index is rebuilt from files on restart. **HMAC signing is opt-in, not automatic** — set `DUNE_AUTHZ_HMAC_SECRET` (loaded via `loadHmacKeyFromEnv()`) to enable it; without it, tuple file integrity checking is disabled (`dune serve` logs a warning: `authz.hmac.disabled`). When enabled, each write signs the tuple into the `hmac` field (not `sig`) and tampered or externally-written files are rejected on load. Do not edit these files directly; use `authz.allow()`, `authz.addMember()`, `authz.disallowAllMatching()`.
 
 ### `authzStore: db`
 
