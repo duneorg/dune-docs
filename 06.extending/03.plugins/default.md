@@ -41,6 +41,8 @@ dune plugin:install jsr:@dune/seo
 
 This adds the entry to `site.yaml` automatically. Run `dune dev` to activate it.
 
+There's also an opt-in auto-discovery mode: set `auto_discover_plugins: true` at the top level of `site.yaml` and every file directly under `plugins/` loads without needing its own `plugins:` entry. It's off by default on purpose — loading an arbitrary `.ts` file out of that directory executes its module code at startup, so enabling it means anyone who can write to `plugins/` can get code executed. Explicit `plugins:` entries always take priority over an auto-discovered plugin with the same effect.
+
 ### Plugin source formats
 
 | Format | Example | Description |
@@ -466,7 +468,7 @@ Config schema fields use the same types as [Flex Object fields](../flex-objects#
 
 ## The `setup()` function
 
-`setup()` is called once when the plugin is registered — before any hook events fire. It receives a `PluginApi` object:
+`setup()` is called once when the plugin is registered. **If it's `async`, the registry does not wait for it to resolve before hooks can fire** — `registerPlugin()` calls `setup()` and only attaches a `.catch()` for error logging, it never blocks registration or dispatch on the returned Promise. Register hooks (via `hooks.on()`, synchronously) before any `await` in `setup()`, and don't rely on async initialization work having finished by the time the first hook event arrives. It receives a `PluginApi` object:
 
 ```typescript
 interface PluginApi {
@@ -492,8 +494,10 @@ export default function createCache(config: CacheConfig = {}): DunePlugin {
       const purgeUrl = (cfg.plugins["edge-cache"] as CacheConfig)?.purge_url;
       if (!purgeUrl) return;
 
-      hooks.on("onCacheInvalidate", async ({ data }) => {
-        await fetch(`${purgeUrl}?key=${data.key}`, { method: "POST" });
+      // onCacheInvalidate's payload is always {} — a "cache is stale"
+      // signal, not scoped to a key — so there's nothing to read off `data`.
+      hooks.on("onCacheInvalidate", async () => {
+        await fetch(purgeUrl, { method: "POST" });
       });
 
       // Verify the purge endpoint is reachable at startup
