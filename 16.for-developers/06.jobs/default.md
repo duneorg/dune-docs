@@ -24,41 +24,38 @@ jobs/
   sitemap-rebuild.ts
 ```
 
-Each file must export a `JobDefinition` as its default export:
+Each file exports a `schedule` string constant and a default-exported handler function — **not** a single default-exported `JobDefinition` object. The loader (`src/jobs/scanner.ts`) reads `mod.schedule` and `mod.default` as two separate exports; `mod.default` must be a function, so a default-exported object (even one satisfying `JobDefinition`) fails the `typeof handler !== "function"` check and the job is skipped with a `jobs.load.missing_handler` warning:
 
 ```typescript
 // jobs/weekly-digest.ts
-import type { JobDefinition } from "@dune/core/jobs";
+import type { JobContext } from "@dune/core/jobs";
 
-export default {
-  name: "weekly-digest",
-  schedule: "0 8 * * 1",   // every Monday at 08:00
-  handler: async (ctx) => {
-    const pages = await ctx.content.pages;
-    const recent = pages
-      .filter((p) => p.published && p.date)
-      .sort((a, b) => (b.date ?? 0) - (a.date ?? 0))
-      .slice(0, 5);
+export const schedule = "0 8 * * 1";   // every Monday at 08:00 — required, top-level export
 
-    await ctx.email.send({
-      to: "team@example.com",
-      subject: "Weekly digest",
-      template: "digest",
-      data: { pages: recent },
-    });
+export default async function handler(ctx: JobContext) {
+  const recent = ctx.content.pages
+    .filter((p) => p.published && p.date)
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")) // date is a string, not a number
+    .slice(0, 5);
 
-    ctx.logger.info("digest_sent", { count: recent.length });
-  },
-} satisfies JobDefinition;
+  await ctx.email.send({
+    to: "team@example.com",
+    subject: "Weekly digest",
+    template: "digest",
+    data: { pages: recent },
+  });
+
+  ctx.logger.info("digest_sent", { count: recent.length });
+}
 ```
 
-### `JobDefinition` fields
+The job's `name` is derived from the filename stem (`weekly-digest.ts` → `"weekly-digest"`) — there's no separate `name` field to set. `JobDefinition` (the internal type the loader constructs from your two exports) does have `name`/`schedule`/`handler` fields, but you never author one directly:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | `string` | Unique identifier. Used in logs, state files, and the admin trigger endpoint. |
-| `schedule` | `string` | Standard 5-field cron expression (`min hour dom month dow`). |
-| `handler` | `(ctx: JobContext) => Promise<void> \| void` | The job function. |
+| `name` | `string` | Derived from the filename, not something you export. |
+| `schedule` | `string` | Standard 5-field cron expression (`min hour dom month dow`) — your `export const schedule`. |
+| `handler` | `(ctx: JobContext) => Promise<void> \| void` | Your default export. |
 
 ### `JobContext`
 
@@ -131,7 +128,7 @@ Trigger a job immediately from the admin panel or via the API:
 POST /admin/api/jobs/{name}/run
 ```
 
-Requires admin authentication and a valid CSRF token. Returns `200` with `{ "ok": true }` once the handler completes, or `500` with `{ "error": "…" }` if it throws.
+Requires admin authentication, the `config.update` permission, and a valid CSRF token. **Fires the job asynchronously and returns immediately** — `200` with `{ "triggered": true, "name": "…" }` as soon as the run starts, not once it completes. If the job name isn't registered, returns `404` with `{ "error": "…" }`. A handler that throws *after* the response has already been sent is only logged to the server console (`[dune/jobs] Manual run of {name} failed: …`) — it does not surface in the HTTP response or change its status code. Poll `GET /admin/api/jobs` (or the state file) afterward to see whether it actually succeeded.
 
 ## Error handling
 
