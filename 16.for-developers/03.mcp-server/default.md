@@ -95,7 +95,7 @@ Tools are callable functions that agents can invoke with parameters.
 
 ### Write tools
 
-Write tools modify site content and configuration directly on disk. They are only available when `mcp:serve` is running against a local site (not a remote or read-only mount).
+Write tools modify site content and configuration directly on disk. They're registered by `mcp:serve` unconditionally — there's no read-only or remote-mount mode that disables them; if the server is running, the write tools are available.
 
 | Tool | Description |
 |------|-------------|
@@ -109,7 +109,7 @@ Write tools modify site content and configuration directly on disk. They are onl
 | `scaffold_form` | Generate a form/blueprint schema at `schemas/{name}.yaml` with example fields. |
 | `scaffold_theme` | Generate a minimal theme skeleton at `themes/{name}/`. |
 
-> **Note**: Scaffold tools (`scaffold_*`) invoke the same generators as `dune generate:*` CLI commands. The MCP server routes their output through `console.log` capture; standard output from the generator is surfaced in the tool result.
+> **Note**: Scaffold tools (`scaffold_*`) invoke the same generators as `dune generate:*` CLI commands. Each generator accepts a `log` callback (falling back to `console.log` when none is given) — the MCP server passes a scoped collector instead of touching global `console.log`, so concurrent scaffold calls don't interleave output. The collected lines are returned as the tool result.
 
 ## Resources
 
