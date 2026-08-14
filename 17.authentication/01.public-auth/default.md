@@ -14,7 +14,18 @@ metadata:
 
 Dune's public auth system lets site visitors register and log in — completely separate from the admin panel. Login methods: OAuth (GitHub, Google, Discord), magic link (passwordless email), and external JWT (Clerk, Auth0, etc.).
 
-**As of this writing, `mountDuneAuth()` has no public export path at all** — `src/auth/mount.ts` isn't listed under any `@dune/core/*` subpath in `deno.json`, and the root `@dune/core` doesn't re-export it either. Everything below describes what the implementation does, but there is currently no supported way for a site to import and call it. `dune serve` and the generated `main.ts` entrypoint never call it automatically either, so `auth:` config in `site.yaml` has no effect on its own today. Treat this page as documenting an in-progress feature rather than something you can wire into a site right now.
+**`mountDuneAuth()` is importable from `@dune/core/auth/mount`** (added in 0.31.7 — on earlier versions this export didn't exist under any `@dune/core/*` subpath at all, and there was no supported way to call it). It's still not auto-wired: `dune serve` and the generated `main.ts` entrypoint never call it for you, so `auth:` config in `site.yaml` does nothing on its own — a site's entrypoint must call `mountDuneAuth(app, ctx)` explicitly, the same way headless-mode sites already call `mountDuneAdmin()`:
+
+```ts
+// main.ts
+import { App } from "fresh";
+import { bootstrap } from "@dune/core/bootstrap";
+import { mountDuneAuth } from "@dune/core/auth/mount";
+
+const ctx = await bootstrap("./");
+const app = new App();
+await mountDuneAuth(app, ctx); // populates ctx.state.siteUser on every request from here on
+```
 
 ## Configuration
 
