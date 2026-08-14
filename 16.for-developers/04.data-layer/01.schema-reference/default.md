@@ -96,7 +96,7 @@ A plain value means exact match (`field: value`). Use operator objects for range
 | Command | Description |
 |---------|-------------|
 | `dune codegen` | Generate `src/db/types/*.ts` and `src/db/index.ts` from schemas |
-| `dune migrate:generate` | Diff schemas against DB and write SQL migration files to `migrations/` |
+| `dune migrate:generate` | Diff schemas against DB and write SQL migration files to `data/migrations/` |
 | `dune migrate:run` | Apply all pending migration files |
 | `dune migrate:status` | Show which migrations are applied and which are pending |
 

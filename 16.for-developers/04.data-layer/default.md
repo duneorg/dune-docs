@@ -118,57 +118,64 @@ export interface CommentUpdate {
 }
 ```
 
-`src/db/index.ts` exports typed repositories for every schema:
+`src/db/index.ts` exports a **single `db` object** keyed by table name — not one named export per model:
 
 ```ts
 // GENERATED — do not edit.
-import { createRepository } from "@dune/core/db";
-import type { Comment, CommentCreate, CommentUpdate } from "./types/Comment.ts";
-export type { Comment, CommentCreate, CommentUpdate };
+import { createDbAdapter, createRepository } from "@dune/core/db";
+import type { Comment, CommentCreate, CommentUpdate } from "./types/comment.ts";
+// ... one import per model
 
-export const Comments = createRepository<Comment, CommentCreate, CommentUpdate>("comments");
+const adapter = await createDbAdapter();
+
+export const db = {
+  comments: createRepository<Comment, CommentCreate, CommentUpdate>("comments", adapter),
+  // ... one entry per model, keyed by table name
+};
+
+export type { Comment, CommentCreate, CommentUpdate };
 ```
 
-Re-run `dune codegen` whenever you change a schema file.
+`dune codegen` never writes an import-map alias into `deno.json` — `@/db` only resolves if your project's `deno.json` already maps `@/` to `./src/`; otherwise import the relative path. Re-run `dune codegen` whenever you change a schema file.
 
 ## Repository API
 
-Import the generated repository and query your data:
+Import the generated `db` object and query your data — everything hangs off `db.{table}`:
 
 ```ts
-import { Comments } from "./src/db/index.ts";
+import { db } from "@/db"; // or "../../src/db/index.ts" if you have no @/ alias
 
 // Create
-const comment = await Comments.create({
+const comment = await db.comments.create({
   pageRoute: "/blog/hello-world",
   authorEmail: "alice@example.com",
   body: "Great post!",
 });
 
 // Find all
-const all = await Comments.find();
+const all = await db.comments.find();
 
 // Find with conditions
-const approved = await Comments.find({
+const approved = await db.comments.find({
   where: { approved: true, pageRoute: "/blog/hello-world" },
   orderBy: ["createdAt", "desc"],
   limit: 10,
 });
 
-// Find one
-const one = await Comments.findOne({ where: { id: "abc123" } });
+// Find one — returns null if zero rows match, THROWS if more than one matches
+const one = await db.comments.findOne({ where: { id: "abc123" } });
 
-// Update
-await Comments.update(comment.id, { approved: true });
+// Update — positional id, not { where, data }
+await db.comments.update(comment.id, { approved: true });
 
-// Delete
-await Comments.delete(comment.id);
+// Delete — positional id, single row only
+await db.comments.delete(comment.id);
 
 // Count
-const total = await Comments.count({ where: { approved: false } });
+const total = await db.comments.count({ where: { approved: false } });
 
-// Upsert
-const upserted = await Comments.upsert(
+// Upsert — positional (where, data)
+const upserted = await db.comments.upsert(
   { pageRoute: "/blog/hello", authorEmail: "alice@example.com" },
   { pageRoute: "/blog/hello", authorEmail: "alice@example.com", body: "Updated" },
 );
@@ -180,25 +187,25 @@ Use operator objects for range and membership queries:
 
 ```ts
 // Greater/less than
-await Comments.find({ where: { createdAt: { $gt: new Date("2026-01-01") } } });
+await db.comments.find({ where: { createdAt: { $gt: new Date("2026-01-01") } } });
 
 // In set
-await Comments.find({ where: { pageRoute: { $in: ["/blog/a", "/blog/b"] } } });
+await db.comments.find({ where: { pageRoute: { $in: ["/blog/a", "/blog/b"] } } });
 
 // Not in set
-await Comments.find({ where: { approved: { $notIn: [false] } } });
+await db.comments.find({ where: { approved: { $notIn: [false] } } });
 
 // Contains (substring match)
-await Comments.find({ where: { body: { $contains: "hello" } } });
+await db.comments.find({ where: { body: { $contains: "hello" } } });
 
 // Starts with
-await Comments.find({ where: { authorEmail: { $startsWith: "alice" } } });
+await db.comments.find({ where: { authorEmail: { $startsWith: "alice" } } });
 
 // Null check
-await Comments.find({ where: { updatedAt: { $isNull: true } } });
+await db.comments.find({ where: { updatedAt: { $isNull: true } } });
 
 // OR clause
-await Comments.find({
+await db.comments.find({
   where: {
     $or: [{ approved: true }, { authorEmail: "alice@example.com" }],
   },
@@ -235,7 +242,7 @@ dune migrate:run         # apply pending migration files
 dune migrate:status      # show which migrations are applied and which are pending
 ```
 
-Migration files are written to `migrations/` and should be committed to version control. The `_dune_migrations` table in the database tracks which have been applied.
+Migration files are written to `data/migrations/` (not bare `migrations/`) and should be committed to version control. The `_dune_migrations` table in the database tracks which have been applied.
 
 Typical workflow after changing a schema:
 
@@ -243,10 +250,10 @@ Typical workflow after changing a schema:
 # 1. Edit schemas/comments.yaml
 # 2. Generate the migration
 dune migrate:generate
-# → migrations/001_create_comments.sql
+# → data/migrations/001_create_comments.sql
 
 # 3. Review the generated SQL
-cat migrations/001_create_comments.sql
+cat data/migrations/001_create_comments.sql
 
 # 4. Apply it
 dune migrate:run
@@ -291,7 +298,7 @@ api:
 | `/api/posts` | `GET` | List records (paginated via `?limit=&offset=`) |
 | `/api/posts` | `POST` | Create record |
 | `/api/posts/{id}` | `GET` | Get single record |
-| `/api/posts/{id}` | `PATCH` | Update record |
+| `/api/posts/{id}` | `PUT` | Update record (not `PATCH`) |
 | `/api/posts/{id}` | `DELETE` | Delete record |
 
 ### Authentication modes
@@ -309,7 +316,7 @@ api:
 For queries the Repository API doesn't cover, use `getAdapter()`:
 
 ```ts
-const adapter = Comments.getAdapter();
+const adapter = db.comments.getAdapter();
 const rows = await adapter.query<{ count: number }>(
   "SELECT COUNT(*) as count FROM comments WHERE approved = ?",
   [1],
