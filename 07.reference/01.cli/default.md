@@ -248,7 +248,7 @@ See [Data Layer](../../16.for-developers/04.data-layer) for full documentation.
 | `dune generate --list` | List all available generators. |
 | `dune generate:plugin <name>` | Scaffold a plugin at `plugins/{name}/index.ts`. |
 | `dune generate:route <name>` | Create a content page at `content/{name}.md`. Name may include path separators (`blog/archive`). |
-| `dune generate:form <name>` | Create a blueprint YAML at `schemas/{name}.yaml` with example fields. |
+| `dune generate:form <name>` | Create a form definition at `forms/{name}.yaml` with example fields. |
 | `dune generate:theme <name>` | Scaffold a theme at `themes/{name}/` with `theme.yaml`, a default template, and a CSS file. |
 | `dune generate:schema <name>` | Create a Flex Object schema at `flex-objects/{name}.yaml`. |
 | `dune generate:admin-route <name>` | Scaffold a custom admin panel route at `src/admin/routes/{name}/index.tsx` with a matching handler and basic auth guard. |

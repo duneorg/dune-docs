@@ -106,7 +106,7 @@ Write tools modify site content and configuration directly on disk. They're regi
 | `install_plugin` | Add a plugin specifier to the `plugins:` list in `site.yaml`. No-op if already present. |
 | `scaffold_plugin` | Generate a plugin skeleton at `plugins/{name}/index.ts`. |
 | `scaffold_route` | Generate a Markdown content page stub at `content/{path}.md` (not TSX, despite the name). |
-| `scaffold_form` | Generate a form/blueprint schema at `schemas/{name}.yaml` with example fields. |
+| `scaffold_form` | Generate a form definition at `forms/{name}.yaml` with example fields. |
 | `scaffold_theme` | Generate a minimal theme skeleton at `themes/{name}/`. |
 
 > **Note**: Scaffold tools (`scaffold_*`) invoke the same generators as `dune generate:*` CLI commands. Each generator accepts a `log` callback (falling back to `console.log` when none is given) — the MCP server passes a scoped collector instead of touching global `console.log`, so concurrent scaffold calls don't interleave output. The collected lines are returned as the tool result.
@@ -122,7 +122,7 @@ Resources are static URIs that agents can read directly.
 | `dune://content/pages` | Complete page index as JSON. |
 | `dune://content/taxonomy` | All taxonomy data with page counts. |
 | `dune://content/blueprints` | All blueprint definitions. |
-| `dune://content/forms` | All schema/form definitions under `schemas/` — read before `scaffold_form` to avoid name collisions or confusing this with the DB data-layer's own `schemas/*.yaml` format (see [Data Layer](../04.data-layer)). |
+| `dune://content/forms` | All form definitions under `forms/` — read before `scaffold_form` to avoid name collisions. Not the same directory as the DB data-layer's own `schemas/*.yaml` format (see [Data Layer](../04.data-layer)) — the two used to collide on `schemas/` before 0.31.7, when `generate:form`/`scaffold_form` wrote to the wrong directory entirely. |
 | `dune://site/audit` | Last 50 admin audit-log entries. Empty array when audit logging isn't enabled. |
 
 ## Skill files
