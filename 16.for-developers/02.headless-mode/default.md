@@ -199,12 +199,12 @@ export default function Post({ data }: PageProps<ResolvedPage>) {
 | `summary` | `string` | First paragraph or `description` frontmatter |
 | `frontmatter` | `FM` | Full typed frontmatter (generic — pass your type as `page<MyFM>()`) |
 
-### `search(query, limit?)`
+### `search(query, opts?)`
 
-Full-text search across all indexed pages. Returns synchronously.
+Full-text search across all indexed pages. **Returns a `Promise`** — `await` it (the search index lookup itself is synchronous internally, but the method's return type is `Promise<ContentSearchResult[]>`). The second argument is an options object, not a bare limit number.
 
 ```ts
-const results = contentApi.search("deno deploy", 10);
+const results = await contentApi.search("deno deploy", { limit: 10 });
 // results: Array<{ route, title, score, excerpt }>
 ```
 
