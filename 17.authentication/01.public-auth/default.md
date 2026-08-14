@@ -14,10 +14,12 @@ metadata:
 
 Dune's public auth system lets site visitors register and log in — completely separate from the admin panel. Login methods: OAuth (GitHub, Google, Discord), magic link (passwordless email), and external JWT (Clerk, Auth0, etc.).
 
-**`mountDuneAuth()` is importable from `@dune/core/auth/mount`** (added in 0.31.7 — on earlier versions this export didn't exist under any `@dune/core/*` subpath at all, and there was no supported way to call it). It's still not auto-wired: `dune serve` and the generated `main.ts` entrypoint never call it for you, so `auth:` config in `site.yaml` does nothing on its own — a site's entrypoint must call `mountDuneAuth(app, ctx)` explicitly, the same way headless-mode sites already call `mountDuneAdmin()`:
+**As of 0.31.7, writing `auth:` in `site.yaml` is enough on its own** — `createDuneApp()` (the code path both `dune serve` and `dune dev` go through) calls `mountDuneAuth(app, ctx)` automatically whenever `site.auth` is configured. A site that never writes an `auth:` block gets zero behavior change: no new directories, no `/auth/*` routes, no added per-request middleware. On earlier versions, `mountDuneAuth()` had no public export under any `@dune/core/*` subpath at all, and there was no supported way to call it, manually or otherwise.
+
+**Headless mode is the one case that still needs a manual call** — headless sites don't go through `createDuneApp()`, so call `mountDuneAuth(app, ctx)` explicitly from `main.ts`, the same way they already call `mountDuneAdmin()`:
 
 ```ts
-// main.ts
+// main.ts — headless mode only; the default/full mode wires this automatically
 import { App } from "fresh";
 import { bootstrap } from "@dune/core/bootstrap";
 import { mountDuneAuth } from "@dune/core/auth/mount";
@@ -26,6 +28,8 @@ const ctx = await bootstrap("./");
 const app = new App();
 await mountDuneAuth(app, ctx); // populates ctx.state.siteUser on every request from here on
 ```
+
+`dune build --static` (the SSG builder) explicitly opts out of the auto-wiring (`mountAuth: false` on its own internal `createDuneApp()` call) — a static build has no live request flow for `/auth/*` to serve, and shouldn't create session/user-store directories as a side effect of generating HTML.
 
 ## Configuration
 
