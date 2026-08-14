@@ -99,13 +99,13 @@ Write tools modify site content and configuration directly on disk. They are onl
 
 | Tool | Description |
 |------|-------------|
-| `write_page` | Write or overwrite a content file. Accepts a path relative to the content dir and the full file content (frontmatter + body). Validates YAML frontmatter before writing. |
+| `write_page` | Write or overwrite a content file. Accepts a path relative to the content dir and the full file content (frontmatter + body). Writes the content as-is — does not parse or validate YAML frontmatter before writing. |
 | `delete_page` | Delete a content file by route (e.g. `/blog/hello`) or by path relative to the content dir. |
 | `update_frontmatter` | Patch frontmatter fields on an existing page. Pass `null` as a value to remove a field. Leaves the body unchanged. |
 | `update_config` | Merge fields into `site.yaml`. Accepts a partial config object; existing keys not in the patch are preserved. |
 | `install_plugin` | Add a plugin specifier to the `plugins:` list in `site.yaml`. No-op if already present. |
-| `scaffold_plugin` | Generate a plugin skeleton at `plugins/{name}/`. |
-| `scaffold_route` | Generate a TSX content page stub at `content/{path}.md`. |
+| `scaffold_plugin` | Generate a plugin skeleton at `plugins/{name}/index.ts`. |
+| `scaffold_route` | Generate a Markdown content page stub at `content/{path}.md` (not TSX, despite the name). |
 | `scaffold_form` | Generate a form/blueprint schema at `schemas/{name}.yaml` with example fields. |
 | `scaffold_theme` | Generate a minimal theme skeleton at `themes/{name}/`. |
 
@@ -122,6 +122,8 @@ Resources are static URIs that agents can read directly.
 | `dune://content/pages` | Complete page index as JSON. |
 | `dune://content/taxonomy` | All taxonomy data with page counts. |
 | `dune://content/blueprints` | All blueprint definitions. |
+| `dune://content/forms` | All schema/form definitions under `schemas/` — read before `scaffold_form` to avoid name collisions or confusing this with the DB data-layer's own `schemas/*.yaml` format (see [Data Layer](../04.data-layer)). |
+| `dune://site/audit` | Last 50 admin audit-log entries. Empty array when audit logging isn't enabled. |
 
 ## Skill files
 
