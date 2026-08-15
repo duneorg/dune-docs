@@ -29,12 +29,10 @@ Hooks let you run code at specific points in Dune's lifecycle — when a page lo
 | Hook | When it fires | Use case |
 |------|--------------|----------|
 | `onRequest` | Incoming request (before routing) | Analytics, auth, rate limiting |
-| `onRouteResolved` | Route matched to a page | URL rewriting, A/B testing |
-| `onPageLoaded` | Full page object loaded | Content transformation |
 | `onCollectionResolved` | Collection query executed | Modify collection results |
 | `onBeforeRender` | Before JSX rendering | Inject data, modify props |
-| `onAfterRender` | After rendering (HTML available) | Post-processing, minification |
-| `onResponse` | Before response sent | Headers, compression |
+
+> **`onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` are declared but not fired.** They're real design questions, not oversights — see the note at the end of this page for why each is deferred rather than implemented.
 
 ### Content processing hooks
 
@@ -97,8 +95,8 @@ export default {
   version: "1.0.0",
   hooks: {
     onRequest: async ({ data, config }) => {
-      // Log every request
-      console.log(`[${new Date().toISOString()}] ${data.req.method} ${data.req.url}`);
+      // data is the Request itself — not wrapped in { req: Request }
+      console.log(`[${new Date().toISOString()}] ${data.method} ${data.url}`);
     },
 
     onMarkdownProcess: async ({ data, setData }) => {
@@ -158,25 +156,23 @@ The `data` field in `HookContext` is typed per event. Here is what each hook rec
 | `onStorageReady` | `StorageAdapter` | The initialized storage adapter |
 | `onContentIndexReady` | `PageIndex[]` | All indexed pages |
 
-### Request lifecycle hooks (intended for custom server integrations)
+### Request lifecycle hooks
 
 | Hook | `data` shape | Description |
 |------|--------------|-------------|
-| `onRequest` | `{ req: Request }` | Incoming HTTP request before routing |
-| `onRouteResolved` | `{ req: Request, page: PageIndex }` | Route matched to a page |
-| `onPageLoaded` | `{ req: Request, page: Page }` | Full page object ready |
-| `onCollectionResolved` | `{ req: Request, collection: Collection }` | Collection query result |
-| `onBeforeRender` | `{ req: Request, page: Page, props: Record<string, unknown> }` | Before JSX render |
-| `onAfterRender` | `{ req: Request, html: string }` | After render, HTML available |
-| `onResponse` | `{ req: Request, response: Response }` | Before response is sent |
+| `onRequest` | `Request` | The incoming request itself — **not** wrapped in `{ req: Request }` |
+| `onCollectionResolved` | `{ req: Request, collection: Collection }` | Collection query result. `setData()` a modified `collection` to change what the template receives. |
+| `onBeforeRender` | `{ req: Request, page: Page, props: Record<string, unknown> }` | The fully-assembled template props, right before rendering. `setData()` a modified `props` to inject or change what the template receives. |
+
+`onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` are declared in `HookEvent` but not fired — see the note at the end of this page.
 
 ### Content processing hooks
 
 | Hook | `data` shape | Description |
 |------|--------------|-------------|
-| `onMarkdownProcess` | `{ raw: string, page: PageIndex }` | Raw Markdown before processing |
-| `onMarkdownProcessed` | `{ html: string, page: PageIndex }` | Rendered HTML after processing |
-| `onMediaDiscovered` | `{ media: MediaFile[], page: PageIndex }` | Media files found for a page |
+| `onMarkdownProcess` | `{ raw: string, page: Page }` | Raw Markdown before processing. `page` is the full `Page` object, not a lightweight index — it's already fully loaded by this point. `setData()` a modified `raw` to rewrite the source before compilation. |
+| `onMarkdownProcessed` | `{ html: string, page: Page }` | Rendered HTML after processing (after sanitization). `setData()` a modified `html` to post-process the output. |
+| `onMediaDiscovered` | `{ media: MediaFile[], page: PageIndex }` | Media files found for a page, fired once per page load (not per request — page loads are cached). |
 
 ### Cache hooks
 
@@ -190,8 +186,8 @@ The `data` field in `HookContext` is typed per event. Here is what each hook rec
 
 | Hook | `data` shape | Description |
 |------|--------------|-------------|
-| `onApiRequest` | `{ req: Request }` | Before API request is handled |
-| `onApiResponse` | `{ req: Request, response: unknown }` | After API response is built |
+| `onApiRequest` | `{ req: Request }` | Before any `/api/*` request is routed |
+| `onApiResponse` | `{ req: Request, response: Response }` | After the API response is built. `setData()` a modified `response` to replace it entirely (headers, body, or status). |
 
 ### Engine lifecycle hooks
 
@@ -225,6 +221,15 @@ The payload objects are mutable — handlers populate them in place (push record
 These same events also trigger [outbound webhooks](../../webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
 
 > **Note:** The startup hooks (`onConfigLoaded`, `onStorageReady`, `onContentIndexReady`) and engine lifecycle hooks (`onRebuild`, `onThemeSwitch`) are fired automatically by Dune. The request and API hooks can also be fired by custom server code using `hooks.fire(event, data)` when integrating Dune into a custom server.
+
+## Four events that are declared but not fired
+
+`HookEvent` also declares `onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` — they pass config validation, but nothing in `@dune/core` or `@dune/plugin-admin` ever calls `hooks.fire()` for them. A handler registered for one of these is simply never invoked, with no error or warning. This is a deliberate, tracked decision, not an oversight:
+
+- **`onRouteResolved`/`onPageLoaded`** describe a two-phase resolution — a route matched to a lightweight `PageIndex`, then the full `Page` object loaded — that doesn't exist in the current engine. `engine.resolve()` does both in a single step and returns the full `Page` directly. Firing both events as originally documented would mean either fabricating a second event from data already in hand, or restructuring `resolve()` into two real phases.
+- **`onAfterRender`/`onResponse`** need the actual rendered HTML string, but Fresh's `render()` returns a `Response` directly — core never sees the HTML itself. The only way to get `{ html: string }` for a handler to inspect or modify would be to intercept every response and buffer its full body into memory via `response.text()`, reconstructing a new `Response` afterward. That kills streaming and adds a real per-request cost, applied to every request whether or not any plugin is actually listening.
+
+If you need equivalent behavior today: `onBeforeRender` already gives you the assembled template props before rendering, which covers most of what a plugin would otherwise want from `onAfterRender` on the props side. For full HTML post-processing, do it inside your own theme template/layout component instead of a hook.
 
 ## Hook execution order
 

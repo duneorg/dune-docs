@@ -72,8 +72,9 @@ export default {
 
   hooks: {
     onRequest: ({ data }) => {
-      const url = new URL(data.req.url);
-      console.log(`[${new Date().toISOString()}] ${data.req.method} ${url.pathname}`);
+      // data is the Request itself — not wrapped in { req: Request }
+      const url = new URL(data.url);
+      console.log(`[${new Date().toISOString()}] ${data.method} ${url.pathname}`);
     },
   },
 } satisfies DunePlugin;
@@ -101,6 +102,15 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
     version: "1.0.0",
     description: "Privacy-focused page view analytics",
 
+    // NOT CURRENTLY POSSIBLE VIA A HOOK: this example needs onAfterRender to
+    // rewrite the final rendered HTML string, but onAfterRender is declared
+    // and documented above as intentionally unimplemented — Dune never sees
+    // the rendered HTML as a string to hand to a hook (Fresh's render()
+    // returns a Response directly). Until that changes, script injection
+    // like this has to happen inside your own theme layout instead — e.g.
+    // read `config.plugins["analytics"]` there and conditionally render the
+    // <script> tag. Left here as an illustration of the shape this hook
+    // would have if it existed, not a working example.
     hooks: {
       onAfterRender: ({ data }) => {
         if (!enabled || !domain) return;
@@ -649,7 +659,7 @@ Plugin config is always available in hook handlers via `config.plugins["plugin-n
 
 ```typescript
 hooks: {
-  onAfterRender: ({ data, config }) => {
+  onBeforeRender: ({ data, config }) => {
     // config.plugins["my-plugin"] is the fully merged config object
     const myConfig = (config.plugins["my-plugin"] ?? {}) as MyPluginConfig;
     if (!myConfig.enabled) return;
@@ -697,11 +707,11 @@ $ dune plugin:list
 Installed plugins (2):
 
   dune-seo@1.0.0 by Jane Doe  — SEO automation: sitemap, robots meta, canonical URLs
-    hooks: onContentIndexReady, onAfterRender
+    hooks: onContentIndexReady, onBeforeRender
     config fields: sitemap, robots, default_robots, changefreq
 
   analytics@0.2.0
-    hooks: onAfterRender
+    hooks: onRequest
 ```
 
 ### `dune plugin:publish`
