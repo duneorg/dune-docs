@@ -68,12 +68,12 @@ admin:
 2. Dune's `LdapAuthProvider` binds to the LDAP server as a service account and searches for the user DN
 3. A second bind with the user's DN and submitted password verifies the credentials
 4. Group memberships are read and mapped to a Dune role via `roleMap`
-5. The first time a user logs in, a local `AdminUser` record is auto-provisioned (no password set — only LDAP auth is used thereafter)
+5. The first time a user logs in, a local `User` record is auto-provisioned (no password set — only LDAP auth is used thereafter)
 6. A session cookie is issued and the user lands on the dashboard
 
 ### Auto-provisioning
 
-Users authenticated via LDAP get a local `AdminUser` record created automatically on first login. The record stores role and display name (synced from LDAP on every login). You can still see and edit these users in Admin → Users, but their passwords are not used.
+Users authenticated via LDAP get a local `User` record created automatically on first login. The record stores role and display name (synced from LDAP on every login). You can still see and edit these users in Admin → Users, but their passwords are not used.
 
 ---
 
@@ -169,7 +169,7 @@ The injected provider takes precedence over anything set in `system.yaml`. Use t
 | `username` | `string` | Login name — used to find/create the local user |
 | `email` | `string?` | Used in the local user record |
 | `name` | `string?` | Display name |
-| `role` | `AdminRole?` | Override the local user's role on each login |
+| `role` | `Role?` | Override the local user's role on each login |
 
 ---
 

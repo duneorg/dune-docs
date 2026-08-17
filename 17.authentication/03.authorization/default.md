@@ -227,7 +227,7 @@ Without this, the granted role is present in `userStore` but `authz.check()` ret
 
 ## Admin panel authz
 
-Admin users (`AdminUser`) are bootstrapped into the authz tuple store at startup via `bootstrapAdminTuples()`. Each admin user gets a direct relation tuple on `{ type: "app", id: "admin" }` matching their role:
+Admin users (`User`) are bootstrapped into the authz tuple store at startup via `bootstrapAdminTuples()`. Each admin user gets a direct relation tuple on `{ type: "app", id: "admin" }` matching their role:
 
 ```
 admin  → tuple: (user:alice, admin,  app:admin)
