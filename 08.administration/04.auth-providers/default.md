@@ -141,7 +141,7 @@ export class MyAuthProvider implements AuthProvider {
       username: user.username,
       email: user.email,
       name: user.displayName,
-      role: "editor",
+      roles: ["editor"],
     };
   }
 }
@@ -169,7 +169,7 @@ The injected provider takes precedence over anything set in `system.yaml`. Use t
 | `username` | `string` | Login name — used to find/create the local user |
 | `email` | `string?` | Used in the local user record |
 | `name` | `string?` | Display name |
-| `role` | `Role?` | Override the local user's role on each login |
+| `roles` | `string[]?` | Roles to assign/sync on each login — `findOrProvisionUser()` picks the highest-ranked valid admin `Role` out of this list |
 
 ---
 
