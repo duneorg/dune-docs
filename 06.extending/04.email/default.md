@@ -44,7 +44,7 @@ email:
     apiKey: "$SENDGRID_API_KEY"
 ```
 
-When `email:` is omitted, or the selected provider is missing its required credentials, `createEmailProvider()` falls back to the console provider (logs to stdout, does not send). This fallback is driven entirely by config, not by an environment variable — see "Dev-mode email preview" below for why that distinction matters.
+When `email:` is omitted, or the selected provider is missing its required credentials, `createEmailProvider()` falls back to the console provider (logs to stdout, does not send). A live provider is also refused under `DUNE_ENV=dev` unless explicitly allowed — see "Dev-mode email preview" below.
 
 ## Sending an email
 
@@ -221,11 +221,11 @@ export default {
 
 ## Dev-mode email preview
 
-**Provider selection does not check any environment variable.** If `email:` in `site.yaml` names a real provider with valid credentials, that provider is used and `send()` delivers for real — in development exactly as in production.
+**`DUNE_ENV=dev` refuses to construct a live provider.** If `email:` in `site.yaml` names a real provider (`smtp`/`resend`/`postmark`/`sendgrid`) with valid credentials, `createEmailProvider()` still swaps it for the console provider whenever `DUNE_ENV=dev` is set — a loud `console.warn()` names the refused provider and the opt-in below. This closes what used to be a real footgun: a validly configured live provider previously sent real email to real recipients in development, exactly as in production, with nothing distinguishing the two.
 
-The only dev-aware behavior lives inside the console provider itself (the one you get when no provider is configured, or the configured one is missing credentials): when `DUNE_ENV=dev`, it additionally writes each message to `{runtimeDir}/dev-email/{id}.json` (default `.dune/admin/dev-email/`) so the admin panel can show it. It always logs to stdout regardless of `DUNE_ENV`; the file-write is the dev-only part.
+To genuinely send through a live provider while `DUNE_ENV=dev` is set (rare — usually only to verify real delivery), set `DUNE_EMAIL_ALLOW_DEV_SEND=1` (or `true`) as well. Both env vars must be set; `DUNE_EMAIL_ALLOW_DEV_SEND` alone has no effect outside dev.
 
-**This means dev mode does not intercept a properly-configured real provider.** If real credentials are present in your local `site.yaml`, running locally with `DUNE_ENV=dev` still sends real email to real recipients. To be safe locally, don't put real provider credentials in your local config, or explicitly set `email.provider: console`.
+The console provider itself (the one you get when no provider is configured, the configured one is missing credentials, or a live provider was just refused above) has its own dev-aware behavior: when `DUNE_ENV=dev`, it additionally writes each message to `{runtimeDir}/dev-email/{id}.json` (default `.dune/admin/dev-email/`) so the admin panel can show it. It always logs to stdout regardless of `DUNE_ENV`; the file-write is the dev-only part.
 
 Browse intercepted emails (console-provider-with-`DUNE_ENV=dev` case only) in the admin panel under **Dev → Email Preview** (`/admin/email-preview`), or query the API directly:
 
