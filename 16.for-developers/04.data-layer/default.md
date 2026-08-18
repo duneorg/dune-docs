@@ -308,7 +308,7 @@ api:
 | Mode | Behaviour |
 |------|-----------|
 | `none` | No authentication required |
-| `required` | Any logged-in `SiteUser` can access all records |
+| `required` | Any logged-in `User` can access all records |
 | `owner` | Reads/writes are scoped to the current user's own records (matched via `ownerField`) |
 
 `owner` mode automatically filters list results to the current user's records and rejects updates/deletes on records owned by others.

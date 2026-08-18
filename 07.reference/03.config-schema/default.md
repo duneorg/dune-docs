@@ -116,7 +116,7 @@ uploads:
     - "image/gif"
     - "image/avif"
     - "application/pdf"
-  require_auth: false           # boolean — Require a logged-in SiteUser (default: false)
+  require_auth: false           # boolean — Require a logged-in User (default: false)
 
 # ── Payments ──────────────────────────────────────────────────────────────────
 payments:

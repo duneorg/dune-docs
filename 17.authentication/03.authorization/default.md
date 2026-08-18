@@ -138,9 +138,9 @@ const allowed = await checkRolesAsync(req, ["member"], { authzOverride: siteAuth
 
 ## Bootstrap from existing users
 
-On first startup after authz is introduced, Dune automatically derives permission tuples from the `roles[]` array on existing `SiteUser` records. This is idempotent — it does not create duplicates.
+On first startup after authz is introduced, Dune automatically derives permission tuples from the `roles[]` array on existing `User` records. This is idempotent — it does not create duplicates.
 
-After bootstrap, **tuples are the authority** for `authz.check()`. The `roles[]` array on `SiteUser` remains in sync as a cache (it is still updated when roles change) but `authz.check()` is the correct enforcement path.
+After bootstrap, **tuples are the authority** for `authz.check()`. The `roles[]` array on `User` remains in sync as a cache (it is still updated when roles change) but `authz.check()` is the correct enforcement path.
 
 ## Tuple storage
 

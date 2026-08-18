@@ -14,7 +14,7 @@ metadata:
 
 Dune's payment module wires Stripe checkout, webhook handling, and customer portal into your site with minimal configuration. When a user completes a purchase, Dune automatically assigns the configured role to their site user account.
 
-Payments require [public site authentication](../../17.authentication/01.public-auth) to be configured — the payment flow reads the current `SiteUser` from the session.
+Payments require [public site authentication](../../17.authentication/01.public-auth) to be configured — the payment flow reads the current `User` from the session.
 
 ## Configuration
 
@@ -49,7 +49,7 @@ When `payments:` is configured, three routes are registered:
 | `POST /payments/webhook` | Receive Stripe webhook events (must be registered in Stripe dashboard) |
 | `GET /payments/portal` | Redirect to Stripe Customer Portal for subscription management |
 
-The checkout and portal routes require a logged-in `SiteUser`. Unauthenticated requests get a `401`.
+The checkout and portal routes require a logged-in `User`. Unauthenticated requests get a `401`.
 
 ## Checkout flow
 
@@ -58,7 +58,7 @@ The checkout and portal routes require a logged-in `SiteUser`. Unauthenticated r
 3. Dune returns `303 See Other` to the Stripe-hosted checkout page
 4. User completes payment on Stripe
 5. Stripe sends a `checkout.session.completed` event to `/payments/webhook`
-6. Dune verifies the webhook signature, finds or creates the `SiteUser`, and assigns the configured `role`
+6. Dune verifies the webhook signature, finds or creates the `User`, and assigns the configured `role`
 
 ## Webhook setup
 
@@ -73,7 +73,7 @@ Dune verifies the `Stripe-Signature` header on every webhook request using HMAC-
 
 ## Role assignment
 
-After a successful `checkout.session.completed` event, Dune adds the product's `role` to the `SiteUser.roles` array. This role can be used in [content gating](../../17.authentication/02.content-gating) rules:
+After a successful `checkout.session.completed` event, Dune adds the product's `role` to the `User.roles` array. This role can be used in [content gating](../../17.authentication/02.content-gating) rules:
 
 ```yaml
 # In content frontmatter:

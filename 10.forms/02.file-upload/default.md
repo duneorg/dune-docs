@@ -30,7 +30,7 @@ uploads:
     - "image/gif"
     - "image/avif"
     - "application/pdf"
-  require_auth: false            # Require a logged-in SiteUser (default: false)
+  require_auth: false            # Require a logged-in User (default: false)
 ```
 
 When `uploads:` is absent from config, the endpoint is not registered.

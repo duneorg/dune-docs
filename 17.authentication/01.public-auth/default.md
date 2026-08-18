@@ -59,8 +59,8 @@ Only configure the providers you need. Each OAuth provider requires a registered
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET` | `/auth/login` | Default login page (renders `LoginForm` or theme's `auth/login.tsx`) |
-| `GET` | `/auth/logout` | Destroy session cookie and redirect to `/` (GET, not POST) |
-| `GET` | `/auth/me` | Return current `SiteUser` as JSON, or `401` if not logged in |
+| `POST` | `/auth/logout` | Destroy session cookie and redirect to `/` |
+| `GET` | `/auth/me` | Return current `User` as JSON, or `401` if not logged in |
 | `GET` | `/auth/github` | Start GitHub OAuth flow |
 | `GET` | `/auth/github/callback` | GitHub OAuth callback |
 | `GET` | `/auth/google` | Start Google OAuth flow |
@@ -79,8 +79,8 @@ Each OAuth provider follows the standard authorization code flow:
 1. User visits `/auth/github` → redirected to GitHub with `state` parameter
 2. GitHub redirects back to `/auth/github/callback?code=...&state=...`
 3. Dune exchanges the code for an access token, fetches the user profile
-4. Dune upserts a `SiteUser` record (creates on first login, updates on subsequent)
-5. Session cookie `dune_auth` is set; user is redirected to `?next=` or `/`
+4. Dune upserts a `User` record (creates on first login, updates on subsequent)
+5. Session cookie `dune-site-session` is set; user is redirected to `?next=` or `/`
 
 ### OAuth app setup
 
@@ -102,7 +102,7 @@ Magic link requires the [email module](../../06.extending/04.email) to be config
 
 ## External JWT mode
 
-Use `mode: "external-jwt"` to delegate authentication entirely to an external provider (Clerk, Auth0, Supabase, etc.). Dune validates the Bearer token on each request and maps JWT claims to a `SiteUser`.
+Use `mode: "external-jwt"` to delegate authentication entirely to an external provider (Clerk, Auth0, Supabase, etc.). Dune validates the Bearer token on each request and maps JWT claims to a `User`.
 
 ```yaml
 auth:
@@ -123,15 +123,15 @@ auth:
     secret: "$JWT_SECRET"
 ```
 
-In external-JWT mode, there are no session cookies and no `/auth/*` login routes — your external provider handles the login UI. Clients pass tokens as `Authorization: Bearer {token}` headers. The auth middleware injects a synthetic `SiteUser` from the validated claims.
+In external-JWT mode, there are no session cookies and no `/auth/*` login routes — your external provider handles the login UI. Clients pass tokens as `Authorization: Bearer {token}` headers. The auth middleware injects a synthetic `User` from the validated claims.
 
 ## User store backends
 
-The `userStore` setting controls where `SiteUser` records are persisted:
+The `userStore` setting controls where `User` records are persisted:
 
 | Value | Description |
 |-------|-------------|
-| `"local"` | Default. Flat YAML files in `data/site-users/`. Committed to version control. Suitable for most sites. |
+| `"local"` | Default. Flat YAML files in `data/users/`. Committed to version control. Suitable for most sites. |
 | `"session"` | No server-side records. Identity is embedded in the session cookie from OAuth/magic-link claims. Roles assigned after login (e.g. via payment webhook) are not visible until the user logs out and back in. |
 | `"db"` | Records stored in the site's database (SQLite or PostgreSQL). Requires `DUNE_DB_PATH` or `DUNE_DB_URL`. Suitable for large user bases or multi-process deployments where flat-file contention is a concern. |
 
@@ -159,33 +159,38 @@ For `provider: "generic"`, the signature header defaults to `x-dune-signature`. 
 
 The webhook endpoint verifies the provider's HMAC signature before processing. Configure the webhook URL in your IdP's dashboard as `{site.url}/auth/webhook`.
 
-## SiteUser
+## User
 
-Every logged-in visitor is represented as a `SiteUser`:
+Every logged-in visitor is represented as a `User` — the same account record type shared with admin panel accounts (`@dune/plugin-admin`); a public site visitor and an admin panel user are both just rows in the same store, distinguished only by what's in `roles`:
 
 ```ts
-interface SiteUser {
-  id: string;           // Internal UUID
-  email: string;        // Primary identifier
-  name?: string;        // Display name (from OAuth profile)
-  avatarUrl?: string;   // Avatar URL (from OAuth profile)
-  roles: string[];      // Assigned roles (e.g. ["member"])
-  provider: string;     // "github" | "google" | "discord" | "magic" | "external-jwt"
-  providerId?: string;  // Provider's user ID (for OAuth)
-  createdAt: number;    // Unix timestamp (ms)
+interface User {
+  id: string;
+  email: string;         // Primary identifier
+  name?: string;          // Display name (from OAuth profile, or set by an admin)
+  avatarUrl?: string;     // Avatar URL (from OAuth profile)
+  username?: string;      // Set for password-login admin accounts; absent for OAuth/magic-link-only visitors
+  passwordHash?: string;  // Set only for accounts with a local password
+  roles: string[];        // e.g. ["member"], or ["admin"] for an admin-panel account
+  provider: string;       // "github" | "google" | "discord" | "magic" | "jwt" | "local"
+  providerId?: string;    // Provider's user ID (for OAuth)
+  createdAt: number;      // Unix timestamp (ms)
+  updatedAt: number;
+  lastSeenAt: number;
+  stripeCustomerId?: string;
 }
 ```
 
-Users are stored as flat JSON files in `data/site-users/` (controlled by `admin.dataDir`). The directory should be committed to version control — site user records are site data, not ephemeral runtime state.
+Users are stored as flat JSON files in `data/users/` (controlled by `admin.dataDir`). The directory should be committed to version control — user records are site data, not ephemeral runtime state.
 
-An email-based index in `data/site-users/by-email/` allows O(1) lookups by email address for login flows.
+An email-based index in `data/users/by-email/` allows O(1) lookups by email address for login flows.
 
 ## Accessing the current user
 
 **In route handlers / Fresh middleware:**
 
 ```ts
-const siteUser = ctx.state.siteUser as SiteUser | null;
+const siteUser = ctx.state.siteUser as User | null;
 ```
 
 **In generated CRUD route handlers** (from `dune codegen`) and other code that only has a raw `Request`, not a Fresh context — `mountDuneAuth()`'s middleware also serializes the resolved user into an internal `x-dune-site-user` request header (JSON, stripped at the edge). `requireAuth(req, mode)` from `@dune/core/auth/api-guard` reads it. **Hand-written TSX content pages get no automatic `page.siteUser` prop** — `TemplateProps` has no such field; read the header yourself the same way `api-guard.ts` does if you need the user there.

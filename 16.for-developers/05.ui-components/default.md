@@ -74,7 +74,7 @@ OAuth buttons link to `/auth/{provider}?next={redirectTo}`. The magic-link input
 
 ## ProfileCard
 
-Displays an authenticated `SiteUser`'s info: avatar (if present), display name, email, roles, and a logout button.
+Displays an authenticated `User`'s info: avatar (if present), display name, email, roles, and a logout button.
 
 ```tsx
 import { ProfileCard } from "@dune/core/ui";
