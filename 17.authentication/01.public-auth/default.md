@@ -140,7 +140,7 @@ auth:
   userStore: "db"   # default: "local"
 ```
 
-Sessions themselves (not user records) use `system.session_store` — `"local"` (file-backed, default), `"kv"` (Deno Deploy/multi-isolate), or `"redis"` (multi-process behind a load balancer). Public-auth sessions and admin sessions share this same setting; there's no separate config for either.
+Sessions themselves (not user records) use `system.session_store` — see [System Configuration](/docs/configuration/system-config#session-store) for the full backend reference (`local`, `kv`, `redis`). Public-auth sessions and admin sessions share this same setting; there's no separate config for either.
 
 ## IdP webhook (user deletion)
 

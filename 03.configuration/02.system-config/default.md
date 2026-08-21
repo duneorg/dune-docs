@@ -52,6 +52,11 @@ typography:
 admin:
   max_upload_mb: 100               # max media upload size in MB (default: 100)
 
+# Session persistence
+session_store:
+  type: "local"                   # "local", "kv", or "redis"
+  # url: "$REDIS_URL"             # required when type is "redis"
+
 # Debug mode
 debug: false
 
@@ -76,6 +81,26 @@ The `check` field determines how Dune detects stale content:
 | `file` | Compare file modification time | Fast, misses renames |
 | `hash` | Hash file content | Accurate, slightly slower |
 | `none` | Never invalidate | Fastest, manual rebuild needed |
+
+## Session store
+
+`session_store` controls where admin and public-auth sessions are persisted. Defaults to `local` (file-backed, single-process) when omitted.
+
+| Backend | Storage | Best for |
+|---------|---------|----------|
+| `local` | File-backed, via the site's storage adapter | Single-process deployments, local development |
+| `kv` | Deno KV | Deno Deploy or any multi-isolate environment (auto-selected there even if unset) |
+| `redis` | Redis, via `ioredis` | Traditional multi-process deployments behind a load balancer |
+
+`url` is required when `type` is `redis`, and supports `$ENV_VAR` expansion:
+
+```yaml
+session_store:
+  type: "redis"
+  url: "$REDIS_URL"
+```
+
+Admin sessions and public-auth sessions (see [Public Auth](/docs/authentication/public-auth)) share this same backend selection but are kept in separate namespaces — a directory prefix for `local`/`kv`, a key prefix for `redis` — so the two never collide.
 
 ## Environment-specific overrides
 
