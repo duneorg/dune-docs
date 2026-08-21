@@ -52,6 +52,8 @@ There's also an opt-in auto-discovery mode: set `auto_discover_plugins: true` at
 | npm | `npm:dune-plugin-name` | npm package (resolved via Deno) |
 | HTTPS | `https://example.com/plugin.ts` | Arbitrary URL import |
 
+JSR and npm specifiers must pin an exact version (`jsr:@dune/plugin-seo@1.0.0`, not a caret range or bare name) — plugins run with full process privileges at load time, so an unpinned specifier is rejected before it's ever imported. Local paths and HTTPS URLs aren't subject to this check.
+
 ## Plugin module format
 
 A plugin module must export a `DunePlugin` as its **default export**, either as a plain object or as a factory function.

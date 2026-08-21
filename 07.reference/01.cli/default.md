@@ -192,6 +192,7 @@ If the installed theme declares a `parent:` in its `theme.yaml` (see [Theme Inhe
 | `dune migrate:generate` | Diff `schemas/*.yaml` against the database and emit SQL migration files to `migrations/`. |
 | `dune migrate:run` | Apply all pending SQL migration files. |
 | `dune migrate:status` | Show which migrations have been applied and which are pending. |
+| `dune migrate:users` | Reshape existing `data/users/` records (added by earlier admin-account/public-auth accounts before they shared one store) to the current unified `User` shape — adds a `by-email/` index entry, backfills missing fields. Idempotent. |
 
 ### Migration options
 
@@ -203,6 +204,15 @@ If the installed theme declares a `parent:` in its `theme.yaml` (see [Theme Inhe
 | `--trust-source` | — | Skip HTML sanitization — only use for sources you fully trust |
 
 See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full documentation on versioning schemas and writing migration files.
+
+## Users
+
+| Command | Description |
+|---------|-------------|
+| `dune users:grant-role <email> <role>` | Grant an admin-tier role (`admin`, `editor`, or `author`) to an existing user, identified by email. Updates `roles[]` and syncs the corresponding authz tuple — the same two things the admin panel's user-edit UI does over HTTP. |
+| `dune users:revoke-role <email> <role>` | Revoke an admin-tier role from an existing user. |
+
+For operators without (or before) web access: first-admin bootstrap on a headless install, scripted/CI-driven site provisioning, or granting admin access to an existing OAuth/magic-link account that has never had one. Idempotent — granting a role already held, or revoking one not held, is a no-op. Accepts `--dry-run`.
 
 ## Backup & Restore
 

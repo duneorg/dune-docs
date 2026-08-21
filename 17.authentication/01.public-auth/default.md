@@ -140,6 +140,8 @@ auth:
   userStore: "db"   # default: "local"
 ```
 
+Sessions themselves (not user records) use `system.session_store` — `"local"` (file-backed, default), `"kv"` (Deno Deploy/multi-isolate), or `"redis"` (multi-process behind a load balancer). Public-auth sessions and admin sessions share this same setting; there's no separate config for either.
+
 ## IdP webhook (user deletion)
 
 When using `mode: external-jwt` with `authzStore: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
