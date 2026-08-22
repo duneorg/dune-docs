@@ -223,7 +223,10 @@ export default {
 
 **`DUNE_ENV=dev` refuses to construct a live provider.** If `email:` in `site.yaml` names a real provider (`smtp`/`resend`/`postmark`/`sendgrid`) with valid credentials, `createEmailProvider()` still swaps it for the console provider whenever `DUNE_ENV=dev` is set — a loud `console.warn()` names the refused provider and the opt-in below. This closes what used to be a real footgun: a validly configured live provider previously sent real email to real recipients in development, exactly as in production, with nothing distinguishing the two.
 
-To genuinely send through a live provider while `DUNE_ENV=dev` is set (rare — usually only to verify real delivery), set `DUNE_EMAIL_ALLOW_DEV_SEND=1` (or `true`) as well. Both env vars must be set; `DUNE_EMAIL_ALLOW_DEV_SEND` alone has no effect outside dev.
+Two ways to get a real provider under `DUNE_ENV=dev`:
+
+- **`DUNE_EMAIL_ALLOW_DEV_SEND=1`** (or `true`) — unrestricted, every send goes out for real. For the rare case dev genuinely needs to verify real delivery end-to-end. Has no effect outside dev.
+- **`DUNE_EMAIL_DEV_ALLOWED_DOMAINS=domain.com,other.org`** (comma-separated) — safer middle ground, and takes precedence if both env vars are set. The real provider is constructed but wrapped: each `send()` checks every recipient's domain against the list. All recipients matching sends for real; any recipient not matching redirects the *whole* message to console instead (not a partial send to just the allowed ones). Guards against a dev environment somehow pointed at production-like data — real sends stay bounded to known-safe domains regardless of what the configured credentials could otherwise reach.
 
 The console provider itself (the one you get when no provider is configured, the configured one is missing credentials, or a live provider was just refused above) has its own dev-aware behavior: when `DUNE_ENV=dev`, it additionally writes each message to `{runtimeDir}/dev-email/{id}.json` (default `.dune/admin/dev-email/`) so the admin panel can show it. It always logs to stdout regardless of `DUNE_ENV`; the file-write is the dev-only part.
 
