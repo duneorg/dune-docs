@@ -204,14 +204,14 @@ export default function MyPage({ data }: PageProps<Data>) {
         <li>Query the content index via the <code>content</code> prop — <code>.pages()</code>, <code>.page()</code>, <code>.search()</code>, <code>.taxonomy()</code></li>
         <li>Use collections defined in their frontmatter</li>
         <li>Handle form submissions and API requests via <code>handler</code></li>
-        <li>Read the current public-site user via the <code>siteUser</code> prop</li>
+        <li>Read the current public-auth user via the <code>user</code> prop</li>
         <li>Full TypeScript type safety</li>
       </ul>
 
       <h2>Reading the current user</h2>
 
       <p>
-        The default component receives a <code>siteUser</code> prop —
+        The default component receives a <code>user</code> prop —
         the resolved <code>User</code> for the current request, or{" "}
         <code>null</code> if nobody is logged in (or public auth isn't
         configured at all). This is the same information a Fresh route
@@ -220,12 +220,12 @@ export default function MyPage({ data }: PageProps<Data>) {
         no longer need to read it themselves.
       </p>
 
-      <pre><code>{`export default function AccountPage({ siteUser }: ContentPageProps) {
-  if (!siteUser) {
+      <pre><code>{`export default function AccountPage({ user }: ContentPageProps) {
+  if (!user) {
     return <p>Please log in to view this page.</p>;
   }
 
-  return <p>Welcome back, {siteUser.name ?? siteUser.email}!</p>;
+  return <p>Welcome back, {user.name ?? user.email}!</p>;
 }`}</code></pre>
 
       <h2>When to use TSX vs Markdown</h2>

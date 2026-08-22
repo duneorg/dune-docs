@@ -197,7 +197,7 @@ const siteUser = ctx.state.siteUser as User | null;
 
 **In generated CRUD route handlers** (from `dune codegen`) and other code that only has a raw `Request`, not a Fresh context — the resolved user is serialized into an internal `x-dune-user` request header (JSON). `requireAuth(req, mode)` from `@dune/core/auth/api-guard` reads it. This header is for internal use only: Dune strips any externally-supplied copy of it from every incoming request before any route or plugin sees it, so it can't be set from outside.
 
-**In hand-written TSX content pages** — the default component receives a `siteUser` prop (`ContentPageProps.siteUser`), the same resolved `User | null`, populated automatically for every request. No manual header parsing needed.
+**In hand-written TSX content pages** — the default component receives a `user` prop (`ContentPageProps.user`), the same resolved `User | null`, populated automatically for every request. No manual header parsing needed.
 
 **Via the API:**
 
