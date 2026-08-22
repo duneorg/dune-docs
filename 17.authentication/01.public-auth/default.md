@@ -59,18 +59,38 @@ Only configure the providers you need. Each OAuth provider requires a registered
 | Method | Route | Description |
 |--------|-------|-------------|
 | `GET` | `/auth/login` | Default login page (renders `LoginForm` or theme's `auth/login.tsx`) |
-| `POST` | `/auth/logout` | Destroy session cookie and redirect to `/` |
+| `GET` | `/auth/logout` | Destroy session cookie and redirect to `/` (GET, not POST) |
 | `GET` | `/auth/me` | Return current `User` as JSON, or `401` if not logged in |
 | `GET` | `/auth/github` | Start GitHub OAuth flow |
-| `GET` | `/auth/github/callback` | GitHub OAuth callback |
+| `GET` | `/auth/github/link` | Start GitHub OAuth to link it to the *current session's* account (`401` if not logged in) |
+| `GET` | `/auth/github/callback` | GitHub OAuth callback — completes either an ordinary login/signup or a `/link` flow |
+| `POST` | `/auth/github/unlink` | Remove a previously-linked GitHub identity (`401` if not logged in) |
 | `GET` | `/auth/google` | Start Google OAuth flow |
+| `GET` | `/auth/google/link` | Start Google OAuth to link it to the *current session's* account |
 | `GET` | `/auth/google/callback` | Google OAuth callback |
+| `POST` | `/auth/google/unlink` | Remove a previously-linked Google identity |
 | `GET` | `/auth/discord` | Start Discord OAuth flow |
+| `GET` | `/auth/discord/link` | Start Discord OAuth to link it to the *current session's* account |
 | `GET` | `/auth/discord/callback` | Discord OAuth callback |
+| `POST` | `/auth/discord/unlink` | Remove a previously-linked Discord identity |
 | `POST` | `/auth/magic/send` | Send a magic link to `email` (form param) |
 | `GET` | `/auth/magic` | Verify magic link token and create session |
 
-Routes for unconfigured providers return `404`.
+Routes for unconfigured providers return `404`. The session cookie is `dune_auth` (HttpOnly, SameSite=Lax, Secure outside `DUNE_ENV=dev`).
+
+## Linking an additional provider
+
+Any logged-in user can connect another OAuth provider to their account:
+
+```html
+<a href="/auth/github/link">Connect GitHub</a>
+```
+
+`getByProvider()` checks both the account's original signup `provider`/`providerId` and everything in `linkedProviders` (added via `/link`). The original signup provider is never removable through `/unlink` — only entries added later via `/link` can be removed. `GET /auth/me` includes linked provider names as `linkedProviders: string[]`.
+
+If the provider identity being linked already belongs to a *different* account, `/callback` doesn't error — it logs into that account instead (redirects to `/?dune_link=linked_elsewhere`), since completing that provider's OAuth consent screen is real proof of controlling it. Check `?dune_link=` (`linked` | `already_linked` | `linked_elsewhere`) to show your own message — there's no built-in UI for any of this.
+
+`POST /auth/{provider}/unlink` refuses to remove your last *additional* identity while magic link is disabled site-wide (your original signup provider is unaffected either way). Only works with `userStore: local` or `db` — `400`s under `userStore: session` (no persistent record to attach a link to).
 
 ## OAuth login
 
@@ -80,7 +100,7 @@ Each OAuth provider follows the standard authorization code flow:
 2. GitHub redirects back to `/auth/github/callback?code=...&state=...`
 3. Dune exchanges the code for an access token, fetches the user profile
 4. Dune upserts a `User` record (creates on first login, updates on subsequent)
-5. Session cookie `dune-site-session` is set; user is redirected to `?next=` or `/`
+5. Session cookie `dune_auth` is set; user is redirected to `?next=` or `/`
 
 ### OAuth app setup
 
