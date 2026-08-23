@@ -52,7 +52,7 @@ There's also an opt-in auto-discovery mode: set `auto_discover_plugins: true` at
 | npm | `npm:dune-plugin-name` | npm package (resolved via Deno) |
 | HTTPS | `https://example.com/plugin.ts` | Arbitrary URL import |
 
-JSR and npm specifiers must pin an exact version (`jsr:@dune/plugin-seo@1.0.0`, not a caret range or bare name) — plugins run with full process privileges at load time, so an unpinned specifier is rejected before it's ever imported. Local paths and HTTPS URLs aren't subject to this check.
+JSR and npm specifiers must pin an exact version (`jsr:@dune/plugin-seo@1.0.0`, not a caret range or bare name) — plugins run with full process privileges at load time, so an unpinned specifier is rejected before it's ever imported. Local paths aren't subject to this check. An HTTPS specifier needs its own `integrity: sha256:<64 hex chars>` (or SRI `sha256-<base64>`) alongside `src` in `site.yaml`'s `plugins:` entry — without it, a compromised or swapped origin could serve different code on the next load with no way to detect it.
 
 ## Plugin module format
 
@@ -258,6 +258,8 @@ export default {
 | `path` | `string` | URL path pattern — supports Fresh param syntax (`:id`, `*`) |
 | `method` | `"GET" \| "POST" \| "PUT" \| "DELETE" \| "ALL"` | HTTP method. Defaults to `"GET"`. Use `"ALL"` to match any method. |
 | `handler` | `(fc: FreshContext) => Response \| Promise<Response>` | Request handler |
+
+A route path can't shadow a core-owned prefix — the admin panel, `/api/contact`, `/api/forms`, `/api/webhook`, `/api/inline-edit`, `/api/pages`, `/api/search`, `/api/nav`, `/api/flex`, `/auth`, `/_fresh`, `/health`. A shadowed route is skipped with a `[dune] plugin route ... rejected: shadows reserved prefix ...` console warning at startup, not a thrown error.
 
 ### `publicRoutes` vs `onRequest`
 

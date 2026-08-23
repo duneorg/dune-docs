@@ -209,10 +209,13 @@ See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full 
 
 | Command | Description |
 |---------|-------------|
+| `dune users:create <email> [--role x[,y]] [--name "..."]` | Create a `User` record before the person has ever logged in, marked `provider: "invited"`. An admin-tier role (`admin`/`editor`/`author`) syncs the `app:admin` authz tuple immediately, same as `users:grant-role`. |
 | `dune users:grant-role <email> <role>` | Grant an admin-tier role (`admin`, `editor`, or `author`) to an existing user, identified by email. Updates `roles[]` and syncs the corresponding authz tuple — the same two things the admin panel's user-edit UI does over HTTP. |
 | `dune users:revoke-role <email> <role>` | Revoke an admin-tier role from an existing user. |
 
 For operators without (or before) web access: first-admin bootstrap on a headless install, scripted/CI-driven site provisioning, or granting admin access to an existing OAuth/magic-link account that has never had one. Idempotent — granting a role already held, or revoking one not held, is a no-op. Accepts `--dry-run`.
+
+An invited person's first magic-link login matches `users:create`'s record by email and just works. First login via OAuth does not — the account-takeover guard rejects an email-only match from a different provider, so closed/invite-only OAuth signup needs a separate feature, not this command.
 
 ## Backup & Restore
 

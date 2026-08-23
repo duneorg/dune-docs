@@ -56,6 +56,7 @@ The job's `name` is derived from the filename stem (`weekly-digest.ts` → `"wee
 | `name` | `string` | Derived from the filename, not something you export. |
 | `schedule` | `string` | Standard 5-field cron expression (`min hour dom month dow`) — your `export const schedule`. |
 | `handler` | `(ctx: JobContext) => Promise<void> \| void` | Your default export. |
+| `timeoutMs` | `number` | Optional per-job override of the default 10-minute timeout — `export const timeoutMs = ...` alongside `schedule`. `JobSchedulerConfig.defaultTimeoutMs` overrides the default globally. |
 
 ### `JobContext`
 
@@ -67,6 +68,7 @@ The job's `name` is derived from the filename stem (`weekly-digest.ts` → `"wee
 | `storage` | `StorageAdapter` | Raw storage adapter for plugin-specific reads/writes. |
 | `logger` | `JobLogger` | Structured logger. Entries include the job name automatically. |
 | `email` | `EmailClient` | Transactional email client. Present when an email provider is configured. Guard with `ctx.config.site.email?.provider` if email may not be set up. |
+| `signal` | `AbortSignal` | Aborted when the job hits its timeout (default 10 minutes, or `timeoutMs`). Pass it to `fetch()` and other cancellable calls to actually stop work on timeout — JS has no true cancellation otherwise. |
 
 `content` and `contentApi` are two different objects, not one renamed — kept deliberately separate so existing jobs relying on `content`'s exact array-property shape don't break. Prefer `contentApi` for anything beyond iterating every page; `.search()`/`.taxonomy()`/filtered `.pages()` aren't available on the raw engine.
 
@@ -136,6 +138,8 @@ Requires admin authentication, the `config.update` permission, and a valid CSRF 
 ## Error handling
 
 If a job handler throws, the error is logged (including the message) and the job's `status` is set to `"errored"`. Scheduling continues — the next tick will fire regardless of the previous run's outcome. There is no automatic retry.
+
+A handler that hangs (an infinite loop, a `fetch()` that never resolves) is treated the same way once it hits its timeout (default 10 minutes) — logged as an error and `status` set to `"errored"`, unblocking future runs of that job. Without this, a hung handler previously left `status` stuck at `"running"` forever.
 
 ## Multi-process deployments
 

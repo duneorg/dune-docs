@@ -41,6 +41,7 @@ metadata:
 | `auth` | Yes | string | `"none"` \| `"required"` \| `"owner"` |
 | `methods` | No | string[] | Subset of `["list","get","create","update","delete"]`. Default: all five |
 | `ownerField` | Required when `auth: "owner"` | string | Field name that stores the owner's user ID |
+| `writable` | Required when `create` or `update` is enabled | string[] | Field names the generated `POST`/`PUT` handlers accept from the client. Deny-by-default: `dune codegen`/`migrate:generate` errors out if this is missing rather than silently accepting every field. Use `writable: []` if the handler should accept no client fields (e.g. every value is server-computed). Can't include `id`, `ownerField`, or an auto-managed field. |
 
 ---
 

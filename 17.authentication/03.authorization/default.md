@@ -155,7 +155,7 @@ data/permissions/
   {uuid}.json   →  { id, subject: {type, id}, relation, object: {type, id}, condition?, hmac? }
 ```
 
-The in-memory index is rebuilt from files on restart. **HMAC signing is opt-in, not automatic** — set `DUNE_AUTHZ_HMAC_SECRET` (loaded via `loadHmacKeyFromEnv()`) to enable it; without it, tuple file integrity checking is disabled (`dune serve` logs a warning: `authz.hmac.disabled`). When enabled, each write signs the tuple into the `hmac` field (not `sig`) and tampered or externally-written files are rejected on load. Do not edit these files directly; use `authz.allow()`, `authz.addMember()`, `authz.disallowAllMatching()`.
+The in-memory index is rebuilt from files on restart. **HMAC signing is opt-in, not automatic** — set `DUNE_AUTHZ_HMAC_SECRET` (loaded via `loadHmacKeyFromEnv()`) to enable it; without it, tuple file integrity checking is disabled (`dune serve` logs a warning: `authz.hmac.disabled`). Once a key is set, an unsigned tuple file (no `hmac` field, e.g. one written before the key was configured, or by hand) is rejected on load by default — run `dune authz:sign` after setting the secret to sign existing files. Set `DUNE_AUTHZ_HMAC_ALLOW_UNSIGNED=1` to temporarily accept unsigned tuples during migration instead. Do not edit these files directly; use `authz.allow()`, `authz.addMember()`, `authz.disallowAllMatching()`.
 
 ### `authzStore: db`
 

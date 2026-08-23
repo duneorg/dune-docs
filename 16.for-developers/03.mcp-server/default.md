@@ -99,9 +99,9 @@ Write tools modify site content and configuration directly on disk. They're regi
 
 | Tool | Description |
 |------|-------------|
-| `write_page` | Write or overwrite a content file. Accepts a path relative to the content dir and the full file content (frontmatter + body). Writes the content as-is — does not parse or validate YAML frontmatter before writing. |
+| `write_page` | Write or overwrite a content file. Accepts a path relative to the content dir and the full file content (frontmatter + body). Writes the content as-is — deliberately parse-and-warn, not reject, since this is a trusted-agent primitive — but the result now includes a warning when the frontmatter block isn't valid YAML, instead of the previous silent write. |
 | `delete_page` | Delete a content file by route (e.g. `/blog/hello`) or by path relative to the content dir. |
-| `update_frontmatter` | Patch frontmatter fields on an existing page. Pass `null` as a value to remove a field. Leaves the body unchanged. |
+| `update_frontmatter` | Patch frontmatter fields on an existing page. Pass `null` as a value to remove a field. Leaves the body unchanged. Errors out (does not write) if the page's *existing* frontmatter isn't valid YAML — merging into it would otherwise silently duplicate or corrupt the frontmatter block. |
 | `update_config` | Merge fields into `site.yaml`. Accepts a partial config object; existing keys not in the patch are preserved. |
 | `install_plugin` | Add a plugin specifier to the `plugins:` list in `site.yaml`. No-op if already present. |
 | `scaffold_plugin` | Generate a plugin skeleton at `plugins/{name}/index.ts`. |
