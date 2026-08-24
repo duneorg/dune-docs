@@ -52,7 +52,7 @@ There's also an opt-in auto-discovery mode: set `auto_discover_plugins: true` at
 | npm | `npm:dune-plugin-name` | npm package (resolved via Deno) |
 | HTTPS | `https://example.com/plugin.ts` | Arbitrary URL import |
 
-JSR and npm specifiers must pin an exact version (`jsr:@dune/plugin-seo@1.0.0`, not a caret range or bare name) — plugins run with full process privileges at load time, so an unpinned specifier is rejected before it's ever imported. Local paths aren't subject to this check. An HTTPS specifier needs its own `integrity: sha256:<64 hex chars>` (or SRI `sha256-<base64>`) alongside `src` in `site.yaml`'s `plugins:` entry — without it, a compromised or swapped origin could serve different code on the next load with no way to detect it.
+JSR and npm specifiers must name a version — exact (`jsr:@dune/plugin-seo@1.0.0`) or a `^`/`~` range (`jsr:@dune/plugin-seo@^1.0.0`) — not a bare name. Plugins run with full process privileges at load time, so an unpinned specifier is rejected before it's ever imported; drift after that point is caught by `--lock --frozen` (the default), which freezes whatever version a range resolves to on first sync. A range is what lets `minimumDependencyAge` degrade gracefully instead of failing outright when the newest matching release is too fresh. Local paths aren't subject to this check. An HTTPS specifier needs its own `integrity: sha256:<64 hex chars>` (or SRI `sha256-<base64>`) alongside `src` in `site.yaml`'s `plugins:` entry — without it, a compromised or swapped origin could serve different code on the next load with no way to detect it.
 
 ## Plugin module format
 

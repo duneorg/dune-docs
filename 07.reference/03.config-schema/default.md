@@ -293,7 +293,7 @@ theme:
 
 `themes:` is the install registry — it records which packages are available on the site. `theme.name` selects which theme is active. A local folder at `themes/{name}/` and a registered package can share the same logical name: use `theme.src` when the active theme should come from the package, or leave `src` unset to use the local folder (with optional `parent:` pointing at a package).
 
-Package specifiers must pin an exact version. Import-map aliases in `deno.json` are resolved when loading.
+Package specifiers must name a version — exact, or a `^`/`~` range — so `minimumDependencyAge` can still fall back to an older, aged-in match when needed. Import-map aliases in `deno.json` are resolved when loading.
 
 ## plugins config
 
