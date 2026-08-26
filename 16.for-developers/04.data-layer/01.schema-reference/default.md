@@ -43,6 +43,8 @@ metadata:
 | `ownerField` | Required when `auth: "owner"` | string | Field name that stores the owner's user ID |
 | `writable` | Required when `create` or `update` is enabled | string[] | Field names the generated `POST`/`PUT` handlers accept from the client. Deny-by-default: `dune codegen`/`migrate:generate` errors out if this is missing rather than silently accepting every field. Use `writable: []` if the handler should accept no client fields (e.g. every value is server-computed). Can't include `id`, `ownerField`, or an auto-managed field. |
 
+Generated `auth: "owner"` routes already enforce ownership correctly on their own. Writing an owner-mode route by hand instead? `ownershipError(user, ownerId)` from `@dune/core/auth/api-guard` centralizes the check (401 unauthenticated, 403 on mismatch) so it doesn't have to be reimplemented per handler — pass the record's stored owner field, never a client-supplied value.
+
 ---
 
 ## Repository methods
