@@ -328,6 +328,12 @@ dune 0.6.9 (source: /path/to/dune)    ← running from a local clone
 
 This is useful when debugging version mismatches or confirming which code is active.
 
+If you're developing Dune itself (not a site built with it), the local-dev install documented in the [repo README](https://github.com/duneorg/dune#readme) creates a global `dune` shim pointed at your checkout. That shim freezes a snapshot of `deno.json` at install time, so it silently goes stale the moment `deno.json`'s `imports` change afterward — failing with a confusing `Import "X" not in import map` error unrelated to whatever was actually just changed.
+
+| Command | Description |
+|---------|-------------|
+| `dune dev:link` | Reinstall the global `dune` shim against this checkout, refreshing its frozen import-map snapshot. Run it after pulling changes that touch `deno.json`'s `imports`. |
+
 ## Config show example
 
 ```bash
