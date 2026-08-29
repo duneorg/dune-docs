@@ -91,3 +91,26 @@ DENO_DIR=$(mktemp -d) dune dev
 ```
 
 This uses a fresh Deno compile cache for the session. You can safely delete the stale cache manually from `~/Library/Caches/deno/gen/` (macOS) or `~/.cache/deno/gen/` (Linux) if you prefer a permanent fix.
+
+**`dune dev`/`dune serve` fails with an npm module resolution error**
+
+If the build fails with `[ERR_MODULE_NOT_FOUND]` or `Could not find referrer npm package`, naming two different resolved versions of the same package (e.g. `preact/10.29.8_1/...` in one line, `npm:preact@^10.29.1` in another), this is a stale or inconsistent local npm cache — not a Dune bug, and not something a fresh `dune new` scaffold can cause on its own. Try, in order:
+
+```bash
+deno cache --reload
+```
+
+If that doesn't clear it, remove Deno's npm cache directory entirely and retry:
+
+```bash
+# macOS
+rm -rf ~/Library/Caches/deno/npm
+
+# Linux
+rm -rf ~/.cache/deno/npm
+
+# Windows (PowerShell)
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\deno\npm"
+```
+
+This is most likely to happen if the same Deno installation was previously used for another Fresh/Preact project with a different dependency version.
