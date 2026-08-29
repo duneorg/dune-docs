@@ -295,6 +295,8 @@ theme:
 
 Package specifiers must name a version — exact, or a `^`/`~` range — so `minimumDependencyAge` can still fall back to an older, aged-in match when needed. Import-map aliases in `deno.json` are resolved when loading.
 
+Changing `minimumDependencyAge`'s `exclude` list doesn't take effect until the lockfile is refreshed — `deno.lock` pins whatever version was already resolved, and neither `--reload` nor a fresh module cache overrides an existing lockfile entry. Run `dune lockfile:sync` (or delete `deno.lock` and let it regenerate) after editing `exclude`, or the old, already-locked version keeps loading regardless of the new config.
+
 ## plugins config
 
 ```yaml
