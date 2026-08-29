@@ -45,20 +45,27 @@ This scaffolds a minimal Dune site:
 
 ```
 my-site/
-├── dune.config.ts          # Site configuration (programmatic)
-├── content/                # Your content lives here
-│   └── 01.home/
-│       └── default.md      # Your homepage
+├── main.ts               # Site entrypoint — generated, don't customize
+├── deno.json             # Import map and dev/build/serve tasks
+├── content/              # Your content lives here
+│   ├── 01.home/
+│   │   └── default.md    # Your homepage
+│   └── 02.blog/
+│       ├── blog.md       # Blog listing page
+│       └── 01.hello-world/
+│           └── post.md   # Your first post
 ├── config/
-│   ├── site.yaml           # Site identity (title, URL, taxonomies)
-│   └── system.yaml         # Engine behavior (cache, debug, languages)
+│   ├── site.yaml         # Site identity (title, URL, taxonomies)
+│   └── system.yaml       # Engine behavior (cache, debug, languages)
 └── themes/
-    └── starter/            # Starter theme
+    └── starter/          # Starter theme
         ├── templates/
-        │   └── default.tsx
+        │   ├── default.tsx   # Page template
+        │   ├── blog.tsx      # Blog listing template
+        │   └── error.tsx     # 404/error pages
         ├── components/
         │   └── layout.tsx
-        ├── islands/        # Preact islands (hydrated in the browser)
+        ├── islands/          # Preact islands (hydrated in the browser)
         │   └── NavToggle.tsx
         └── theme.yaml
 ```
