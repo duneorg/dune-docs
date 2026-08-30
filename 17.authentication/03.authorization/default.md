@@ -36,8 +36,8 @@ Dune's default schema defines:
 |--------|-------------|
 | `access` | member, admin, editor, author |
 | `edit` | owner, admin, editor |
-| `pages.update` | admin, editor |
-| `users.manage` | admin |
+| `pages.update` | admin, editor, author |
+| `users.update` | admin |
 | `media.upload` | admin, editor, author |
 
 ## Config
