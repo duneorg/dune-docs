@@ -36,8 +36,8 @@ Dune's default schema defines:
 |--------|-------------|
 | `access` | member, admin, editor, author |
 | `edit` | owner, admin, editor |
-| `pages.update` | admin, editor |
-| `users.manage` | admin |
+| `pages.update` | admin, editor, author |
+| `users.update` | admin |
 | `media.upload` | admin, editor, author |
 
 ## Config
@@ -235,11 +235,11 @@ editor → tuple: (user:bob,   editor, app:admin)
 author → tuple: (user:carol, author, app:admin)
 ```
 
-The admin panel middleware enforces panel access via `authz.check()` when authz is wired. Role changes and user deletes via the admin API automatically sync the tuple store.
+The admin panel middleware enforces panel access via `authz.check()`. If `authz` is undefined (creation failed at startup), the gate fails closed (403). Role changes and user deletes via the admin API automatically sync the tuple store.
 
-**Granular admin permission checks** (`pages.create`, `config.read`, etc.) still use the flat `ROLE_PERMISSIONS` model — full polizy migration for those is tracked in the later roadmap.
+**Granular admin permission checks** (`pages.create`, `config.read`, etc.) use the same `authz.check()` against `{ type: "app", id: "admin" }`, mapped through the canonical `actionToRelations` schema. There is no parallel role table.
 
 ## Limitations
 
 - `authzStore: local` is single-process only. Multi-process deployments should use a shared database (future `authzStore: db`).
-- Granular admin permissions (`pages.create`, `config.read`, etc.) — not yet through polizy. `ROLE_PERMISSIONS` remains the authority for those.
+- The published synchronous hook `ResponseTransformContext.auth.hasPermission()` is a role-only approximation of that schema (`roleHasPermission()`). Use `authz.check()` for access decisions.
