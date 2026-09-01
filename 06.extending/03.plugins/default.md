@@ -556,7 +556,7 @@ export default function createMyPlugin(): DunePlugin {
     version: "1.0.0",
 
     async mount({ app, bootstrap }: MountApi) {
-      // Register a custom API route
+      // Register a custom API route — unauthenticated, public data only.
       app.get("/api/my-plugin/status", (_req) => {
         return Response.json({ ok: true, pages: bootstrap.engine.pages.length });
       });
@@ -567,13 +567,56 @@ export default function createMyPlugin(): DunePlugin {
 }
 ```
 
-`setup()` and `mount()` lifecycle relative to app startup:
+That example is intentionally public — it doesn't touch anything a visitor shouldn't see. **If your route mutates data or reads anything private, gate it.** The next section covers that.
+
+### Registering an admin-guarded route
+
+`@dune/plugin-admin` ships `withGuards()` — a composable helper that checks the requester's admin permission and (for mutating requests) CSRF, before your handler runs. It reads `ctx.state.adminContext` and `ctx.state.auth`, both populated by middleware the admin plugin registers via `mountEarly()` (see below) — so a guarded route works from *any* plugin's `mount()`, not just admin's own routes. **Register it under the admin path prefix** (default `/admin`, e.g. `/admin/my-plugin/…`): the auth middleware that sets `ctx.state.auth` only runs for requests under that prefix, exactly like every built-in admin route:
+
+```typescript
+import type { App } from "jsr:@fresh/core";
+import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
+import { withGuards } from "jsr:@dune/plugin-admin/admin/guards";
+
+export default function createMyPlugin(): DunePlugin {
+  return {
+    name: "my-admin-plugin",
+    version: "1.0.0",
+
+    async mount({ app }: MountApi) {
+      app.post(
+        "/admin/my-plugin/rebuild-index",
+        withGuards({ permission: "pages.publish" }, async (fc) => {
+          // withGuards already confirmed the requester holds pages.publish
+          // and, for this POST, passed CSRF — your handler only runs if
+          // both checks passed.
+          await rebuildMyIndex();
+          return Response.json({ ok: true });
+        }),
+      );
+    },
+
+    hooks: {},
+  };
+}
+```
+
+This depends on the admin plugin being present and enabled (`admin.enabled !== false` in site config) — `ctx.state.adminContext` is `undefined` otherwise, and `withGuards()` treats that as unauthenticated rather than throwing. See `@dune/plugin-admin`'s own docs for the full list of built-in permission strings.
+
+### `mountEarly()` — middleware other plugins' routes depend on
+
+Fresh compiles each route's middleware chain at the moment the route is registered, not per-request — a route registered before some `app.use()` call never sees it, even when both are unscoped. Plugin `mount()` hooks run in plugin registration order, and the built-in admin plugin registers late (`bootstrap()` doesn't construct it until authz, the HMAC key, and the history engine are ready), so **a route registered from your own `mount()` is compiled before admin's own `mount()` runs** — which is exactly why both `ctx.state.adminContext` and `ctx.state.auth` (the admin auth middleware) need a separate hook to reach you.
+
+`mountEarly()` exists for this: Dune calls every plugin's `mountEarly()` — admin's first, regardless of registration order — before calling *any* plugin's `mount()`. You will not need to implement `mountEarly()` yourself unless you're contributing middleware that other plugins' routes must depend on; consuming `ctx.state.adminContext` from your own `mount()`-registered route (as in the example above) already works without touching this hook.
+
+`setup()`, `mountEarly()`, and `mount()` lifecycle relative to app startup:
 
 | Phase | When | What's available |
 |-------|------|-----------------|
 | `setup()` | During `bootstrap()` | `hooks`, `config`, `storage` |
 | `adminServices()` | After core infra, before admin routes mount | `storage`, `config`, `dataDir`, `contentDir`, `history`, `hooks` |
-| `mount()` | After `createDuneApp()` | `app`, `bootstrap`, `adminServices` |
+| `mountEarly()` | After `createDuneApp()`, before any plugin's `mount()` | `app`, `bootstrap`, `adminServices` |
+| `mount()` | After `createDuneApp()`, after every plugin's `mountEarly()` | `app`, `bootstrap`, `adminServices` |
 | Hook events | Per-request / per-rebuild | Full runtime context |
 
 ## Registering admin services
