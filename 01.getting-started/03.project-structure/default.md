@@ -14,9 +14,13 @@ metadata:
 
 A Dune site has a predictable structure. Every directory has a clear purpose.
 
+The tree below is illustrative — it shows every kind of file a site *can* have, not what a fresh site starts with. `dune new` only scaffolds a small subset of this (`content/`, `config/site.yaml`, `config/system.yaml`, `themes/starter/`, plus a generated `main.ts`/`deno.json` and some editor/tooling files — see [Installation](getting-started/installation) for the exact list it prints). Everything below marked **(optional)** is something you add yourself as your site grows; it doesn't exist until you create it.
+
 ```
 my-site/
-├── dune.config.ts            # Programmatic config (TypeScript)
+├── dune.config.ts            # (optional) Programmatic config (TypeScript) —
+│                              # not created by `dune new`; add it yourself
+│                              # when you need config logic YAML can't express
 ├── content/                  # All content lives here
 │   ├── 01.home/
 │   │   └── default.md
@@ -25,33 +29,35 @@ my-site/
 │   │   └── 01.hello-world/
 │   │       ├── post.md
 │   │       └── cover.jpg
-│   ├── 03.about/
+│   ├── 03.about/             # (optional) additional sections you add
 │   │   └── default.md
-│   └── 04.landing/
+│   └── 04.landing/           # (optional)
 │       └── page.tsx          # TSX content page
 ├── config/
 │   ├── site.yaml             # Site identity and metadata
 │   ├── system.yaml           # Engine behavior
-│   └── env/
+│   └── env/                  # (optional) not created by `dune new`
 │       ├── development/
 │       │   └── system.yaml   # Dev-specific overrides
 │       └── production/
 │           └── system.yaml   # Production overrides
 ├── themes/
-│   └── my-theme/
+│   └── my-theme/              # `dune new` scaffolds this as themes/starter/
 │       ├── theme.yaml        # Theme manifest
 │       ├── templates/        # JSX/TSX page templates
 │       │   ├── default.tsx
-│       │   ├── post.tsx
+│       │   ├── post.tsx      # (optional) starter ships default/blog/error
+│       │   │                 # only — pages without a matching template
+│       │   │                 # fall back to default.tsx
 │       │   └── blog.tsx
 │       ├── components/       # Shared layout components (server-only)
 │       │   └── layout.tsx
 │       ├── islands/          # Preact islands (hydrated in the browser)
 │       │   └── NavToggle.tsx
-│       └── static/           # Theme assets (CSS, fonts)
+│       └── static/           # (optional) Theme assets (CSS, fonts)
 │           └── styles.css
-├── plugins/                  # Local plugins
-└── static/                   # Global static files (favicon, robots.txt)
+├── plugins/                  # (optional) Local plugins
+└── static/                   # (optional) Global static files (favicon, robots.txt)
 ```
 
 ## Content directory conventions

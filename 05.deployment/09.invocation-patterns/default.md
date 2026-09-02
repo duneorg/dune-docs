@@ -59,9 +59,9 @@ WantedBy=multi-user.target
 
 ### Lockfile enforcement (`--frozen`) — status
 
-`serve` accepts `--frozen` (or `DUNE_FROZEN=1`) to make Deno refuse to start if `deno.lock` is missing entries — the same enforcement described below for the legacy JSR-URL pattern. **`--frozen` is not the default for `serve`** (an earlier release briefly made it the default and that was reverted — see the CHANGELOG). A live regression surfaced: Deno's `--frozen` validation, at least as observed on Deno 2.7.14, can refuse to boot against a lockfile containing entries only reachable through the built-in admin plugin's dynamic import — even a lockfile `dune lockfile sync` reports as complete. Whether this reproduces under the main.ts pattern specifically is still being verified; treat `--frozen` on `serve` as something to test against your own site's plugin set before relying on it, not as a default guarantee.
+`serve` accepts `--frozen` (or `DUNE_FROZEN=1`) to make Deno refuse to start if `deno.lock` is missing entries — the same enforcement described below for the legacy JSR-URL pattern. **`--frozen` is not the default for `serve`** (an earlier release briefly made it the default and that was reverted — see the CHANGELOG). A live regression surfaced: Deno's `--frozen` validation, at least as observed on Deno 2.7.14, can refuse to boot against a lockfile containing entries only reachable through the built-in admin plugin's dynamic import — even a lockfile `dune lockfile:sync` reports as complete. Whether this reproduces under the main.ts pattern specifically is still being verified; treat `--frozen` on `serve` as something to test against your own site's plugin set before relying on it, not as a default guarantee.
 
-`dune lockfile sync`/`dune lockfile check` are unaffected by this — they use their own discovery-based subprocess resolution, not Deno's `--frozen` flag, and remain the reliable way to keep `deno.lock` complete and verify it before deploying (see [Lockfile as build artifact](#lockfile-as-build-artifact) below, which applies regardless of invocation pattern).
+`dune lockfile:sync`/`dune lockfile:check` are unaffected by this — they use their own discovery-based subprocess resolution, not Deno's `--frozen` flag, and remain the reliable way to keep `deno.lock` complete and verify it before deploying (see [Lockfile as build artifact](#lockfile-as-build-artifact) below, which applies regardless of invocation pattern).
 
 ## Legacy patterns
 
@@ -85,7 +85,7 @@ The version is pinned in `deno.json` alongside your site's other imports. Upgrad
 
 **Tradeoffs:**
 
-- Upgrading core = edit `deno.json`, run `dune lockfile sync`, commit, deploy
+- Upgrading core = edit `deno.json`, run `dune lockfile:sync`, commit, deploy
 - The entry script resolves its full module graph on each launch — this is why `deno.lock` management matters here
 - Downgrading is a `deno.json` edit; no reinstall step
 
@@ -167,13 +167,13 @@ The workflow:
 
 ```
 1. Bump @dune/core in deno.json  (or add a plugin)
-2. dune lockfile sync             — resolves missing entries locally
+2. dune lockfile:sync             — resolves missing entries locally
 3. git add deno.json deno.lock
 4. git commit
 5. git pull on the server + restart
 ```
 
-`dune upgrade` and `dune add` run step 2 automatically. You still need to commit the result. Never run `dune lockfile sync` on the server as part of a deploy — resolution decisions belong in dev/CI, reviewed and committed; the server should only ever verify (`dune lockfile check`), never resolve fresh dependency versions at deploy time.
+`dune upgrade` and `dune add` run step 2 automatically. You still need to commit the result. Never run `dune lockfile:sync` on the server as part of a deploy — resolution decisions belong in dev/CI, reviewed and committed; the server should only ever verify (`dune lockfile:check`), never resolve fresh dependency versions at deploy time.
 
 ### Why this matters
 
@@ -182,7 +182,7 @@ Without a committed lockfile, Deno resolves missing entries itself when a proces
 ### Checking the lockfile before deploying
 
 ```bash
-dune lockfile check
+dune lockfile:check
 ```
 
 Returns exit code 0 if complete, 1 if anything is missing. Safe to run in CI as a pre-deploy gate.
@@ -195,6 +195,6 @@ For a new site, use the `main.ts` entrypoint pattern — it's what `dune new` sc
 |---|---|---|---|
 | Re-exec involved | no | yes | yes |
 | Version tracked in | `deno.json` | `deno.json` | server install |
-| Upgrade step | edit + `lockfile sync` + commit | edit + `lockfile sync` + commit | `deno install -g` on server |
+| Upgrade step | edit + `lockfile:sync` + commit | edit + `lockfile:sync` + commit | `deno install -g` on server |
 | Flag-position footguns | none | yes (see above) | n/a |
 | Systemd unit complexity | simplest | more | simple |

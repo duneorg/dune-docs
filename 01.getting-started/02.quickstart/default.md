@@ -91,13 +91,15 @@ Content is just files. This Markdown file sits next to its images
 in the same folder. No media library, no upload forms — just files.
 ```
 
-Visit `/blog/hello-world` and you'll see your post, rendered through the `post.tsx` template from your theme.
+Visit `/blog/hello-world` and you'll see your post.
+
+By filename convention, `post.md` looks for a `post.tsx` template. The starter theme doesn't ship one — it only has `default.tsx`, `blog.tsx`, and `error.tsx` — so this falls back to `default.tsx` instead of erroring. That's why the post above renders using the same layout as your homepage. If you want post-specific markup (a byline, a "back to blog" link, whatever), add `themes/starter/templates/post.tsx`; copy `themes/starter/templates/default.tsx` as a starting point, since a `post.md` frontmatter with no explicit `template:` field will pick it up automatically the next time you save.
 
 ## Key concepts to notice
 
 1. **Folder = page**. The folder `01.hello-world/` IS the page. The `.md` file inside provides its content.
 2. **Numeric prefix = order**. `01.hello-world` appears first in navigation. The number is stripped from the URL.
-3. **Filename = template**. `post.md` renders with the `post.tsx` template. `blog.md` renders with `blog.tsx`. `default.md` renders with `default.tsx`.
+3. **Filename = template, with a fallback**. `post.md` looks for the `post.tsx` template; `blog.md` looks for `blog.tsx`; `default.md` looks for `default.tsx`. A page whose implied template doesn't exist in the theme falls back to `default.tsx` rather than failing — see the callout above. An explicit `template:` frontmatter field always overrides the filename convention.
 4. **Co-located media**. `cover.jpg` lives next to `post.md`. Reference it with a plain relative path: `![alt](cover.jpg)`.
 5. **Frontmatter = configuration**. YAML between `---` delimiters controls title, date, taxonomies, collections, and more.
 6. **Collections are declarative**. `@self.children` gathers child pages. No code, no GraphQL, no database queries.
