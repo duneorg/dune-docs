@@ -24,6 +24,7 @@ All commands are run with `dune` (or `deno task dune`).
 | `dune serve --root my-site` | Serve a site in a subdirectory without `cd`-ing into it first. |
 | `dune dev --env-file` | Load `.env` from the site root into the process environment before plugins/config are read. |
 | `dune dev --env-file=path/to/file` | Same, from an explicit path (relative to the site root, or absolute). |
+| `dune ps` | List dune dev/serve instances currently running on this machine — PID, mode, site title, root, and the port(s) actually listening. Scans the process table; works retroactively on anything already running. macOS/Linux only. |
 
 `--env-file` is off by default — nothing auto-loads secrets from disk on a plain `dune dev`/`serve`. It parses simple `KEY=VALUE` lines (blank lines and `#` comments skipped, surrounding quotes stripped); a key already set in the environment always wins over the file. An explicitly-requested file that doesn't exist is a hard error, not a silent no-op. Also accepted by `dune serve`.
 
@@ -36,6 +37,9 @@ All commands are run with `dune` (or `deno task dune`).
 | `dune cache:clear` | Delete all cached data (rendered HTML, content index, images). |
 | `dune cache:rebuild` | Rebuild content index from scratch. Use after bulk content changes. |
 | `dune validate` | Whole-project lint: config, plugins, templates, schemas, and content. |
+| `dune doctor` | Environment/runtime health checks — distinct from `validate`'s project-correctness checks: can this site's dependency graph actually resolve and boot, on this machine, right now? Checks Deno version, dependency resolution (`deno cache main.ts`, reformatting an npm-cache-mismatch error into actionable steps instead of a raw stack trace), and lockfile staleness. Fast — no live boot. |
+| `dune doctor --boot` | Also spawns the site for real (on a free ephemeral port) and makes a request against it. Slower and more failure-prone than the default checks, hence opt-in. |
+| `dune doctor --json` | Machine-parseable output for either form above. |
 
 `dune validate` checks:
 
@@ -256,7 +260,8 @@ See [Data Layer](../../16.for-developers/04.data-layer) for full documentation.
 
 | Command | Description |
 |---------|-------------|
-| `dune new [name]` | Create a new Dune site with starter content and default theme. |
+| `dune new [name]` | Create a new Dune site with starter content and default theme. Automatically runs `dune doctor`'s fast checks afterward (Deno version, dependency resolution, lockfile staleness) and prints any findings — informational only, doesn't fail the scaffold. |
+| `dune new [name] --verify` | Same as above, but also runs `dune doctor --boot` (spawns the site for real and makes a request against it) and exits non-zero if that fails. |
 | `dune new [name] --headless` | Create a headless Fresh+Dune site. No theme — you own all routes. See [Headless Mode](/docs/for-developers/headless-mode). |
 | `dune generate --list` | List all available generators. |
 | `dune generate:plugin <name>` | Scaffold a plugin at `plugins/{name}/index.ts`. |
