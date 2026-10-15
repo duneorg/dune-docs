@@ -132,18 +132,30 @@ collection:
       <h2>Layout control</h2>
 
       <p>
-        TSX pages render themselves — they don't need a theme template. But
-        you can still opt into wrapping with a theme layout:
+        TSX pages render themselves — they don't need a theme template. A
+        plain TSX page (one without a <code>handler</code>) is wrapped in your
+        theme's standard layout, <code>components/layout.tsx</code> — the same
+        site chrome (head, navigation, footer) that Markdown pages get — so
+        the component only has to produce the page body. Use{" "}
+        <code>layout</code> in the frontmatter to change that:
       </p>
 
       <pre><code>{`export const frontmatter = {
   title: "My Page",
 
   // Layout options:
-  // layout: "default"   → wrap in theme's default layout (this IS the default)
-  // layout: "landing"   → wrap in a specific layout component
+  // (omitted)            → wrapped in the theme's standard layout
+  // layout: "default"    → same as omitting it
+  // layout: "landing"    → wrap in components/landing.tsx instead
   // layout: false        → no wrapper — you control everything including <html>
 };`}</code></pre>
+
+      <p>
+        A page that exports a <code>handler</code> and calls{" "}
+        <code>ctx.render()</code> is never wrapped: like a Fresh route, it owns
+        the whole page, and its component receives the site navigation as props
+        so it can render its own chrome (or import the theme layout itself).
+      </p>
 
       <h2>Request handlers</h2>
 
