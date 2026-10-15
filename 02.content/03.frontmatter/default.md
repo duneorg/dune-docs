@@ -44,6 +44,7 @@ descriptor: "Custom Web Solutions"
 | `published` | boolean | `true` | If `false`, page doesn't exist for visitors |
 | `status` | string | — | Workflow status: `draft`, `in_review`, `published`, `archived` |
 | `date` | string | — | Publication date (ISO 8601) |
+| `dateModified` | string | — | Last editorial modification date (ISO 8601). Used for the sitemap `<lastmod>`; falls back to the file modification time when unset |
 | `publish_date` | string | — | Scheduled publish (ISO 8601 datetime) |
 | `unpublish_date` | string | — | Scheduled unpublish (ISO 8601 datetime) |
 | `visible` | boolean | `true` | If `false`, accessible but hidden from navigation |

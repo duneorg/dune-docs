@@ -73,7 +73,16 @@ Valid values: `always` · `hourly` · `daily` · `weekly` · `monthly` · `yearl
 
 ## Last modified date
 
-Each URL's `<lastmod>` is the file modification time of the content file, formatted as `YYYY-MM-DD`.
+Each URL's `<lastmod>` is the page's `dateModified` frontmatter value when it is set and is a valid date, formatted as `YYYY-MM-DD`. Otherwise it falls back to the file modification time of the content file.
+
+```yaml
+---
+title: My Article
+dateModified: 2025-06-15
+---
+```
+
+Set `dateModified` on pages whose files get re-created by deploys (a fresh `git clone` resets every file's modification time to the checkout time, which makes the fallback date meaningless for crawlers).
 
 ## Multilingual sites
 
