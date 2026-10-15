@@ -169,6 +169,8 @@ Fires `onPageDelete` — the same hook the admin panel fires when deleting a pag
 | `dune plugin:search <query>` | Search JSR for Dune-compatible plugins. |
 | `dune plugin:update [name]` | Update a JSR or npm plugin to its latest version. Omit name to update all. |
 
+`plugin:install`, `plugin:remove` and `plugin:update` edit `config/site.yaml` in place: only the affected lines change, so comments, blank lines and quote style survive (removing a plugin also removes the comment lines directly above it). Each edit is re-parsed and checked against the intended result before it is written. If the file uses a layout the edit can't handle safely (for example a flow-style `plugins: [...]` list), the command exits with an error and leaves the file untouched. All three accept `--dry-run` to show what would change without writing.
+
 ## Themes
 
 | Command | Description |
@@ -315,7 +317,7 @@ See [MCP Server](/docs/for-developers/mcp-server) for full documentation and con
 | Flag | Description |
 |------|-------------|
 | `--version`, `-V` | Print version and install source, then exit. |
-| `--help`, `-h` | Print help, then exit. |
+| `--help`, `-h` | Print help, then exit. After a command (`dune plugin:update --help`) it prints that command's usage instead of running it. Only `plugin:update` has its own usage text so far; other commands show the global help. |
 | `--root <dir>` | Site root directory (default: `.`). |
 | `--port <n>` | Server port for `dev` and `serve` (default: `3000`). |
 | `--debug` | Enable verbose debug output. |
