@@ -22,24 +22,29 @@ Run Dune on any machine with Deno installed — a VPS, a dedicated server, or yo
 curl -fsSL https://deno.land/install.sh | sh
 ```
 
-### 2. Clone and configure
+### 2. Get your site onto the server and add production overrides
+
+Put your site's repository on the server (any method works; Git is the usual one):
 
 ```bash
-git clone https://github.com/you/my-site.git
+git clone <your-site-repo-url> my-site
 cd my-site
 ```
 
-Set up production config:
+Dune merges `config/site.yaml` and `config/system.yaml` with any files in `config/env/<name>/`, where `<name>` is the value of the `DUNE_ENV` environment variable. Step 3 sets `DUNE_ENV=production`, so everything in `config/env/production/` applies on this server and nowhere else. Only list what differs from your other environments.
+
+`config/env/production/site.yaml`:
+```yaml
+url: "https://example.com"
+```
 
 `config/env/production/system.yaml`:
 ```yaml
-debug: false
 cache:
-  enabled: true
-  driver: "filesystem"
   lifetime: 7200
-  check: "file"
 ```
+
+The production defaults are already sensible: `debug: false`, and the filesystem cache is enabled with the `file` staleness check. You don't need to repeat them. See [System Config](/docs/configuration/system-config#environment-specific-overrides) for the other cache drivers and the `hash` check.
 
 ### 3. Build and serve
 
