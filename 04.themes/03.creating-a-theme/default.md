@@ -177,7 +177,7 @@ import { Callout } from "./components/Callout.tsx";
 export default { Alert, Callout };
 ```
 
-Dune loads this file automatically at startup. See [MDX Content](../extending/mdx-content) for details.
+Dune loads this file automatically at startup. See [MDX Content](../content/mdx-content) for details.
 
 ## 9. Add a collection template
 

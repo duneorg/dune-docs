@@ -32,7 +32,7 @@ Build custom themes, extend Dune with plugins and format handlers, and integrate
 
 [Hooks](/docs/extending/hooks) — lifecycle hooks for content and routing  
 [Format Handlers](/docs/extending/format-handlers) — add new content formats  
-[MDX Content](/docs/extending/mdx-content) — JSX inside Markdown  
+[MDX Content](/docs/content/mdx-content) — JSX inside Markdown  
 [Plugins](/docs/extending/plugins) — packaging and distributing extensions  
 [Email](/docs/extending/email) — transactional email via `email.send()` with SMTP, Resend, Postmark, or SendGrid  
 [Payments](/docs/extending/payments) — Stripe checkout, webhooks, and billing portal
