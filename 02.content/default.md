@@ -98,6 +98,6 @@ Flat files work well for articles, changelog entries, or any content that doesn'
 |--------|-------------|------|-----------|----------|
 | `.md` | YAML between `---` | Markdown → HTML | Injected into theme template | Blog posts, docs, articles |
 | `.tsx` | `export const frontmatter = {}` or sidecar YAML | JSX component | Self-rendering, optional layout | Landing pages, interactive content |
-| `.mdx` | YAML between `---` | Markdown + JSX | Compiled, injected into template | Tutorials with live examples *(v0.2)* |
+| [`.mdx`](/docs/content/mdx-content) | YAML between `---` | Markdown + JSX | Compiled, injected into template | Tutorials with live examples |
 
 Read on for details on each format, frontmatter fields, media handling, collections, and taxonomies.
