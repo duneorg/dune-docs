@@ -180,6 +180,56 @@ The following template names are used by Dune's built-in routes:
 
 See [Search](../reference/search#search-ui) for a full example.
 
+## Output modes: fragments, JSON, XML, text
+
+By default a template renders into a full HTML document (your layout, the head, the feed links, and the admin bar for logged-in editors). A template can instead produce the **entire response body itself** by exporting `output`:
+
+```tsx
+// themes/mytheme/templates/pricing-table.tsx
+export const output = "fragment";
+
+export default function PricingTable() {
+  return <table id="pricing">…</table>;
+}
+```
+
+A page then uses it like any other template (`template: pricing-table` in its frontmatter).
+
+| `output` | Media type | The template returns |
+|---|---|---|
+| `"fragment"` | `text/html` | JSX, rendered as HTML with no `<html>`/`<head>`/`<body>` wrapper |
+| `"json"` | `application/json` | a value (`JSON.stringify`'d) or an already-serialized string |
+| `"xml"` | `application/xml` | a string |
+| `"text"` | `text/plain` | a string |
+| `"text/csv"` (any `type/subtype`) | that media type | a string |
+
+Text-like types are sent with `; charset=utf-8`. A string is always sent unchanged, so Dune never HTML-escapes your JSON or XML. Returning the wrong type (for example an object from an `"xml"` template) is a 500 with a message naming the template, not `[object Object]`. Async templates work in every mode.
+
+A JSON endpoint is just a flat content file with a dotted `slug`:
+
+```md
+---
+title: Pricing
+template: pricing-json
+slug: pricing.json
+---
+```
+
+This is served at `/pricing.json` (a flat file has no trailing slash, and `/pricing.json/` redirects to it). `/robots.txt`, `/sitemap.xml` and the favicon are reserved and served from static files first.
+
+What a bare response skips, and what it keeps:
+
+- **Skipped:** feed-link injection, the dev live-reload script, RTL `dir`, and plugin response transforms (the admin bar). A fragment swapped into a page must not carry its own admin bar or reload script.
+- **Kept:** security headers, ETag and caching, compression, base-path rewriting, and editing-marker scrubbing. Markers (`data-dune-*`) are removed from fragments even for a logged-in editor, since a fragment has no editing overlay.
+
+A few things to know:
+
+- **Set in the template, never in frontmatter.** If a page author could choose the media type, an editor could serve attacker-controlled `text/javascript` or `text/html` from your site's origin. Choosing which template a page uses is the existing trust boundary.
+- **Islands in a fragment render on the server but do not hydrate** when the fragment is inserted into a page after load (Fresh hydrates at page load).
+- **A template that returns a string or object is called as a plain function**, not rendered as a component, so a `"json"`/`"xml"`/`"text"` template cannot use hooks (the same constraint as async templates). `"fragment"` templates render as normal components.
+- An unrecognised `output` value logs a warning once and the template renders as a normal HTML page.
+- Typography's orphan protection inserts `&nbsp;` before the last word of rendered Markdown paragraphs; that also appears inside fragments (it is configurable).
+
 ## Blog listing template example
 
 ```tsx
