@@ -80,7 +80,7 @@ For example, in a German page:
 <a href="/de/contact">Contact us</a>
 ```
 
-The following URL patterns are never rewritten: `/themes/`, `/content-media/`, `/api/`, `/admin/`.
+The following URL patterns are never rewritten: `/themes/`, `/content-media/`, `/api/`, `/admin/`, and links to media files (such as `.pdf`, `.mp3` or `.zip`), because co-located media is served at its unprefixed route path. A language-prefixed media URL like `/de/about/brochure.pdf` is also accepted and served the same file.
 
 ## Navigation
 
