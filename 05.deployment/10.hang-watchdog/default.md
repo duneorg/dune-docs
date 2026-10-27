@@ -24,6 +24,8 @@ The main thread sends the watchdog a heartbeat every second. If the heartbeats s
 
 It kills rather than exits cleanly because a blocked thread can't run shutdown code. The dune dev wrapper exits with status 137 when this happens. **Nothing restarts the process for you**: use a supervisor for `dune serve` (see below). The newest 20 reports are kept. Path segments longer than 24 characters are cut in reports, so tokens in URLs don't end up in them.
 
+> **Add `.dune/` to your `.gitignore`.** `dune new` doesn't write one, so in a site repo that doesn't already ignore `.dune/`, the reports in `.dune/hangs/` show up as untracked files and are easy to commit by accident.
+
 ## Limits
 
 | Setting | Default | Notes |
