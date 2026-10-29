@@ -303,9 +303,13 @@ Supported targets: `fly`, `docker`, `deno-deploy`.
 
 | Command | Description |
 |---------|-------------|
-| `dune upgrade` | Update the `@dune/core` specifier in `deno.json` to the latest version on JSR. |
+| `dune upgrade [version]` | Move every `@dune/core` reference in `deno.json` to the latest version on JSR, or to `version`. |
 
-`dune upgrade` reads the site's `deno.json`, checks JSR for the latest `@dune/core` release, and writes the updated specifier. Deno fetches the new version automatically on next startup.
+`dune upgrade` reads the site's `deno.json`, checks JSR for the latest `@dune/core` release, and moves **every** `jsr:@dune/core@…` reference to it: the `@dune/core` import, its subpath entries (such as `@dune/core/ui/editable`) and the CLI specifier in legacy `tasks`. Each reference keeps its own style: an exact pin stays exact, and `^0.35` stays a caret on the minor. Then it syncs the lockfile. Deno fetches the new version automatically on next startup.
+
+Pass a full version to set it explicitly instead of the latest, for example `dune upgrade 0.35.1`. An explicit version is applied to every reference, so it also works for rollbacks, and for upgrading while the newest release is still inside Deno's minimum-dependency-age window.
+
+After upgrading, a site that still launches through a versioned CLI specifier in its `tasks` is pointed at `dune migrate:entrypoint`, and plugin versions are pointed at `dune plugin:update`; neither is changed by `dune upgrade` itself.
 
 When running from a local source clone, the command prints the current version and the appropriate `git pull` command instead.
 
