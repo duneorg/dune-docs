@@ -35,6 +35,19 @@ In a site on the generated `main.ts` entrypoint, a global `dune <cmd>` hands ove
 
 `--env-file` is off by default — nothing auto-loads secrets from disk on a plain `dune dev`/`serve`. It parses simple `KEY=VALUE` lines (blank lines and `#` comments skipped, surrounding quotes stripped); a key already set in the environment always wins over the file. An explicitly-requested file that doesn't exist is a hard error, not a silent no-op. Also accepted by `dune serve`.
 
+### `dune <cmd>` in a site with its own `main.ts`
+
+A site on the [`main.ts` entrypoint pattern](/docs/deployment/invocation-patterns) governs itself: its import map pins the core version, and its `deno task`s carry the flags it wants (`--watch`, `--env-file`). So when the site root holds an unedited, generated `main.ts` next to its `deno.json`, `dune <cmd> [args]` hands over to the site instead of running its own copy of the CLI:
+
+- If the site has a task named `<cmd>` that runs `main.ts`, it runs `deno task <cmd> [args]`, so `dune dev --port 3001` is `deno task dev --port 3001`: same core, same plugins, same `.env` handling as the site's own task.
+- Otherwise it runs `deno run -A main.ts <cmd> [args]`.
+
+A line on stderr says which of the two it ran. `--root` still selects the site; the command runs from that directory.
+
+Install- and machine-level commands are never handed over: `new`, `ps`, `stop`, `dev:link`, `upgrade`, `lockfile:check`, `lockfile:sync` and `migrate:entrypoint`, plus `--help` and `--version`. A site with no `main.ts`, or one you have edited, runs through the normal CLI as before.
+
+To run the `dune` you invoked against such a site anyway (for example when working on Dune itself from a checkout), set `DUNE_SITE_ENTRYPOINT=off`.
+
 ## Build & Cache
 
 | Command | Description |
