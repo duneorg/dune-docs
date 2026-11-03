@@ -236,8 +236,19 @@ See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full 
 | `dune users:create <email> [--role x[,y]] [--name "..."]` | Create a `User` record before the person has ever logged in, marked `provider: "invited"`. An admin-tier role (`admin`/`editor`/`author`) syncs the `app:admin` authz tuple immediately, same as `users:grant-role`. |
 | `dune users:grant-role <email> <role>` | Grant an admin-tier role (`admin`, `editor`, or `author`) to an existing user, identified by email. Updates `roles[]` and syncs the corresponding authz tuple — the same two things the admin panel's user-edit UI does over HTTP. |
 | `dune users:revoke-role <email> <role>` | Revoke an admin-tier role from an existing user. |
+| `dune users:passwd <email\|username> [--stdin \| --generate]` | Set or reset a local user's password. The password is never an argument (shell history, `ps`): by default it is prompted for on a terminal with no echo and asked twice; `--stdin` reads it from stdin for scripts; `--generate` prints a random one once. Applies the same strength rules as the admin panel and revokes all of the user's existing admin and site sessions. Refuses accounts with no local password (OAuth, magic link, invited) and exits non-zero on any failure. Works with the flat-file and the DB user store. |
 
 For operators without (or before) web access: first-admin bootstrap on a headless install, scripted/CI-driven site provisioning, or granting admin access to an existing OAuth/magic-link account that has never had one. Idempotent — granting a role already held, or revoking one not held, is a no-op. Accepts `--dry-run`.
+
+`users:passwd` is the recovery path when the only admin has forgotten their password, and the way to rotate a password nobody has the plaintext of. Running it needs shell access to the site's data directory, the same access the other `users:*` commands need, so it adds no new trust boundary. It resolves the user directory from `data_dir` (falling back to the deprecated `admin.dataDir`), like the rest of core.
+
+```bash
+dune users:passwd admin
+echo "$NEW_PASSWORD" | dune users:passwd alice@example.com --stdin
+dune users:passwd alice@example.com --generate
+```
+
+With `--generate`, the new password is printed once to stdout. Store it before closing the terminal.
 
 An invited person's first magic-link login matches `users:create`'s record by email and just works. First login via OAuth does not — the account-takeover guard rejects an email-only match from a different provider, so closed/invite-only OAuth signup needs a separate feature, not this command.
 
