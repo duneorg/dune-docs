@@ -257,7 +257,7 @@ For a more responsive dev loop, `bootstrap()` accepts a `dev: true` option that 
 
 ## Admin panel
 
-The admin panel is available at `/admin` (or your configured `admin.path`) automatically via `mountDuneAdmin()`. On first run, a default admin account is created and the password written to `.dune/admin/admin-password.txt`. Read the file, then delete it and change the password in the admin UI.
+The admin panel is available at `/admin` (or your configured `admin.path`) automatically via `mountDuneAdmin()`. Dune creates no default admin, so create the first one before you log in: `dune users:create admin@example.com --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](/docs/administration#creating-the-first-admin).
 
 The admin panel is fully functional in headless mode: create and edit pages, manage users, view metrics, configure plugins.
 
