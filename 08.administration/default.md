@@ -18,17 +18,13 @@ The Dune admin panel is a browser-based interface for managing content, media, u
 
 ## Accessing the panel
 
-By default the panel is at `/admin`. Log in with the credentials created at first startup — Dune prints the password to the console and writes it to a temporary file:
+By default the panel is at `/admin`. Dune does not create a default admin account: create the first admin yourself (see below), then log in with it. A site that has no enabled admin logs a warning at startup with the command to run.
 
-```
-🔑 Default admin created — username: admin
-   Password written to: data/users/.admin-password-XXXXX
-   Read it, then delete the file and change your password.
-```
+> Before `@dune/plugin-admin` 3.3.0, first startup created a default `admin` account and wrote its password to a file. That no longer happens. Sites that already have an admin are unaffected.
 
-### Creating the first admin explicitly
+### Creating the first admin
 
-You don't have to rely on the generated password. Create the first admin yourself, either from the command line:
+Create the first admin from the command line:
 
 ```bash
 dune users:create admin@example.com --role admin --username admin --password-prompt
@@ -80,7 +76,7 @@ Three roles control what each user can do:
 
 Users are stored in `data/users/` (under `data_dir` in `system.yaml`) and should be committed to version control. Passwords are stored as PBKDF2 hashes — never in plaintext.
 
-On first startup, a default `admin` account is created automatically. Delete the temporary password file and change the password immediately.
+There is no default account; see [Creating the first admin](#creating-the-first-admin). To change a password later, use the admin panel or `dune users:passwd`.
 
 ## What the panel provides
 
