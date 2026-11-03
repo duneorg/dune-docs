@@ -26,6 +26,28 @@ By default the panel is at `/admin`. Log in with the credentials created at firs
    Read it, then delete the file and change your password.
 ```
 
+### Creating the first admin explicitly
+
+You don't have to rely on the generated password. Create the first admin yourself, either from the command line:
+
+```bash
+dune users:create admin@example.com --role admin --username admin --password-prompt
+```
+
+or from the environment, for container and server deployments:
+
+```bash
+DUNE_ADMIN_EMAIL=admin@example.com
+DUNE_ADMIN_PASSWORD=...            # at least the minimum strength; never logged
+DUNE_ADMIN_USERNAME=admin          # optional, default "admin"
+```
+
+If both `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` are set and the site has no enabled admin, Dune creates one when it boots. This lives in core, so it works with any admin implementation. Rules:
+
+- It only acts when **no enabled admin exists**. It never overrides or resets an existing account; to change a password use [`dune users:passwd`](reference/cli#users).
+- Both variables must be set, or neither. A weak password, an invalid email, a username that is taken, or an email that belongs to a non-admin account stops boot with a message saying which.
+- The password stays in the process environment. Remove `DUNE_ADMIN_PASSWORD` from your deployment config after the first boot.
+
 Change the URL prefix with `admin.path` in your config:
 
 ```yaml
