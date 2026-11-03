@@ -107,7 +107,7 @@ WordPress content is HTML. Dune's markdown renderer passes raw HTML through unch
 ### Not imported
 
 - Comments (Dune has its own comment system — migrate manually if needed)
-- Users (create admin users via `dune new` or the admin panel)
+- Users (create your first admin with `dune users:create <email> --role admin --password-prompt`; see [Administration](administration#creating-the-first-admin))
 - Attachments / media (download your `wp-content/uploads/` separately and place files in the relevant `content/` page folders or a shared `static/` directory)
 - Custom post types beyond `post` and `page`
 - Plugin data (ACF fields, WooCommerce products, etc.)

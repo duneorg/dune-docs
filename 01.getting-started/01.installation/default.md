@@ -98,6 +98,18 @@ The dev server watches for changes — edit `content/01.home/default.md` and you
 
 **Using a different port** — pass `--port`: `deno task dev --port 4000`. Useful if `3000` is already taken by another project; the server prints the URL it actually bound once it starts, so check that if you're not sure what port ended up in use.
 
+## Create your first admin
+
+You can read and edit content as files without an account, but the admin panel at `/admin` needs a user. Dune does not create a default one, so create it yourself (in a second terminal while the dev server runs, or before starting it):
+
+```bash
+dune users:create you@example.com --role admin --password-prompt
+```
+
+You're asked for a password twice, with no echo (at least 12 characters). Then log in at `http://localhost:3000/admin/login` with the username (by default the part of the email before the `@`; set it with `--username`). The account is stored in `data/users/`; commit it with the rest of the site. If `dune` isn't installed globally, run it through the CLI your site already uses: `deno run -A jsr:@dune/core/cli users:create …`.
+
+See [Administration](administration) for scripted and environment-based setup, and for resetting a forgotten password with `dune users:passwd`.
+
 ## What just happened?
 
 1. Dune scanned the `content/` directory and built a **content index** — a lightweight map of every page, its route, and its frontmatter

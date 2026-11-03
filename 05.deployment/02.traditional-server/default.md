@@ -48,6 +48,8 @@ The production defaults are already sensible: `debug: false`, and the filesystem
 
 ### 3. Build and serve
 
+User accounts live in `data/users/` and are normally committed with the site, so an admin you created locally arrives with the clone. If the site has no enabled admin yet (a fresh repo, or you keep `data/users/` out of git), create one on the server with `dune users:create <email> --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](administration#creating-the-first-admin) for the rules, and remove the password variable afterwards.
+
 ```bash
 # Build the content index
 DUNE_ENV=production dune build

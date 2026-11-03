@@ -22,6 +22,8 @@ deno task dev
 
 The server starts at `http://localhost:3000` with hot-reload — every content or theme change is picked up automatically.
 
+Want to edit in the browser instead of in files? Create your first admin with `dune users:create you@example.com --role admin --password-prompt`, then log in at `/admin`. See [Installation](getting-started/installation#create-your-first-admin).
+
 ## Create a blog section
 
 Create a folder for your blog and add a listing page:
