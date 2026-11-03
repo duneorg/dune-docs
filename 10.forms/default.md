@@ -145,10 +145,6 @@ Each form in `forms/` is automatically served at two endpoints:
 | `GET` | `/api/forms/{name}` | Returns the public form schema as JSON |
 | `POST` | `/api/forms/{name}` | Submits the form |
 
-`POST /api/contact` is deprecated. Define `forms/contact.yaml` and post to `/api/forms/contact` instead.
-
-To react to a stored submission from code, register an `onFormSubmit` hook; see [Hooks](/docs/extending/hooks).
-
 ### GET — fetch schema
 
 ```http

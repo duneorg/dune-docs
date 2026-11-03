@@ -40,14 +40,6 @@ await cli({ root: import.meta.dirname });
 
 **A global `dune` follows the site.** In a site on this pattern, `dune dev` (or any other site command) run from a globally installed or checked-out `dune` hands over to the site's own entrypoint, so it behaves exactly like the matching `deno task`: the site's pinned core, its plugins, its flags and `.env` handling. Set `DUNE_SITE_ENTRYPOINT=off` to run the `dune` you invoked instead. Details in the [CLI reference](/docs/reference/cli).
 
-### A global `dune` command in a `main.ts` site
-
-`dune dev` and `deno task dev` should be interchangeable, and in a site on this pattern they now are. When the site root holds an unedited template `main.ts`, a global `dune <cmd> [args]` hands over to the site instead of running its own core: `deno task <cmd> [args]` if the site has such a task that runs `main.ts`, otherwise `deno run -A main.ts <cmd> [args]`. That keeps the site's own core version, import map and task flags (`--env-file`, `--watch`). One line on stderr says the handover happened.
-
-`dune new`, `ps`, `stop`, `dev:link`, `upgrade`, `lockfile:*` and `migrate:entrypoint` are about the install, not the site, and are never handed over.
-
-To run this `dune` against such a site anyway, for example when working on Dune itself, set `DUNE_SITE_ENTRYPOINT=off`.
-
 ```ini
 # systemd unit — main.ts pattern
 [Unit]
