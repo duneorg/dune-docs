@@ -14,6 +14,8 @@ metadata:
 
 All commands are run with `dune` (or `deno task dune`).
 
+In a site on the generated `main.ts` entrypoint, a global `dune <cmd>` hands over to the site (`deno task <cmd>`, or `deno run -A main.ts <cmd>`), so it runs with the site's own core and task flags. Install-level commands (`new`, `ps`, `stop`, `dev:link`, `upgrade`, `lockfile:*`, `migrate:entrypoint`) are never handed over. Set `DUNE_SITE_ENTRYPOINT=off` to opt out. See [Invocation patterns](/docs/deployment/invocation-patterns).
+
 ## Development
 
 | Command | Description |

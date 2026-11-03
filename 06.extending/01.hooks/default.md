@@ -71,7 +71,7 @@ Fired during bootstrap when the search engine is created. They let a plugin add 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
 | `onSearchRecordsCollect` | Before the search index is built | Inject extra records (e.g. extracted PDF text) into the index |
-| `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch) |
+| `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch). If it fails to build, Dune [falls back and retries](../../reference/search#when-a-search-backend-is-down) instead of stopping |
 
 ### Content mutation hooks
 
@@ -83,6 +83,15 @@ Fired by the admin panel after CRUD operations. Useful for triggering external s
 | `onPageUpdate` | Page saved and index rebuilt | Notify external search, invalidate CDN |
 | `onPageDelete` | Page deleted and index rebuilt | Remove from external search, purge CDN |
 | `onWorkflowChange` | Page workflow status changed | Trigger review notifications, update CMS |
+
+### Public feature hooks
+
+Fired by core, so they work with no admin plugin installed.
+
+| Hook | When it fires | Use case |
+|------|--------------|----------|
+| `onFormSubmit` | A form submission was accepted and stored | Forward to a CRM, create a ticket |
+| `onSystemAction` | The [incoming webhook](/docs/webhooks) ran `rebuild` or `purge-cache` | Audit or mirror the action |
 
 ## Registering hooks
 
@@ -217,6 +226,13 @@ The payload objects are mutable — handlers populate them in place (push record
 | `onWorkflowChange` | `{ sourcePath: string, from: WorkflowStatus, to: WorkflowStatus }` | Fired after a page's workflow status changes |
 
 `WorkflowStatus` is `"draft" | "in_review" | "published" | "archived"`.
+
+### Public feature hooks
+
+| Hook | `data` shape | Description |
+|------|--------------|-------------|
+| `onFormSubmit` | `{ form: string, submission: Submission }` | Fired after a public form submission is stored. `form` is the form name (`"contact"` for the legacy `/api/contact`). `submission` includes `id`, `fields`, `meta` and any `files`. Spam (honeypot) and invalid submissions never fire it. |
+| `onSystemAction` | `{ action: "rebuild" \| "purge-cache", ip: string \| null, userAgent: string \| null }` | Fired once per action run by `POST /api/webhook/incoming`. `ip` honours `system.trusted_proxies`. |
 
 These same events also trigger [outbound webhooks](../../webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
 

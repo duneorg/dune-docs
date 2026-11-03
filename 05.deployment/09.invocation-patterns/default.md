@@ -38,6 +38,14 @@ await cli({ root: import.meta.dirname });
 
 **Existing sites**: run `dune migrate:entrypoint` to move onto this pattern — it writes `main.ts`, adds any import-map entries dune-core needs that your site doesn't already declare, and rewrites your tasks. It's idempotent and refuses to touch a `main.ts` you've hand-edited. Run `dune validate` afterward and soak-test before rolling it out to more than one site.
 
+### A global `dune` command in a `main.ts` site
+
+`dune dev` and `deno task dev` should be interchangeable, and in a site on this pattern they now are. When the site root holds an unedited template `main.ts`, a global `dune <cmd> [args]` hands over to the site instead of running its own core: `deno task <cmd> [args]` if the site has such a task that runs `main.ts`, otherwise `deno run -A main.ts <cmd> [args]`. That keeps the site's own core version, import map and task flags (`--env-file`, `--watch`). One line on stderr says the handover happened.
+
+`dune new`, `ps`, `stop`, `dev:link`, `upgrade`, `lockfile:*` and `migrate:entrypoint` are about the install, not the site, and are never handed over.
+
+To run this `dune` against such a site anyway, for example when working on Dune itself, set `DUNE_SITE_ENTRYPOINT=off`.
+
 ```ini
 # systemd unit — main.ts pattern
 [Unit]

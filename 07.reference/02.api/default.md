@@ -615,7 +615,9 @@ Returns extended stats (uptime, page count, cache stats) when a valid `health_to
 health_token: "your-secret-token"
 ```
 
-Without a valid token the response is always the minimal `{ "status": "ok" }`.
+Without a valid token the response is always minimal: `{ "status": "ok" }`, or `{ "status": "degraded" }` when a search engine has failed (see [When a search backend is down](../search#when-a-search-backend-is-down)). `degraded` is still HTTP 200, because the site is serving content. With the token, the response also lists each search engine's state and last error.
+
+`/health/ready` stays `200` while degraded and adds `"degraded": true` to its body.
 
 ## Rate limiting
 

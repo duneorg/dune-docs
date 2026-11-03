@@ -217,6 +217,13 @@ publish_date: "2025-12-01T09:00:00Z"    # Auto-publish at this time
 unpublish_date: "2026-01-01T00:00:00Z"  # Auto-unpublish at this time
 ```
 
+Core reads these fields itself, so they work without the admin plugin or a scheduler. A page is live when `publish_date <= now < unpublish_date`; either bound may be left out. Before its `publish_date`, or from its `unpublish_date` on, a page is treated as unpublished everywhere `published` is honoured: routes, feeds, the sitemap, search, taxonomies and static builds. `published: false` always wins; the dates only narrow it to a window.
+
+- Dates are ISO 8601. A value without a zone, including a bare `2026-12-01`, is read as **UTC**.
+- An unparseable date is ignored with a warning rather than failing the index.
+- Nothing is written to the file. The engine rebuilds at the next window boundary, so a page appears and disappears on time without a restart.
+- A static build (`dune build --static`) reflects the moment it ran, so rebuild after a `publish_date` passes.
+
 ## Draft preview
 
 Before publishing, editors can preview how a draft will look on the live site — with the active theme, layout, and styles applied — without making the page public.

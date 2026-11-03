@@ -174,6 +174,7 @@ typography:
   orphan_protection: true        # boolean — Insert &nbsp; before last word in paragraphs
 
 search:
+  fail_on_startup: false         # boolean — Stop startup if a search engine fails to build (default: false = log, retry, fall back)
   customFields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)

@@ -447,3 +447,24 @@ plugins:
 ```
 
 Dune indexes full page bodies (via the host's `loadText` helper) and re-syncs on content changes. Records injected by other plugins — including `@dune/plugin-pdf` — are indexed into Meilisearch too.
+
+### When a search backend is down
+
+Search is secondary to serving your pages, so a backend that is unreachable does not stop the site. Engines are built independently:
+
+- **Startup continues.** A failed engine is logged once, with the cause (`search.engine.failed engine="meilisearch" … reason="… ECONNREFUSED …"`), and marked failed. Every other engine, and the site, carries on.
+- **Search falls back.** While the configured engine is failed, queries are answered by the next usable one, normally the built-in engine, which indexes the same pages. Ranking differs from the backend's, but search keeps working. If no engine can answer, `/api/search` returns `503` with `Retry-After: 30`.
+- **It retries by itself.** A failed engine is retried in the background, 5 seconds after the failure and then at doubling intervals up to every 5 minutes. When it recovers, it takes over again and the log says `search.engine.recovered`.
+- **You can see it.** `/health` reports `"status": "degraded"` (still HTTP 200, so the instance stays in rotation); with the [health token](../api#detailed-health-authenticated) it lists each engine's state and last error. `dune doctor --boot` warns about it too. Alert on `degraded` rather than on the HTTP status.
+
+A failed engine that stays failed is easy to miss because the site looks fine. If you would rather block a deploy on it, make the new instance fail its health check, or stop startup outright:
+
+```yaml
+# config/system.yaml
+search:
+  fail_on_startup: true   # default: false
+```
+
+Startup also stops, regardless of this setting, when a plugin reports a configuration error that retrying cannot fix, such as a rejected API key.
+
+If you write a search engine plugin: throw `SearchConfigError` (from `@dune/core/search`) for a failure that will not fix itself, and any other error for one that might.
