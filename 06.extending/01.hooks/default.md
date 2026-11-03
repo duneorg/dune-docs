@@ -71,7 +71,7 @@ Fired during bootstrap when the search engine is created. They let a plugin add 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
 | `onSearchRecordsCollect` | Before the search index is built | Inject extra records (e.g. extracted PDF text) into the index |
-| `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch) |
+| `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch). If it fails to build, Dune [falls back and retries](../../reference/search#when-a-search-backend-is-down) instead of stopping |
 
 ### Content mutation hooks
 
