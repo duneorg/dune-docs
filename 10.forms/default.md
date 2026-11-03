@@ -14,6 +14,8 @@ metadata:
 
 Dune includes a blueprint-driven form system. You define forms as YAML files and the engine handles validation, spam protection, file uploads, email notifications, and submission storage — no backend code required.
 
+Forms are part of Dune itself. They work with the admin panel turned off (`admin.enabled: false`) or without an admin plugin at all; the admin panel only adds a screen for reading the submissions.
+
 ## Creating a form
 
 Create a YAML file in the `forms/` directory at your site root:
@@ -40,7 +42,8 @@ fields:
     type: text
     label: "Your name"
     required: true
-    minlength: 2
+    validate:
+      min: 2
 
   email:
     type: email
@@ -60,8 +63,9 @@ fields:
     type: textarea
     label: "Message"
     required: true
-    minlength: 20
-    maxlength: 5000
+    validate:
+      min: 20
+      max: 5000
 ```
 
 ### With notifications
@@ -79,28 +83,32 @@ fields:
   # ...
 ```
 
-The `notifications.email` value overrides the `To:` address for this specific form. The mail itself goes out through the site's email provider, `email:` in `site.yaml`, so any provider it supports works.
+The `notifications.email` value overrides the `To:` address for this specific form. The webhook URL replaces the site-wide one but keeps its signing secret.
 
-### Site-wide form settings
-
-Forms are served by Dune core and need no admin plugin. The settings that apply to every form live in `site.yaml`:
+Site-wide notifications are set in `site.yaml`. The email is sent through the provider you configured under [`email`](/docs/extending/email), so it can use SMTP, Resend, Postmark or SendGrid:
 
 ```yaml
-# site.yaml
+# config/site.yaml
+email:
+  provider: resend
+  from: hello@example.com
+  resend:
+    apiKey: "$RESEND_API_KEY"
+
 forms:
-  honeypot: _hp               # default honeypot field name
+  honeypot: _hp                      # default; a form's own `honeypot` wins
   notifications:
     email:
-      to: hello@example.com   # a form's own notifications.email replaces this
-      subject: "New {form} submission"   # {form} is the form name
+      to: hello@example.com          # string or list
+      subject: "New {form} submission"   # optional; {form} is the form name
     webhook:
-      url: https://hooks.example.com/dune
-      secret: "$FORM_WEBHOOK_SECRET"     # signs the payload (HMAC)
+      url: https://hooks.example.com/forms
+      secret: "$FORM_WEBHOOK_SECRET" # signs the body: X-Dune-Signature: sha256=<hex>
 ```
 
-A `notifications` block that still carries its own `smtp:` keeps working with a warning; move to `site.email` instead.
+Sending failures are logged and never shown to the person submitting the form.
 
-The old `admin.honeypot` and `admin.notifications` keys are still read and log a deprecation warning.
+> **Moved from `admin:`.** `admin.honeypot` and `admin.notifications` still work and log a deprecation warning. A `notifications.email` block with its own `smtp:` credentials also keeps working with a warning; move the credentials to `email:` instead.
 
 ## Field types
 
@@ -122,13 +130,11 @@ The old `admin.honeypot` and `admin.notifications` keys are still read and log a
 |--------|-------|-------------|
 | `label` | all | Human-readable label |
 | `required` | all | Field must be present and non-empty |
-| `minlength` | text, email, tel, textarea | Minimum character count |
-| `maxlength` | text, email, tel, textarea | Maximum character count |
-| `min` | number | Minimum numeric value |
-| `max` | number | Maximum numeric value |
-| `pattern` | text, email, tel | Regex the value must match |
+| `placeholder` | text-like | Placeholder text, returned in the schema |
+| `validate.min` | text, email, tel, textarea / number | Minimum length / minimum value |
+| `validate.max` | text, email, tel, textarea / number | Maximum length / maximum value |
+| `validate.pattern` | text, email, tel | Regex the value must match |
 | `options` | select | Map of `value: label` pairs |
-| `value` | hidden | Fixed value for hidden fields |
 
 ## The API endpoint
 
@@ -139,10 +145,6 @@ Each form in `forms/` is automatically served at two endpoints:
 | `GET` | `/api/forms/{name}` | Returns the public form schema as JSON |
 | `POST` | `/api/forms/{name}` | Submits the form |
 
-`POST /api/contact` is deprecated. Define `forms/contact.yaml` and post to `/api/forms/contact` instead.
-
-To react to a stored submission from code, register an `onFormSubmit` hook; see [Hooks](/docs/extending/hooks).
-
 ### GET — fetch schema
 
 ```http
@@ -151,18 +153,19 @@ GET /api/forms/contact
 
 ```json
 {
+  "name": "contact",
   "title": "Contact Us",
   "success_url": "/thanks",
   "honeypot": "_email_confirm",
   "fields": {
-    "name": { "type": "text", "label": "Your name", "required": true, "minlength": 2 },
+    "name": { "type": "text", "label": "Your name", "required": true, "validate": { "min": 2 } },
     "email": { "type": "email", "label": "Email address", "required": true },
     "message": { "type": "textarea", "label": "Message", "required": true }
   }
 }
 ```
 
-Sensitive keys (`notifications.email`, `notifications.webhook`) are omitted from the public schema.
+Sensitive keys (`notifications.email`, `notifications.webhook`) are omitted from the public schema. An unknown form and a disabled form both return `404`.
 
 ### POST — submit
 
@@ -179,16 +182,19 @@ Send `multipart/form-data` (required for file uploads) or `application/x-www-for
 </form>
 ```
 
-**Success response** (`303 See Other`):
+A browser form post and a `fetch` call get different responses. Send `Accept: application/json` to get JSON.
 
-```
-Location: /thanks
+**Success.** A form post gets `302 Found` to `success_url`. Only a path on your own site is followed; anything else falls back to `/`. With `Accept: application/json` you get `200`:
+
+```json
+{ "ok": true }
 ```
 
-**Validation error response** (`422 Unprocessable Entity`):
+**Validation error.** With `Accept: application/json`, `422 Unprocessable Entity`:
 
 ```json
 {
+  "error": "Validation failed",
   "errors": [
     { "field": "email", "message": "Invalid email address" },
     { "field": "message", "message": "Must be at least 20 characters" }
@@ -196,30 +202,43 @@ Location: /thanks
 }
 ```
 
-**Rate limit response** (`429 Too Many Requests`):
+A form post is redirected back to the page it came from with `?form_error=1` added.
+
+**Rate limit** (`429 Too Many Requests`, with a `Retry-After` header):
 
 ```json
-{ "error": "Too many submissions — please wait before trying again" }
+{ "error": "Too many requests" }
 ```
+
+**Other errors.** A form that doesn't exist is `404`. A form with `enabled: false` is `403` on submit. A body over 55 MB is `413`.
 
 ## Accessing submissions
 
-All submissions are stored in `data_dir` (a `system.yaml` setting, default `data/`; the older `admin.dataDir` is still read, with a deprecation warning). With the admin plugin installed they are viewable under **Form Submissions**. Each submission records:
+Submissions are stored as JSON in `data/submissions/{form-name}/`. The directory is `data_dir` in `system.yaml` (default `data`), and it is meant to be git-tracked so submissions survive deploys:
+
+```yaml
+# config/system.yaml
+data_dir: data
+```
+
+> `admin.dataDir` still works and logs a deprecation warning.
+
+Each submission records:
 
 - Timestamp
-- IP address (hashed for privacy)
+- Submitter IP address, language and user agent
 - All submitted field values
 - Any uploaded file references
 
-Submissions are stored as JSON in `data/submissions/{form-name}/`. This directory is git-tracked, so submissions are preserved across deploys.
+With the admin panel enabled, submissions are listed under **Form Submissions**. Without it, read the JSON files directly, or react to new ones in a plugin with the `onFormSubmit` hook (see [Hooks](/docs/extending/hooks)).
 
 ## Spam protection
 
 Dune applies two spam prevention layers:
 
-**Honeypot field**: Add a `honeypot` key to your form definition. The engine generates a hidden field with that name. Automated bots typically fill every field — if the honeypot field is non-empty, the submission is silently rejected (returns success to avoid training bots).
+**Honeypot field**: Add a `honeypot` key to your form definition (or set `forms.honeypot` in `site.yaml` for every form; the default is `_hp`) and render a hidden input with that name. Automated bots typically fill every field — if the honeypot field is non-empty, the submission is silently dropped and the response looks like a success, so bots learn nothing.
 
-**Rate limiting**: A per-IP rate limit is applied to all form submissions. By default, submissions from the same IP are limited to a few requests per minute.
+**Rate limiting**: Each IP can submit 5 times per minute across all forms. Set `system.trusted_proxies: true` if Dune runs behind a reverse proxy, so the real client address is used rather than the proxy's.
 
 ## File uploads
 
@@ -233,7 +252,7 @@ fields:
     required: true
 ```
 
-Uploaded files are stored in `<data_dir>/uploads/` and referenced from the submission record by filename. The admin panel displays uploaded files with download links.
+Uploaded files are stored in `{data_dir}/uploads/{form}/{submission-id}/` and referenced from the submission record. The admin panel displays uploaded files with download links.
 
 ### Allowed file types
 
@@ -244,7 +263,7 @@ Dune enforces a server-side extension allowlist. Only the following types are ac
 **Office:** `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`  
 **Archives:** `.zip`
 
-Script, executable, and HTML/SVG files (`.php`, `.sh`, `.exe`, `.html`, `.svg`, `.js`, etc.) are rejected with a `400` error. The stored content-type is derived from the file extension rather than the browser-supplied type.
+Script, executable, and HTML/SVG files (`.php`, `.sh`, `.exe`, `.html`, `.svg`, `.js`, etc.) are skipped: the submission is still saved, without that file, and the submitter is not told. The same goes for files over 10 MB and for any file past the fifth. The stored content-type is derived from the file extension rather than the browser-supplied type.
 
 Form submissions larger than 55 MB are rejected before the body is parsed (`413 Request Too Large`).
 
@@ -263,9 +282,13 @@ body.append("email", "jane@example.com");
 body.append("message", "Hello from the JS client!");
 
 // Submit
-const res = await fetch("/api/forms/contact", { method: "POST", body });
+const res = await fetch("/api/forms/contact", {
+  method: "POST",
+  body,
+  headers: { Accept: "application/json" },
+});
 
-if (res.status === 303) {
+if (res.ok) {
   // Success — redirect to success_url or show inline message
   window.location.href = schema.success_url ?? "/";
 } else if (res.status === 422) {
@@ -276,4 +299,15 @@ if (res.status === 303) {
 
 ## Disabling a form
 
-Remove the YAML file to disable a form entirely — requests to its endpoint will return `404`. There is no `enabled: false` toggle; the presence of the file is the gate.
+Remove the YAML file to delete a form: its endpoint returns `404`. To pause one without deleting it, set `enabled: false`:
+
+```yaml
+# forms/contact.yaml
+enabled: false
+```
+
+A paused form's schema returns `404` (the same as a form that doesn't exist) and submissions are refused with `403`. Existing submissions stay where they are.
+
+## The legacy contact endpoint
+
+`POST /api/contact` is deprecated and logs a warning the first time it is used. It stores whatever it receives under the form name in `form_name` (default `contact`) and only checks that there is a `name` or an `email`. Define `forms/contact.yaml` and post to `/api/forms/contact` instead, so the submission is validated.

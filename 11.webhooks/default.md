@@ -181,7 +181,7 @@ Incoming webhooks let external systems trigger server-side actions — such as a
 ### Configuration
 
 ```yaml
-# system.yaml
+# config/system.yaml
 webhooks:
   incoming:
     - token: "$DEPLOY_WEBHOOK_TOKEN"
@@ -194,9 +194,7 @@ webhooks:
       actions: [rebuild, purge-cache]
 ```
 
-Core serves this endpoint, so it works with `admin.enabled: false` and without the admin plugin. The older `admin.incoming_webhooks` key is still read and logs a deprecation warning.
-
-Each executed action fires an `onSystemAction` hook, which an admin plugin uses to write its audit log. You can register your own handler to audit or mirror it.
+Incoming webhooks are part of Dune itself and work with the admin panel off. `admin.incoming_webhooks` still works and logs a deprecation warning.
 
 Token values that start with `$` are expanded from environment variables at request time — the raw value is never stored in logs or config output.
 

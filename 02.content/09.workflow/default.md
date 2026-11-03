@@ -208,21 +208,18 @@ In practice, use `status` for editorial tracking and use `published: false` for 
 
 ## Scheduling
 
-The admin panel supports scheduled publish and unpublish actions. These are stored as scheduled actions and applied by the Dune scheduler at the configured time — this requires a running `dune serve` process; scheduled actions don't execute during one-shot commands like `dune build`.
-
-Frontmatter equivalents:
+A page can have a publish window in its frontmatter:
 
 ```yaml
-publish_date: "2025-12-01T09:00:00Z"    # Auto-publish at this time
-unpublish_date: "2026-01-01T00:00:00Z"  # Auto-unpublish at this time
+publish_date: "2025-12-01T09:00:00Z"    # not live before this time
+unpublish_date: "2026-01-01T00:00:00Z"  # not live from this time on
 ```
 
-Core reads these fields itself, so they work without the admin plugin or a scheduler. A page is live when `publish_date <= now < unpublish_date`; either bound may be left out. Before its `publish_date`, or from its `unpublish_date` on, a page is treated as unpublished everywhere `published` is honoured: routes, feeds, the sitemap, search, taxonomies and static builds. `published: false` always wins; the dates only narrow it to a window.
+The page is live when `publish_date <= now < unpublish_date`; either date may be left out. Outside the window it behaves like `published: false`: no route, and it is left out of feeds, the sitemap, search and static builds. `published: false` always wins; the dates only narrow it to a window.
 
-- Dates are ISO 8601. A value without a zone, including a bare `2026-12-01`, is read as **UTC**.
-- An unparseable date is ignored with a warning rather than failing the index.
-- Nothing is written to the file. The engine rebuilds at the next window boundary, so a page appears and disappears on time without a restart.
-- A static build (`dune build --static`) reflects the moment it ran, so rebuild after a `publish_date` passes.
+Dates are ISO 8601. A value without a time zone, including a bare `2026-12-01`, is read as UTC. A date that can't be parsed is ignored and logged. Nothing is written back to the file, and no admin panel is needed: a running `dune serve` rebuilds the index at the next boundary, so a page appears and disappears on time without a restart. A static build (`dune build --static`) reflects the moment it ran.
+
+The admin panel can also schedule a publish or unpublish for a page. Those are stored separately as scheduled actions, applied by the scheduler in a running `dune serve`, and don't execute during one-shot commands like `dune build`.
 
 ## Draft preview
 

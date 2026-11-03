@@ -14,7 +14,7 @@ metadata:
 
 Dune's email module provides an `EmailClient.send()` API for sending transactional emails, with pluggable delivery providers and a small template system (Markdown, MDX-as-Markdown, or TSX). There is no ambient, pre-configured client — you construct one from config, except inside background jobs, which receive one automatically.
 
-This is separate from the admin form submission notifications configured under `admin.notifications.email`.
+Form submission notifications use this same configuration: they are sent through the provider set here (see [Forms](/docs/forms)).
 
 ## Configuration
 

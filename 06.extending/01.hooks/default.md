@@ -86,12 +86,12 @@ Fired by the admin panel after CRUD operations. Useful for triggering external s
 
 ### Public feature hooks
 
-Fired by core, so they work with no admin plugin installed.
+Fired by Dune itself, so they work without an admin plugin.
 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
-| `onFormSubmit` | A form submission was accepted and stored | Forward to a CRM, create a ticket |
-| `onSystemAction` | The [incoming webhook](/docs/webhooks) ran `rebuild` or `purge-cache` | Audit or mirror the action |
+| `onFormSubmit` | A public form submission was accepted and stored | Sync to a CRM, post to Slack |
+| `onSystemAction` | An [incoming webhook](../../webhooks) ran `rebuild` or `purge-cache` | Audit log, notify a deploy channel |
 
 ## Registering hooks
 
@@ -227,12 +227,12 @@ The payload objects are mutable — handlers populate them in place (push record
 
 `WorkflowStatus` is `"draft" | "in_review" | "published" | "archived"`.
 
-### Public feature hooks
+Two more hooks come from the public form and webhook endpoints, which run in Dune itself:
 
-| Hook | `data` shape | Description |
-|------|--------------|-------------|
-| `onFormSubmit` | `{ form: string, submission: Submission }` | Fired after a public form submission is stored. `form` is the form name (`"contact"` for the legacy `/api/contact`). `submission` includes `id`, `fields`, `meta` and any `files`. Spam (honeypot) and invalid submissions never fire it. |
-| `onSystemAction` | `{ action: "rebuild" \| "purge-cache", ip: string \| null, userAgent: string \| null }` | Fired once per action run by `POST /api/webhook/incoming`. `ip` honours `system.trusted_proxies`. |
+| Hook | Payload | Notes |
+|------|---------|-------|
+| `onFormSubmit` | `{ form: string, submission: Submission }` | After the submission is stored. Not fired for honeypot hits or validation failures. `submission` has `id`, `fields`, `meta` and any `files`. |
+| `onSystemAction` | `{ action: "rebuild" \| "purge-cache", ip: string \| null, userAgent: string \| null }` | Once per action an incoming webhook runs. `@dune/plugin-admin` uses it to write its audit log. |
 
 These same events also trigger [outbound webhooks](../../webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
 

@@ -106,19 +106,17 @@ Registers on the Fresh app:
 - Admin panel routes under `/admin` (or your configured `admin.path`)
 - Per-site admin context middleware
 - Plugin public routes
-- Public API endpoints (`/api/contact`, `/api/forms/:name`, `/api/webhook/incoming`), through `registerFormRoutes()`
+- Public form and incoming-webhook endpoints (`/api/forms/:name`, `/api/webhook/incoming`, and the deprecated `/api/contact`), by calling `registerFormRoutes()`
 
-### `registerFormRoutes(app, ctx)`
+Those endpoints are served by Dune itself, not by the admin panel. If you build the app from `bootstrap()` and don't call `mountDuneAdmin()`, register them yourself:
 
-Public forms and the incoming webhook are served by core, not by the admin plugin. `createDuneApp()` registers them; an app assembled from `bootstrap()` without it needs to do so itself. `mountDuneAdmin()` calls it for you, so a headless app that mounts the admin panel needs nothing extra. An app with `admin.enabled: false` and no `createDuneApp()` calls it directly:
-
-```typescript
+```ts
 import { registerFormRoutes } from "@dune/core/forms";
 
 registerFormRoutes(app, ctx);
 ```
 
-It is idempotent per app: a second call registers nothing, so calling it from more than one place is safe.
+Calling it more than once for the same app is harmless.
 
 ### `getDuneAdminIslands()`
 

@@ -203,7 +203,7 @@ interface User {
 }
 ```
 
-Users are stored as flat JSON files in `data/users/` (controlled by `admin.dataDir`). The directory should be committed to version control — user records are site data, not ephemeral runtime state.
+Users are stored as flat JSON files in `data/users/` (under `data_dir` in `system.yaml`). The directory should be committed to version control — user records are site data, not ephemeral runtime state.
 
 An email-based index in `data/users/by-email/` allows O(1) lookups by email address for login flows.
 

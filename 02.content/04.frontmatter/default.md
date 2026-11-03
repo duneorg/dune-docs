@@ -45,8 +45,8 @@ descriptor: "Custom Web Solutions"
 | `status` | string | — | Workflow status: `draft`, `in_review`, `published`, `archived` |
 | `date` | string | — | Publication date (ISO 8601) |
 | `dateModified` | string | — | Last editorial modification date (ISO 8601). Used for the sitemap `<lastmod>`; falls back to the file modification time when unset |
-| `publish_date` | string | — | Scheduled publish (ISO 8601 datetime) |
-| `unpublish_date` | string | — | Scheduled unpublish (ISO 8601 datetime) |
+| `publish_date` | string | — | Page is not live before this time (ISO 8601; no zone = UTC) |
+| `unpublish_date` | string | — | Page is not live from this time on (ISO 8601; no zone = UTC) |
 | `visible` | boolean | `true` | If `false`, accessible but hidden from navigation |
 | `routable` | boolean | `true` | If `false`, page has no URL (modular sections) |
 | `trusted_html` | boolean | `false` | If `true`, raw HTML embedded in this page's markdown is rendered as-is, bypassing the HTML sanitiser. Only use for pages whose content you fully trust. Site-wide opt-out via `trusted_html: true` in `site.yaml`. |
