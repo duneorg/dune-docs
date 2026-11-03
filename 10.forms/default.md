@@ -79,7 +79,28 @@ fields:
   # ...
 ```
 
-The `notifications.email` value overrides the `To:` address for this specific form — the global SMTP configuration (host, port, credentials) is still used. Configure global SMTP in your admin settings.
+The `notifications.email` value overrides the `To:` address for this specific form. The mail itself goes out through the site's email provider, `email:` in `site.yaml`, so any provider it supports works.
+
+### Site-wide form settings
+
+Forms are served by Dune core and need no admin plugin. The settings that apply to every form live in `site.yaml`:
+
+```yaml
+# site.yaml
+forms:
+  honeypot: _hp               # default honeypot field name
+  notifications:
+    email:
+      to: hello@example.com   # a form's own notifications.email replaces this
+      subject: "New {form} submission"   # {form} is the form name
+    webhook:
+      url: https://hooks.example.com/dune
+      secret: "$FORM_WEBHOOK_SECRET"     # signs the payload (HMAC)
+```
+
+A `notifications` block that still carries its own `smtp:` keeps working with a warning; move to `site.email` instead.
+
+The old `admin.honeypot` and `admin.notifications` keys are still read and log a deprecation warning.
 
 ## Field types
 
@@ -117,6 +138,10 @@ Each form in `forms/` is automatically served at two endpoints:
 |--------|-----|-------------|
 | `GET` | `/api/forms/{name}` | Returns the public form schema as JSON |
 | `POST` | `/api/forms/{name}` | Submits the form |
+
+`POST /api/contact` is deprecated. Define `forms/contact.yaml` and post to `/api/forms/contact` instead.
+
+To react to a stored submission from code, register an `onFormSubmit` hook; see [Hooks](/docs/extending/hooks).
 
 ### GET — fetch schema
 
@@ -179,7 +204,7 @@ Location: /thanks
 
 ## Accessing submissions
 
-All submissions are stored in `admin.dataDir` (default `data/`) and are viewable from the admin panel under **Form Submissions**. Each submission records:
+All submissions are stored in `data_dir` (a `system.yaml` setting, default `data/`; the older `admin.dataDir` is still read, with a deprecation warning). With the admin plugin installed they are viewable under **Form Submissions**. Each submission records:
 
 - Timestamp
 - IP address (hashed for privacy)
@@ -208,7 +233,7 @@ fields:
     required: true
 ```
 
-Uploaded files are stored in `admin.dataDir/uploads/` and referenced from the submission record by filename. The admin panel displays uploaded files with download links.
+Uploaded files are stored in `<data_dir>/uploads/` and referenced from the submission record by filename. The admin panel displays uploaded files with download links.
 
 ### Allowed file types
 
