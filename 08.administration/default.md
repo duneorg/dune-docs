@@ -56,7 +56,7 @@ Three roles control what each user can do:
 | `editor` | Content CRUD, media management, read config and submissions. Cannot manage users or change config. |
 | `author` | Create and edit pages, upload media, read submissions. Cannot delete pages, media, or access config. |
 
-Users are stored in `data/users/` (controlled by `admin.dataDir`) and should be committed to version control. Passwords are stored as PBKDF2 hashes — never in plaintext.
+Users are stored in `data/users/` (under `data_dir` in `system.yaml`) and should be committed to version control. Passwords are stored as PBKDF2 hashes — never in plaintext.
 
 On first startup, a default `admin` account is created automatically. Delete the temporary password file and change the password immediately.
 
@@ -145,5 +145,5 @@ The session cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` (in production
 - Admin routes are isolated under `admin.path` and require authentication on every request
 - Sessions use PBKDF2-hashed passwords with per-user salts
 - The `admin` role is required to create other `admin`-role accounts — editors and authors cannot escalate their own privileges
-- Form submission data lives in `admin.dataDir` (git-tracked); session and revision data lives in `admin.runtimeDir` (gitignored) — keep these locations separate
+- Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `admin.runtimeDir` (gitignored) — keep these locations separate
 - If you expose the panel publicly, put it behind HTTPS and consider restricting access by IP at the infrastructure level for higher-security sites

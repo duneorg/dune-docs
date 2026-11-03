@@ -50,7 +50,16 @@ typography:
 
 # Admin settings
 admin:
-  max_upload_mb: 100               # max media upload size in MB (default: 100)
+  maxUploadMb: 100                 # max media upload size in MB (default: 100)
+
+# Where form submissions (and admin users) are stored; git-track it
+data_dir: data
+
+# Incoming webhooks: let an external system trigger rebuild / purge-cache
+# webhooks:
+#   incoming:
+#     - token: "$DEPLOY_WEBHOOK_TOKEN"
+#       actions: [rebuild]
 
 # Session persistence
 session_store:

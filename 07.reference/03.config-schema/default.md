@@ -137,6 +137,21 @@ flags:
   beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 ```
 
+```yaml
+# Public forms (the forms themselves live in forms/*.yaml). No admin plugin needed.
+forms:
+  honeypot: "_hp"                # string — spam-trap field name; a form's own `honeypot` wins (default: "_hp")
+  notifications:
+    email:                       # sent through the `email:` provider above
+      to: "hello@example.com"    # string | string[] — required
+      subject: "New {form} submission"   # string — {form} = form name (optional)
+      from: "forms@example.com"  # string — defaults to email.from (optional)
+    webhook:
+      url: "https://hooks.example.com/forms"
+      secret: "$FORM_WEBHOOK_SECRET"     # string — HMAC-SHA256 signing secret ("$ENV_VAR" supported)
+      allow_private: false       # boolean — allow private/loopback targets (default: false)
+```
+
 ## system.yaml
 
 ```yaml
@@ -235,7 +250,19 @@ tracing:
 
 debug: false                     # boolean
 timezone: "UTC"                  # string — IANA timezone
+
+data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces admin.dataDir.
+
+# Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
+webhooks:
+  incoming:
+    - token: "$DEPLOY_WEBHOOK_TOKEN"   # string — pre-shared token ("$ENV_VAR" expansion supported)
+      actions: [rebuild]               # Array<"rebuild" | "purge-cache">
+    - token: "$CACHE_WEBHOOK_TOKEN"
+      actions: [purge-cache]
 ```
+
+Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` (clears the processed image cache). See [Webhooks](../webhooks).
 
 ## admin.yaml (or admin: block in dune.config.ts)
 
@@ -244,7 +271,7 @@ admin:
   enabled: true                  # boolean — Enable admin panel (default: true)
   path: "/admin"                 # string — URL prefix for the admin panel
   sessionLifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
-  dataDir: "data"                # string — Persistent data directory (users, submissions, comments). Git-tracked.
+  dataDir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
   runtimeDir: ".dune/admin"      # string — Runtime data directory (sessions, revisions, staging, analytics). Not git-tracked.
   maxRevisions: 50               # number — Maximum revisions retained per page (default: 50)
   git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
@@ -261,19 +288,14 @@ admin:
         - onPageDelete
         - onWorkflowChange
 
-  # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
-  incoming_webhooks:
-    - token: "$DEPLOY_WEBHOOK_TOKEN"   # string — pre-shared token ("$ENV_VAR" expansion supported)
-      actions: [rebuild]               # Array<"rebuild" | "purge-cache">
-    - token: "$CACHE_WEBHOOK_TOKEN"
-      actions: [purge-cache]
+  # Deprecated — use `webhooks.incoming` in system.yaml and `forms:` in site.yaml.
+  # Still read, with a warning:
+  #   incoming_webhooks, honeypot, notifications
 ```
 
 Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
-Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` (clears the processed image cache).
-
-`dataDir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtimeDir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
+`data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtimeDir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
 
 ## theme config
 

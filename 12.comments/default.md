@@ -42,7 +42,7 @@ Users can edit or delete their own comments. Users with the `editor` or `admin` 
 
 | Data | Location | Persisted |
 |------|----------|-----------|
-| Comment records | `{admin.dataDir}/comments/{encodedPath}.json` | Yes — git-tracked |
+| Comment records | `{data_dir}/comments/{encodedPath}.json` | Yes — git-tracked |
 | Mention read state | `{admin.runtimeDir}/mention-reads/{username}.json` | No — ephemeral |
 
 `encodedPath` is derived from the page's `sourcePath` by replacing `/` with `__` and `.` with `-dot-`. For example, `02.blog/01.hello-world` becomes `02-dot-blog__01-dot-hello-world`.
