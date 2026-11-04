@@ -41,25 +41,25 @@ admin:
   auth_provider:
     type: "ldap"
     url: "ldaps://ldap.example.com:636"
-    baseDn: "ou=users,dc=example,dc=com"
+    base_dn: "ou=users,dc=example,dc=com"
 
     # Service account for search (optional — omit for direct bind)
-    bindDn: "cn=dune-service,dc=example,dc=com"
-    bindPassword: "$LDAP_BIND_PASSWORD"
+    bind_dn: "cn=dune-service,dc=example,dc=com"
+    bind_password: "$LDAP_BIND_PASSWORD"
 
     # Attribute names (defaults shown)
-    usernameAttr: "sAMAccountName"   # Active Directory; use "uid" for OpenLDAP
-    emailAttr: "mail"
-    nameAttr: "cn"
+    username_attr: "sAMAccountName"   # Active Directory; use "uid" for OpenLDAP
+    email_attr: "mail"
+    name_attr: "cn"
 
     # Group → role mapping (first match wins)
-    roleMap:
+    role_map:
       - group: "cn=cms-admins,ou=groups,dc=example,dc=com"
         role: "admin"
       - group: "cn=cms-editors,ou=groups,dc=example,dc=com"
         role: "editor"
 
-    defaultRole: "author"   # Role for users not in any mapped group
+    default_role: "author"   # Role for users not in any mapped group
 ```
 
 ### How it works
@@ -67,7 +67,7 @@ admin:
 1. User enters username + password in the admin login form
 2. Dune's `LdapAuthProvider` binds to the LDAP server as a service account and searches for the user DN
 3. A second bind with the user's DN and submitted password verifies the credentials
-4. Group memberships are read and mapped to a Dune role via `roleMap`
+4. Group memberships are read and mapped to a Dune role via `role_map`
 5. The first time a user logs in, a local `User` record is auto-provisioned (no password set — only LDAP auth is used thereafter)
 6. A session cookie is issued and the user lands on the dashboard
 
@@ -89,26 +89,26 @@ admin:
     type: "saml"
 
     # Your SP (Service Provider) settings
-    entityId: "https://example.com/admin"
-    acsUrl: "https://example.com/admin/saml/acs"   # POST /admin/saml/acs
+    entity_id: "https://example.com/admin"
+    acs_url: "https://example.com/admin/saml/acs"   # POST /admin/saml/acs
 
     # IdP metadata (URL or inline XML)
-    idpMetadata: "https://idp.example.com/metadata.xml"
+    idp_metadata: "https://idp.example.com/metadata.xml"
 
     # Attribute mapping (defaults shown)
-    usernameAttr: "username"
-    emailAttr: "email"
-    nameAttr: "displayName"
-    roleAttr: "groups"
+    username_attr: "username"
+    email_attr: "email"
+    name_attr: "displayName"
+    role_attr: "groups"
 
     # Group value → role mapping
-    roleMap:
+    role_map:
       - value: "cms-admins"
         role: "admin"
       - value: "cms-editors"
         role: "editor"
 
-    defaultRole: "author"
+    default_role: "author"
 ```
 
 ### Login flow

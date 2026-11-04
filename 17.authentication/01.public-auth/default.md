@@ -37,18 +37,18 @@ await mountDuneAuth(app, ctx); // populates ctx.state.siteUser on every request 
 # site.yaml
 auth:
   mode: "dune"                   # "dune" | "external-jwt"
-  sessionLifetime: 2592000       # Session TTL in seconds (default: 30 days)
+  session_lifetime: 2592000       # Session TTL in seconds (default: 30 days)
   providers:
     github:
-      clientId: "$GITHUB_CLIENT_ID"
-      clientSecret: "$GITHUB_CLIENT_SECRET"
+      client_id: "$GITHUB_CLIENT_ID"
+      client_secret: "$GITHUB_CLIENT_SECRET"
     google:
-      clientId: "$GOOGLE_CLIENT_ID"
-      clientSecret: "$GOOGLE_CLIENT_SECRET"
+      client_id: "$GOOGLE_CLIENT_ID"
+      client_secret: "$GOOGLE_CLIENT_SECRET"
     discord:
-      clientId: "$DISCORD_CLIENT_ID"
-      clientSecret: "$DISCORD_CLIENT_SECRET"
-    magicLink:
+      client_id: "$DISCORD_CLIENT_ID"
+      client_secret: "$DISCORD_CLIENT_SECRET"
+    magic_link:
       enabled: true
 ```
 
@@ -90,7 +90,7 @@ Any logged-in user can connect another OAuth provider to their account:
 
 If the provider identity being linked already belongs to a *different* account, `/callback` doesn't error — it logs into that account instead (redirects to `/?dune_link=linked_elsewhere`), since completing that provider's OAuth consent screen is real proof of controlling it. Check `?dune_link=` (`linked` | `already_linked` | `linked_elsewhere`) to show your own message — there's no built-in UI for any of this.
 
-`POST /auth/{provider}/unlink` refuses to remove your last *additional* identity while magic link is disabled site-wide (your original signup provider is unaffected either way). Only works with `userStore: local` or `db` — `400`s under `userStore: session` (no persistent record to attach a link to).
+`POST /auth/{provider}/unlink` refuses to remove your last *additional* identity while magic link is disabled site-wide (your original signup provider is unaffected either way). Only works with `user_store: local` or `db` — `400`s under `user_store: session` (no persistent record to attach a link to).
 
 ## OAuth login
 
@@ -128,10 +128,10 @@ Use `mode: "external-jwt"` to delegate authentication entirely to an external pr
 auth:
   mode: "external-jwt"
   jwt:
-    jwksUrl: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
-    userIdClaim: "sub"         # default
-    emailClaim: "email"        # default
-    rolesClaim: "roles"        # default — string or string[]
+    jwks_url: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
+    user_id_claim: "sub"         # default
+    email_claim: "email"        # default
+    roles_claim: "roles"        # default — string or string[]
 ```
 
 For HS256 shared-secret tokens:
@@ -147,7 +147,7 @@ In external-JWT mode, there are no session cookies and no `/auth/*` login routes
 
 ## User store backends
 
-The `userStore` setting controls where `User` records are persisted:
+The `user_store` setting controls where `User` records are persisted:
 
 | Value | Description |
 |-------|-------------|
@@ -157,19 +157,19 @@ The `userStore` setting controls where `User` records are persisted:
 
 ```yaml
 auth:
-  userStore: "db"   # default: "local"
+  user_store: "db"   # default: "local"
 ```
 
 Sessions themselves (not user records) use `system.session_store` — see [System Configuration](/docs/configuration/system-config#session-store) for the full backend reference (`local`, `kv`, `redis`). Public-auth sessions and admin sessions share this same setting; there's no separate config for either.
 
 ## IdP webhook (user deletion)
 
-When using `mode: external-jwt` with `authzStore: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
+When using `mode: external-jwt` with `authz_store: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
 
 ```yaml
 auth:
   mode: "external-jwt"
-  authzStore: local
+  authz_store: local
   webhook:
     provider: "clerk"               # "clerk" | "auth0" | "generic"
     secret: "$DUNE_CLERK_WEBHOOK_SECRET"
@@ -177,7 +177,7 @@ auth:
 
 This activates `POST /auth/webhook`. On receiving a `user.deleted` event (provider-specific payload format), Dune revokes all authz tuples for that user. Role-change events are handled automatically by per-request fingerprint reconciliation and do not require a webhook.
 
-For `provider: "generic"`, the signature header defaults to `x-dune-signature`. Override with `signatureHeader: "x-my-sig"`.
+For `provider: "generic"`, the signature header defaults to `x-dune-signature`. Override with `signature_header: "x-my-sig"`.
 
 The webhook endpoint verifies the provider's HMAC signature before processing. Configure the webhook URL in your IdP's dashboard as `{site.url}/auth/webhook`.
 

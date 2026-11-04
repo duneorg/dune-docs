@@ -16,8 +16,8 @@ Dune runs two completely separate authentication systems on the same server:
 
 | System | Who it's for | Sessions stored at | Cookie name |
 |--------|--------------|--------------------|-------------|
-| **Admin auth** | Content editors, admins | `admin.runtimeDir/sessions/` | `dune-admin-session` |
-| **Public auth** | Site visitors | `admin.runtimeDir/site-sessions/` | `dune_auth` |
+| **Admin auth** | Content editors, admins | `admin.runtime_dir/sessions/` | `dune-admin-session` |
+| **Public auth** | Site visitors | `admin.runtime_dir/site-sessions/` | `dune_auth` |
 
 The two systems share no state, no user records, and no session cookies. An admin user is not a site user, and vice versa.
 
@@ -45,4 +45,4 @@ See [Content Gating](02.content-gating) for configuration.
 
 Dune uses [polizy](https://github.com/bratsos/polizy) for relationship-based authorization — group membership, resource-level ownership grants, and hierarchy. The same `authz.check()` call backs both `roles:` frontmatter enforcement and custom route middleware.
 
-See [Authorization](03.authorization) for configuration and usage, including the `external-jwt + authzStore: local` combination for using an external IdP for authentication while keeping polizy as the authorization authority.
+See [Authorization](03.authorization) for configuration and usage, including the `external-jwt + authz_store: local` combination for using an external IdP for authentication while keeping polizy as the authorization authority.

@@ -217,7 +217,7 @@ const fm: PageFrontmatter = { title: "…" };
 
 ## Config schema stability
 
-Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0.
+Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0, with one exception: 0.36 renamed the camelCase keys to snake_case in a single breaking step (see [Key naming](/docs/configuration#key-naming)). After that the convention is fixed.
 
 ## What is NOT stable
 

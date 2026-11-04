@@ -123,7 +123,7 @@ After four attempts with no success, Dune logs a warning and discards the delive
 Every delivery attempt is written to disk at:
 
 ```
-{admin.runtimeDir}/webhook-logs/{YYYY-MM-DD}/{id}.json
+{admin.runtime_dir}/webhook-logs/{YYYY-MM-DD}/{id}.json
 ```
 
 Each log file is a delivery record:

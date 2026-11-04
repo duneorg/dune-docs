@@ -22,7 +22,7 @@ Search uses an in-memory inverted index built from:
 - Page **taxonomy values** (boosted 2×)
 - Page **body text** (stripped of Markdown/HTML syntax)
 - Page **template** name
-- Any **custom frontmatter fields** you add via `system.search.customFields`
+- Any **custom frontmatter fields** you add via `system.search.custom_fields`
 
 The index is built once at startup (`dune serve`) or rebuilt on each content change in dev mode (`dune dev`). It is not persisted to disk — a restart triggers a full rebuild.
 
@@ -33,7 +33,7 @@ By default only the fields above are indexed. To make additional frontmatter fie
 ```yaml
 # config/system.yaml
 search:
-  customFields:
+  custom_fields:
     - summary
     - author
     - series
@@ -291,7 +291,7 @@ input.addEventListener("input", () => {
 
 ## Query analytics
 
-Every search against `GET /api/search` is recorded fire-and-forget to a JSONL file at `{admin.runtimeDir}/search-analytics.jsonl`. The admin panel exposes aggregated statistics at:
+Every search against `GET /api/search` is recorded fire-and-forget to a JSONL file at `{admin.runtime_dir}/search-analytics.jsonl`. The admin panel exposes aggregated statistics at:
 
 ```
 GET /admin/api/search/analytics
@@ -317,7 +317,7 @@ Response:
 
 `zeroResultQueries` lists queries that returned no results on average — useful for discovering missing content.
 
-The analytics file is machine-local and not git-tracked (it lives in `runtimeDir`). It is not pruned automatically — trim or rotate the file periodically on high-traffic sites.
+The analytics file is machine-local and not git-tracked (it lives in `runtime_dir`). It is not pruned automatically — trim or rotate the file periodically on high-traffic sites.
 
 ## Build requirement
 
@@ -328,7 +328,7 @@ const search = createSearchEngine({ pages, storage, contentDir, formats });
 await search.build();  // required before calling search.search() or search.suggest()
 ```
 
-Pass `customFields` to index additional frontmatter:
+Pass `customFields` (the programmatic option) to index additional frontmatter:
 
 ```ts
 const search = createSearchEngine({

@@ -221,7 +221,7 @@ Submissions are stored as JSON in `data/submissions/{form-name}/`. The directory
 data_dir: data
 ```
 
-> `admin.dataDir` still works and logs a deprecation warning.
+> `admin.data_dir` still works and logs a deprecation warning.
 
 Each submission records:
 

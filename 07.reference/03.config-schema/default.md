@@ -60,30 +60,30 @@ http_cache:
 # ── Public site user authentication ─────────────────────────────────────────
 auth:
   mode: "dune"                   # "dune" | "external-jwt" (default: "dune")
-  sessionLifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
+  session_lifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
   providers:
     github:
-      clientId: "$GITHUB_CLIENT_ID"
-      clientSecret: "$GITHUB_CLIENT_SECRET"
+      client_id: "$GITHUB_CLIENT_ID"
+      client_secret: "$GITHUB_CLIENT_SECRET"
     google:
-      clientId: "$GOOGLE_CLIENT_ID"
-      clientSecret: "$GOOGLE_CLIENT_SECRET"
+      client_id: "$GOOGLE_CLIENT_ID"
+      client_secret: "$GOOGLE_CLIENT_SECRET"
     discord:
-      clientId: "$DISCORD_CLIENT_ID"
-      clientSecret: "$DISCORD_CLIENT_SECRET"
-    magicLink:
+      client_id: "$DISCORD_CLIENT_ID"
+      client_secret: "$DISCORD_CLIENT_SECRET"
+    magic_link:
       enabled: true              # boolean — Enable magic-link email login
-  authzStore: "local"            # "local" — Permission tuple storage.
+  authz_store: "local"            # "local" — Permission tuple storage.
                                #   dune mode: defaults to "local".
                                #   external-jwt mode: no default — omit for JWT-claims-only authz,
                                #   set "local" to enable local polizy authz alongside the external IdP.
   # external-jwt mode options (used when mode: "external-jwt")
   jwt:
     secret: "$JWT_SECRET"        # string — HMAC-SHA256 shared secret (HS256)
-    jwksUrl: "https://..."       # string — JWKS endpoint for RS256 (Clerk, Auth0, etc.)
-    userIdClaim: "sub"           # string — Claim containing user ID (default: "sub")
-    emailClaim: "email"          # string — Claim containing email (default: "email")
-    rolesClaim: "roles"          # string — Claim containing role(s) (default: "roles")
+    jwks_url: "https://..."       # string — JWKS endpoint for RS256 (Clerk, Auth0, etc.)
+    user_id_claim: "sub"           # string — Claim containing user ID (default: "sub")
+    email_claim: "email"          # string — Claim containing email (default: "email")
+    roles_claim: "roles"          # string — Claim containing role(s) (default: "roles")
 
 # ── Transactional email ───────────────────────────────────────────────────────
 email:
@@ -190,7 +190,7 @@ typography:
 
 search:
   fail_on_startup: false         # boolean — Stop startup if a search engine fails to build (default: false = log, retry, fall back)
-  customFields: []               # string[] — Extra frontmatter field names to include in search index
+  custom_fields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
   excerpt_length: 160           # number — Character length of returned excerpts (default: 160)
@@ -251,7 +251,7 @@ tracing:
 debug: false                     # boolean
 timezone: "UTC"                  # string — IANA timezone
 
-data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces admin.dataDir.
+data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces admin.data_dir.
 
 # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
 webhooks:
@@ -270,10 +270,10 @@ Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` 
 admin:
   enabled: true                  # boolean — Enable admin panel (default: true)
   path: "/admin"                 # string — URL prefix for the admin panel
-  sessionLifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
-  dataDir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
-  runtimeDir: ".dune/admin"      # string — Runtime data directory (sessions, revisions, staging, analytics). Not git-tracked.
-  maxRevisions: 50               # number — Maximum revisions retained per page (default: 50)
+  session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
+  data_dir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
+  runtime_dir: ".dune/admin"      # string — Runtime data directory (sessions, revisions, staging, analytics). Not git-tracked.
+  max_revisions: 50               # number — Maximum revisions retained per page (default: 50)
   git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
 
   # Outbound webhooks — fired on content mutation events
@@ -295,7 +295,7 @@ admin:
 
 Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
-`data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtimeDir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
+`data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtime_dir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
 
 ## theme config
 

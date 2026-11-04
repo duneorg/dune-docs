@@ -114,7 +114,7 @@ On Deno Deploy, Dune uses `Deno.cron()` for native scheduling. On all other envi
 
 ## Job state
 
-Each job's execution state is persisted to `{runtimeDir}/jobs/{name}.json`:
+Each job's execution state is persisted to `{runtime_dir}/jobs/{name}.json`:
 
 | Field | Description |
 |-------|-------------|
@@ -123,7 +123,7 @@ Each job's execution state is persisted to `{runtimeDir}/jobs/{name}.json`:
 | `status` | `"idle"`, `"running"`, or `"errored"`. |
 | `lastError` | Error message from the most recent failed run, or `null`. |
 
-State files are in `runtimeDir` (default `.dune/admin/`) — gitignored, not committed to version control.
+State files are in `runtime_dir` (default `.dune/admin/`) — gitignored, not committed to version control.
 
 ## Manual trigger
 

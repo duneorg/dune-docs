@@ -87,7 +87,7 @@ There is no default account; see [Creating the first admin](#creating-the-first-
 | **Draft preview** | Save a draft and get a shareable preview URL that renders through the active theme. Reviewers don't need admin access. See [Draft preview](content/workflow#draft-preview). |
 | **Workflow** | Move pages through `draft → in_review → published → archived` states. |
 | **Scheduled actions** | Set a date/time for automatic publish or unpublish. |
-| **Revision history** | Browse and restore previous versions of any page. Up to `admin.maxRevisions` (default 50) saved per page. The current revision count is shown in the editor toolbar. |
+| **Revision history** | Browse and restore previous versions of any page. Up to `admin.max_revisions` (default 50) saved per page. The current revision count is shown in the editor toolbar. |
 | **Comments & annotations** | Leave threaded comments on pages with @mention support and a resolve workflow for editorial sign-off. See [Comments](comments). |
 | **Webhooks** | Fire outbound HTTP POST requests when pages are created, updated, deleted, or workflow status changes. See [Webhooks](webhooks). |
 | **Flex Objects** | Create, edit, and delete records for schema-driven custom data types (products, team members, events, etc.). Schemas defined in `flex-objects/{type}.yaml`. See [Flex Objects](flex-objects). |
@@ -115,13 +115,13 @@ Every save to a page creates a revision snapshot. The page editor toolbar shows 
 
 From the history view you can restore any previous version — this creates a new revision rather than overwriting the current one, so you can always undo a restore by reverting again.
 
-Revisions are stored in `admin.runtimeDir` (default `.dune/admin/`) and are **not** committed to version control. The maximum number of revisions kept per page is controlled by `admin.maxRevisions` (default 50); older revisions are pruned automatically.
+Revisions are stored in `admin.runtime_dir` (default `.dune/admin/`) and are **not** committed to version control. The maximum number of revisions kept per page is controlled by `admin.max_revisions` (default 50); older revisions are pruned automatically.
 
 ## Draft staging
 
 Staging lets editors save work-in-progress content and share a live preview with reviewers — before the page goes public.
 
-Saving a draft from the page editor stores a staging file in `admin.runtimeDir/staging/`. Each draft gets a random opaque token. The preview URL is:
+Saving a draft from the page editor stores a staging file in `admin.runtime_dir/staging/`. Each draft gets a random opaque token. The preview URL is:
 
 ```
 https://example.com/__preview?path={encoded-source-path}&token={token}
@@ -129,7 +129,7 @@ https://example.com/__preview?path={encoded-source-path}&token={token}
 
 The token is stable across saves, so sharing the link once is enough — it stays valid as the editor continues working. When the draft is published, the staging file is removed.
 
-Staging files are ephemeral (live in `runtimeDir`, not committed to git). They are lost if you wipe `runtimeDir` or deploy to a fresh server. To keep drafts across deploys, back up `runtimeDir` or mount it on persistent storage.
+Staging files are ephemeral (live in `runtime_dir`, not committed to git). They are lost if you wipe `runtime_dir` or deploy to a fresh server. To keep drafts across deploys, back up `runtime_dir` or mount it on persistent storage.
 
 ## Git auto-commit
 
@@ -154,7 +154,7 @@ Commit failures are logged as warnings and never block the save. Git must be ava
 
 ## Sessions
 
-Sessions are cookie-based and stored in `admin.runtimeDir` (default `.dune/admin/sessions/`). They expire after `admin.sessionLifetime` seconds (default 24 hours). Sessions are ephemeral — they are lost on restart or deploy.
+Sessions are cookie-based and stored in `admin.runtime_dir` (default `.dune/admin/sessions/`). They expire after `admin.session_lifetime` seconds (default 24 hours). Sessions are ephemeral — they are lost on restart or deploy.
 
 The session cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` (in production). In development (`DUNE_ENV=dev`), the `Secure` flag is omitted to allow HTTP.
 
@@ -163,5 +163,5 @@ The session cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` (in production
 - Admin routes are isolated under `admin.path` and require authentication on every request
 - Sessions use PBKDF2-hashed passwords with per-user salts
 - The `admin` role is required to create other `admin`-role accounts — editors and authors cannot escalate their own privileges
-- Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `admin.runtimeDir` (gitignored) — keep these locations separate
+- Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `admin.runtime_dir` (gitignored) — keep these locations separate
 - If you expose the panel publicly, put it behind HTTPS and consider restricting access by IP at the infrastructure level for higher-security sites

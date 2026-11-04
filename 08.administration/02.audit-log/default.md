@@ -44,10 +44,10 @@ Use the filter controls to narrow by event type or actor.
 admin:
   audit:
     enabled: true          # boolean — Enable audit logging (default: true)
-    logFile: "audit.log"   # string  — Log file path, relative to runtimeDir (default: "audit.log")
+    log_file: "audit.log"   # string  — Log file path, relative to runtime_dir (default: "audit.log")
 ```
 
-The default log file is `{runtimeDir}/audit.log` (typically `.dune/admin/audit.log`). This path is outside version control and persists across restarts.
+The default log file is `{runtime_dir}/audit.log` (typically `.dune/admin/audit.log`). This path is outside version control and persists across restarts.
 
 To disable audit logging entirely:
 

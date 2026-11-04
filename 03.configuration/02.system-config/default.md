@@ -50,7 +50,7 @@ typography:
 
 # Admin settings
 admin:
-  maxUploadMb: 100                 # max media upload size in MB (default: 100)
+  max_upload_mb: 100                 # max media upload size in MB (default: 100)
 
 # Where form submissions (and admin users) are stored; git-track it
 data_dir: data
