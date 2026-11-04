@@ -108,7 +108,7 @@ forms:
 
 Sending failures are logged and never shown to the person submitting the form.
 
-> **Moved from `admin:`.** `admin.honeypot` and `admin.notifications` still work and log a deprecation warning. A `notifications.email` block with its own `smtp:` credentials also keeps working with a warning; move the credentials to `email:` instead.
+> **Moved from `admin:` (0.36).** `admin.honeypot` and `admin.notifications` are gone: a config that still has them refuses to load and names the new key. Move them to `forms.honeypot` and `forms.notifications` in `site.yaml`. A `notifications.email` block with its own `smtp:` credentials is gone too; configure the provider once under `site.email` and every email the site sends uses it.
 
 ## Field types
 
@@ -221,7 +221,7 @@ Submissions are stored as JSON in `data/submissions/{form-name}/`. The directory
 data_dir: data
 ```
 
-> `admin.data_dir` still works and logs a deprecation warning.
+> `admin.data_dir` is gone (0.36); a config that still has it refuses to load. Set `data_dir` at the top level of `system.yaml`.
 
 Each submission records:
 
@@ -308,6 +308,6 @@ enabled: false
 
 A paused form's schema returns `404` (the same as a form that doesn't exist) and submissions are refused with `403`. Existing submissions stay where they are.
 
-## The legacy contact endpoint
+## The contact endpoint
 
-`POST /api/contact` is deprecated and logs a warning the first time it is used. It stores whatever it receives under the form name in `form_name` (default `contact`) and only checks that there is a `name` or an `email`. Define `forms/contact.yaml` and post to `/api/forms/contact` instead, so the submission is validated.
+`POST /api/contact` was removed in 0.36. Define `forms/contact.yaml` and post to `/api/forms/contact`, so the submission is validated against its fields. `/api/contact` is no longer reserved, so a plugin may use that path.

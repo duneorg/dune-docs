@@ -194,7 +194,7 @@ webhooks:
       actions: [rebuild, purge-cache]
 ```
 
-Incoming webhooks are part of Dune itself and work with the admin panel off. `admin.incoming_webhooks` still works and logs a deprecation warning.
+Incoming webhooks are part of Dune itself and work with the admin panel off. `admin.incoming_webhooks` was removed in 0.36; a config that still has it refuses to load. Move the list to `webhooks.incoming` in `system.yaml`.
 
 Token values that start with `$` are expanded from environment variables at request time — the raw value is never stored in logs or config output.
 

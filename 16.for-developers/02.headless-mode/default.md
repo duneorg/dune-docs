@@ -106,7 +106,7 @@ Registers on the Fresh app:
 - Admin panel routes under `/admin` (or your configured `admin.path`)
 - Per-site admin context middleware
 - Plugin public routes
-- Public form and incoming-webhook endpoints (`/api/forms/:name`, `/api/webhook/incoming`, and the deprecated `/api/contact`), by calling `registerFormRoutes()`
+- Public form and incoming-webhook endpoints (`/api/forms/:name`, `/api/webhook/incoming`), by calling `registerFormRoutes()`
 
 Those endpoints are served by Dune itself, not by the admin panel. If you build the app from `bootstrap()` and don't call `mountDuneAdmin()`, register them yourself:
 

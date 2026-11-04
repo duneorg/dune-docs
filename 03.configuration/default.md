@@ -70,6 +70,16 @@ It rewrites `config/site.yaml`, `config/system.yaml` and every file under `confi
 
 The migrator only touches block-style YAML. A file that has an old key it cannot reach (flow style such as `uploads: { maxSizeMb: 5 }`, a quoted key, a key inside a list item, or a file with Windows `CRLF` line endings) is reported and left unchanged, so rename those by hand. Programmatic config in `dune.config.ts` is not checked: an old key there is ignored, so rename it yourself.
 
+Some settings did not just change spelling, they moved, so the migrator reports them and you move them by hand (the loader refuses them too, naming the new place):
+
+| Removed | Now |
+|---------|-----|
+| `admin.honeypot` | `forms.honeypot` in `site.yaml` |
+| `admin.notifications` | `forms.notifications` in `site.yaml` |
+| `admin.incoming_webhooks` | `webhooks.incoming` in `system.yaml` |
+| `admin.data_dir` (and `admin.dataDir`) | `data_dir` at the top level of `system.yaml` |
+| `forms.notifications.email.smtp` | `site.email` |
+
 `@dune/plugin-admin` reads the `admin:` block, so the rename ships with admin 4.0.0. With an older admin, core refuses to start if you have customised any renamed admin key, rather than falling back to defaults.
 
 | Block | Old key → new key |

@@ -259,7 +259,7 @@ export default {
 | `method` | `"GET" \| "POST" \| "PUT" \| "DELETE" \| "ALL"` | HTTP method. Defaults to `"GET"`. Use `"ALL"` to match any method. |
 | `handler` | `(fc: FreshContext) => Response \| Promise<Response>` | Request handler |
 
-A route path can't shadow a core-owned prefix — the admin panel, `/api/contact`, `/api/forms`, `/api/webhook`, `/api/inline-edit`, `/api/pages`, `/api/search`, `/api/nav`, `/api/flex`, `/auth`, `/_fresh`, `/health`. A shadowed route is skipped with a `[dune] plugin route ... rejected: shadows reserved prefix ...` console warning at startup, not a thrown error.
+A route path can't shadow a core-owned prefix — the admin panel, `/api/forms`, `/api/webhook`, `/api/inline-edit`, `/api/pages`, `/api/search`, `/api/nav`, `/api/flex`, `/auth`, `/_fresh`, `/health`. A shadowed route is skipped with a `[dune] plugin route ... rejected: shadows reserved prefix ...` console warning at startup, not a thrown error.
 
 ### `publicRoutes` vs `onRequest`
 
@@ -336,7 +336,7 @@ An `InjectedSearchRecord` is `{ route, title, body, fields?, template? }`. Anyth
 
 ### Replacing the engine
 
-`onSearchEngineCreate` lets you swap the built-in in-memory engine for an alternative backend. Assign `ctx.data.engine` to any object implementing the `SearchEngine` interface (`build`, `rebuild`, `search`, `suggest`). Leave it unset to keep the built-in engine. The context also provides the page list, any records collected by `onSearchRecordsCollect`, and a `loadText(page)` helper that returns a page's plain-text body — so an alternative engine can index the same text the built-in engine would.
+`onSearchEngineCreate` lets you swap the built-in in-memory engine for an alternative backend. Pass any object implementing the `SearchEngine` interface (`build`, `rebuild`, `search`, `suggest`) to `ctx.data.register(name, engine)`, then call `ctx.data.setActiveEngine(name)` to make it the one that serves queries. Register nothing to keep the built-in engine. (Assigning `ctx.data.engine` was removed in 0.36.) The context also provides the page list, any records collected by `onSearchRecordsCollect`, and a `loadText(page)` helper that returns a page's plain-text body — so an alternative engine can index the same text the built-in engine would.
 
 ```typescript
 import type { DunePlugin } from "@dune/core/plugins";
@@ -348,11 +348,13 @@ export default function mylSearch(config: { url?: string } = {}): DunePlugin {
     version: "1.0.0",
     hooks: {
       onSearchEngineCreate: ({ data }) => {
-        data.engine = createMyEngine(
+        const engine = createMyEngine(
           { url: config.url ?? Deno.env.get("MY_SEARCH_URL") },
           data.pages,
           { loadText: data.loadText, injectedRecords: data.injectedRecords },
         );
+        data.register("my-search", engine);
+        data.setActiveEngine("my-search");
       },
     },
   };

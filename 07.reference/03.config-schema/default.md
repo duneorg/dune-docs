@@ -251,7 +251,7 @@ tracing:
 debug: false                     # boolean
 timezone: "UTC"                  # string — IANA timezone
 
-data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces admin.data_dir.
+data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces the removed admin.data_dir.
 
 # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
 webhooks:
@@ -288,9 +288,10 @@ admin:
         - onPageDelete
         - onWorkflowChange
 
-  # Deprecated — use `webhooks.incoming` in system.yaml and `forms:` in site.yaml.
-  # Still read, with a warning:
-  #   incoming_webhooks, honeypot, notifications
+  # Removed in 0.36 (a config that still has them refuses to load):
+  #   incoming_webhooks → webhooks.incoming (system.yaml)
+  #   honeypot, notifications → forms.honeypot, forms.notifications (site.yaml)
+  #   data_dir → data_dir (top level of system.yaml)
 ```
 
 Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.

@@ -217,7 +217,7 @@ If the installed theme declares a `parent:` in its `theme.yaml` (see [Theme Inhe
 | `dune migrate:run` | Apply all pending SQL migration files. |
 | `dune migrate:status` | Show which migrations have been applied and which are pending. |
 | `dune migrate:users` | Reshape existing `data/users/` records (added by earlier admin-account/public-auth accounts before they shared one store) to the current unified `User` shape — adds a `by-email/` index entry, backfills missing fields. Idempotent. |
-| `dune migrate:config` | Rename the camelCase config keys in `config/site.yaml`, `config/system.yaml` and `config/env/*/` to snake_case (0.36), keeping comments and order. Idempotent; see [Key naming](/docs/configuration#key-naming). |
+| `dune migrate:config` | Rename the camelCase config keys in `config/site.yaml`, `config/system.yaml` and `config/env/*/` to snake_case (0.36), keeping comments and order. Idempotent. Settings that moved to another place in 0.36 (`admin.honeypot`, `admin.notifications`, `admin.incoming_webhooks`, `admin.data_dir`, the `smtp:` block of form notifications) are reported for a manual move and make the command exit 1; see [Key naming](/docs/configuration#key-naming). |
 
 ### Migration options
 
