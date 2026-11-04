@@ -495,6 +495,8 @@ interface PluginApi {
   config: DuneConfig;
   /** Storage adapter — read and write plugin-specific data */
   storage: StorageAdapter;
+  /** Services built by core: security policy, sessions, users, passwords, rate limiting, logger (0.36) */
+  services: PluginServices;
 }
 ```
 
@@ -543,6 +545,8 @@ interface MountApi {
   bootstrap: BootstrapResult;
   /** Merged admin services collected from all plugins (content editor, inline edit, etc.) */
   adminServices: AdminServices;
+  /** The same `PluginServices` object `setup()` received (0.36) */
+  services: PluginServices;
 }
 ```
 
@@ -620,6 +624,83 @@ Fresh compiles each route's middleware chain at the moment the route is register
 | `mountEarly()` | After `createDuneApp()`, before any plugin's `mount()` | `app`, `bootstrap`, `adminServices` |
 | `mount()` | After `createDuneApp()`, after every plugin's `mountEarly()` | `app`, `bootstrap`, `adminServices` |
 | Hook events | Per-request / per-rebuild | Full runtime context |
+
+## Plugin services
+
+Since 0.36 core hands a plugin its security-sensitive building blocks as `services` on both `setup(api)` and `mount(api)`, instead of the plugin importing them from `@dune/core`. Policy that has to stay fixable by a core patch release (HTML sanitising, SSRF guarding, body limits, password hashing, session backends) is reached only through this object, so a plugin always runs against the policy of the core that is actually running it, not whichever copy its own dependency resolved.
+
+```typescript
+interface PluginServices {
+  security: {
+    sanitizeHtml(input: string, opts?: SanitizeOptions): string;
+    safeFetch(url: string, init?: RequestInit, opts?: SsrfCheckOptions): Promise<Response>;
+    checkBodySize(req: Request, maxBytes: number): Response | null;   // 413 response, or null if within limit
+    limitedBody(stream, maxBytes): ReadableStream<Uint8Array>;        // fails with a body_too_large error past the limit
+    checkPasswordStrength(password: unknown): PasswordCheckResult;
+    clientIp(req: Request, opts?: ClientIpOptions): string;
+    parseUserYaml(text: string): unknown;                             // safe-schema YAML for user-written input
+  };
+  rateLimit: {
+    createLimiter(maxRequests: number, windowMs: number, store?: RateLimitStore): RateLimiter;
+    createLocalStore(): RateLimitStore;
+  };
+  sessions: {
+    createManager(opts: { sessionsDir: string; lifetimeMs: number }): Promise<SessionManager>;
+  };
+  users: {
+    createLocalStore(opts: { usersDir: string }): UserStore;
+  };
+  passwords: {
+    hash(password: string): Promise<string>;
+    verify(password: string, stored: string): Promise<boolean>;
+    needsRehash(stored: string): boolean;
+    readonly dummyHash: string;      // verify against this for unknown users, so a login costs the same either way
+  };
+  logger: Logger;
+}
+```
+
+- **Sessions** use the backend configured in `system.session_store` (local files under `sessionsDir`, Deno KV or Redis). In a multisite install they are scoped to the site by the same key prefix core uses, so a plugin's sessions never share keys with another site's.
+- **Users** `createLocalStore` returns the flat-file store under `usersDir` in the site's storage. It is the same store shape core uses; `user_store: db` is not reflected here yet.
+- **Types** only: the interfaces are what a plugin may rely on. Import them with `import type { PluginServices } from "@dune/core/plugin-api"`.
+
+```typescript
+setup: ({ services }) => {
+  const limiter = services.rateLimit.createLimiter(30, 60_000);
+  // ...
+},
+mount: ({ app, services }) => {
+  app.post("/api/my-plugin/note", async (ctx) => {
+    const tooBig = services.security.checkBodySize(ctx.req, 64 * 1024);
+    if (tooBig) return tooBig;
+    // ...
+  });
+},
+```
+
+### Telling errors apart
+
+`instanceof` fails when a plugin and the site hold two copies of a module, so the errors that cross this boundary carry a stable `code` and are tested with `isDuneError`:
+
+| Code | Raised by |
+|------|-----------|
+| `body_too_large` | a body read through `limitedBody` past its limit |
+| `ssrf_blocked` | `safeFetch` refusing a private, loopback or otherwise unsafe destination |
+| `duplicate_email` | `users.createLocalStore().create()` on an existing email |
+| `weak_password` | a password rejected by the strength policy |
+
+```typescript
+import { isDuneError } from "@dune/core/plugin-api";
+
+try {
+  await services.security.safeFetch(url);
+} catch (err) {
+  if (isDuneError(err, "ssrf_blocked")) return new Response("Blocked destination", { status: 400 });
+  throw err;
+}
+```
+
+A plugin written before 0.36 keeps working: the old imports from `@dune/core` still resolve. They are the ones that can drift from the running core's policy, so move to `services` when you next touch the plugin.
 
 ## Registering admin services
 

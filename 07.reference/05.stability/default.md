@@ -80,12 +80,16 @@ const plugin: DunePlugin = {
     },
   },
   setup: async (api) => {
-    // api.hooks, api.config, api.storage
+    // api.hooks, api.config, api.storage, api.services (0.36)
   },
 };
 
 export default plugin;
 ```
+
+### Plugin services (since 0.36)
+
+`PluginApi.services` and `MountApi.services` (see [Plugin services](/docs/extending/plugins#plugin-services)) are new required fields, so code that builds those objects by hand, such as a test harness, has to supply them. The service interfaces and `isDuneError` in `@dune/core/plugin-api` are the plugin-facing contract. The implementations behind them are not: they change with core patch releases, which is the point.
 
 ### Plugin API version
 
