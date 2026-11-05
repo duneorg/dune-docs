@@ -56,7 +56,7 @@ To run the `dune` you invoked against such a site anyway (for example when worki
 | `dune cache:rebuild` | Rebuild content index from scratch. Use after bulk content changes. |
 | `dune validate` | Whole-project lint: config, plugins, templates, schemas, and content. |
 | `dune doctor` | Environment/runtime health checks — distinct from `validate`'s project-correctness checks: can this site's dependency graph actually resolve and boot, on this machine, right now? Checks Deno version, dependency resolution (`deno cache main.ts`, reformatting an npm-cache-mismatch error into actionable steps instead of a raw stack trace), and lockfile staleness. Fast — no live boot. |
-| `dune doctor --boot` | Also spawns the site for real (on a free ephemeral port) and makes a request against it. Slower and more failure-prone than the default checks, hence opt-in. |
+| `dune doctor --boot` | Also spawns the site for real (on a free ephemeral port) and makes a request against it. Slower and more failure-prone than the default checks, hence opt-in. It also lists which plugin provides each [capability](../../extending/plugins) (`auth.session`, `scheduler.executor`, …), and errors when the admin is enabled but nothing provides `auth.session` (nobody could sign in) or a provider's factory threw; it warns when scheduled actions are queued but no plugin runs them. |
 | `dune doctor --json` | Machine-parseable output for either form above. |
 
 `dune validate` checks:

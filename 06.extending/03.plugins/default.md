@@ -104,25 +104,23 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
     version: "1.0.0",
     description: "Privacy-focused page view analytics",
 
-    // NOT CURRENTLY POSSIBLE VIA A HOOK: this example needs onAfterRender to
-    // rewrite the final rendered HTML string, but onAfterRender is declared
-    // and documented above as intentionally unimplemented — Dune never sees
-    // the rendered HTML as a string to hand to a hook (Fresh's render()
-    // returns a Response directly). Until that changes, script injection
-    // like this has to happen inside your own theme layout instead — e.g.
-    // read `config.plugins["analytics"]` there and conditionally render the
-    // <script> tag. Left here as an illustration of the shape this hook
-    // would have if it existed, not a working example.
-    hooks: {
-      onAfterRender: ({ data }) => {
-        if (!enabled || !domain) return;
+    hooks: {},
 
-        const snippet = provider === "plausible"
-          ? `<script defer data-domain="${domain}" src="https://plausible.io/js/script.js"></script>`
-          : `<script async src="https://analytics.umami.is/script.js" data-website-id="${domain}"></script>`;
+    // Inject the script into the rendered page: transformResponse sees the
+    // finished Response, so it can rewrite the HTML.
+    async transformResponse({ response }) {
+      if (!enabled || !domain) return response;
+      if (!(response.headers.get("Content-Type") ?? "").includes("text/html")) return response;
 
-        data.html = data.html.replace("</head>", `${snippet}\n</head>`);
-      },
+      const snippet = provider === "plausible"
+        ? `<script defer data-domain="${domain}" src="https://plausible.io/js/script.js"></script>`
+        : `<script async src="https://analytics.umami.is/script.js" data-website-id="${domain}"></script>`;
+
+      const html = await response.text();
+      return new Response(html.replace("</head>", `${snippet}\n</head>`), {
+        status: response.status,
+        headers: response.headers,
+      });
     },
   };
 }

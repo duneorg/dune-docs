@@ -486,7 +486,7 @@ Returns a live snapshot of the engine's runtime state — useful for agents and 
 ```json
 {
   "pages": { "total": 42, "published": 38, "drafts": 4 },
-  "plugins": [{ "name": "my-plugin", "version": "1.0.0", "hooks": ["onPageLoaded"] }],
+  "plugins": [{ "name": "my-plugin", "version": "1.0.0", "hooks": ["onBeforeRender"] }],
   "theme": { "name": "default", "templates": ["default", "post", "landing"] },
   "forms": [{ "name": "contact", "enabled": true }],
   "config": { "title": "My Site", "url": "https://example.com" }

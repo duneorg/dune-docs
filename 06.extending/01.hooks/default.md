@@ -32,8 +32,6 @@ Hooks let you run code at specific points in Dune's lifecycle — when a page lo
 | `onCollectionResolved` | Collection query executed | Modify collection results |
 | `onBeforeRender` | Before JSX rendering | Inject data, modify props |
 
-> **`onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` are declared but not fired.** They're real design questions, not oversights — see the note at the end of this page for why each is deferred rather than implemented.
-
 ### Content processing hooks
 
 | Hook | When it fires | Use case |
@@ -120,15 +118,18 @@ export default {
       setData({ ...data, raw: modified });
     },
 
-    onAfterRender: async ({ data }) => {
-      // Add reading time to rendered HTML
-      const wordCount = data.html.split(/\s+/).length;
-      const minutes = Math.ceil(wordCount / 200);
-      data.html = data.html.replace(
-        "</article>",
-        `<p class="reading-time">${minutes} min read</p></article>`,
-      );
-    },
+  },
+
+  // Post-process the rendered page: transformResponse sees the finished
+  // Response (there is no hook that hands you the HTML string).
+  async transformResponse({ response }) {
+    if (!(response.headers.get("Content-Type") ?? "").includes("text/html")) return response;
+    const html = await response.text();
+    const minutes = Math.ceil(html.split(/\s+/).length / 200);
+    return new Response(
+      html.replace("</article>", `<p class="reading-time">${minutes} min read</p></article>`),
+      { status: response.status, headers: response.headers },
+    );
   },
 } satisfies DunePlugin;
 ```
@@ -175,8 +176,6 @@ The `data` field in `HookContext` is typed per event. Here is what each hook rec
 | `onRequest` | `Request` | The incoming request itself — **not** wrapped in `{ req: Request }` |
 | `onCollectionResolved` | `{ req: Request, collection: Collection }` | Collection query result. `setData()` a modified `collection` to change what the template receives. |
 | `onBeforeRender` | `{ req: Request, page: Page, props: Record<string, unknown> }` | The fully-assembled template props, right before rendering. `setData()` a modified `props` to inject or change what the template receives. |
-
-`onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` are declared in `HookEvent` but not fired — see the note at the end of this page.
 
 ### Content processing hooks
 
@@ -242,14 +241,13 @@ These same events also trigger [outbound webhooks](../../webhooks) when `admin.w
 
 > **Note:** The startup hooks (`onConfigLoaded`, `onStorageReady`, `onContentIndexReady`) and engine lifecycle hooks (`onRebuild`, `onThemeSwitch`) are fired automatically by Dune. The request and API hooks can also be fired by custom server code using `hooks.fire(event, data)` when integrating Dune into a custom server.
 
-## Four events that are declared but not fired
+## Events that no longer exist
 
-`HookEvent` also declares `onRouteResolved`, `onPageLoaded`, `onAfterRender`, and `onResponse` — they pass config validation, but nothing in `@dune/core` or `@dune/plugin-admin` ever calls `hooks.fire()` for them. A handler registered for one of these is simply never invoked, with no error or warning. This is a deliberate, tracked decision, not an oversight:
+`onRouteResolved`, `onPageLoaded`, `onAfterRender` and `onResponse` were declared in older versions but nothing ever fired them, so a handler registered for one silently never ran. They were removed in 0.36; registering one is now a type error, and `dune validate` flags them in skills code. What to use instead:
 
-- **`onRouteResolved`/`onPageLoaded`** describe a two-phase resolution — a route matched to a lightweight `PageIndex`, then the full `Page` object loaded — that doesn't exist in the current engine. `engine.resolve()` does both in a single step and returns the full `Page` directly. Firing both events as originally documented would mean either fabricating a second event from data already in hand, or restructuring `resolve()` into two real phases.
-- **`onAfterRender`/`onResponse`** need the actual rendered HTML string, but Fresh's `render()` returns a `Response` directly — core never sees the HTML itself. The only way to get `{ html: string }` for a handler to inspect or modify would be to intercept every response and buffer its full body into memory via `response.text()`, reconstructing a new `Response` afterward. That kills streaming and adds a real per-request cost, applied to every request whether or not any plugin is actually listening.
-
-If you need equivalent behavior today: `onBeforeRender` already gives you the assembled template props before rendering, which covers most of what a plugin would otherwise want from `onAfterRender` on the props side. For full HTML post-processing, do it inside your own theme template/layout component instead of a hook.
+- **Props before rendering:** `onBeforeRender` gives you the assembled template props.
+- **The rendered page:** a plugin's `transformResponse` sees the finished `Response` (see the example above). It has to read the body, so only do it for the responses you need to change.
+- **Everything else about the page:** do it in your theme's template or layout component.
 
 ## Hook execution order
 

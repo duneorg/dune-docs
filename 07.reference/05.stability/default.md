@@ -71,12 +71,9 @@ const plugin: DunePlugin = {
   version: "1.0.0",
   description: "Does something useful",
   hooks: {
-    onPageLoaded: async ({ data, config }) => {
-      // data is the Page that was just loaded
-    },
-    onAfterRender: async ({ data, setData }) => {
-      // data is the rendered HTML string; setData() replaces it
-      setData(data.replace("</body>", "<script>…</script></body>"));
+    onBeforeRender: async ({ data, setData }) => {
+      // data is { req, page, props }; setData() replaces what the template receives
+      setData({ ...data, props: { ...data.props, extra: true } });
     },
   },
   setup: async (api) => {
@@ -135,12 +132,8 @@ All hook events as of v0.6.0:
 | Startup | `onStorageReady` | `StorageAdapter` |
 | Startup | `onContentIndexReady` | `PageIndex[]` |
 | Request | `onRequest` | `Request` — replace with a `Response` + call `stopPropagation()` to short-circuit routing |
-| Request | `onRouteResolved` | `RouteMatch` |
-| Request | `onPageLoaded` | `Page` |
 | Request | `onCollectionResolved` | `Collection` |
 | Request | `onBeforeRender` | `TemplateProps` |
-| Request | `onAfterRender` | `string` (HTML) |
-| Request | `onResponse` | `Response` |
 | Content | `onMarkdownProcess` | `string` (raw markdown) |
 | Content | `onMarkdownProcessed` | `string` (HTML) |
 | Content | `onMediaDiscovered` | `MediaFile` |
