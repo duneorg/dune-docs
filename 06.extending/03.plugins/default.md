@@ -922,6 +922,7 @@ export default function createAutosavePlugin(): DunePlugin {
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
 | `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
 | `mount({ bootstrap })` | `mount({ runtime })`: a curated `PluginRuntime` (see below) |
+| `app: App` (Fresh) and `FreshContext` in handlers | `PluginApp` and `PluginRouteContext`; Fresh-only features need your own Fresh dependency and a cast (see below) |
 
 ### The runtime
 
@@ -940,6 +941,25 @@ export default function createAutosavePlugin(): DunePlugin {
 | `jobs` | The job scheduler of the serving process. It appears after `mount()`: read it lazily |
 
 Everything is read-only. Wiring that is core's business (the format registry, the image handler, the signing key, the capability registry) is not reachable from a plugin.
+
+### Routes and the request context
+
+The plugin contract names no Fresh type, so it does not pin a Fresh version. `mount()`'s `app` is a `PluginApp` and route handlers receive a `PluginRouteContext`:
+
+| `PluginApp` | |
+|---|---|
+| `use(...handlers)`, `use(path, ...handlers)` | Middleware; call `ctx.next()` to continue |
+| `get`, `post`, `put`, `patch`, `delete`, `all` `(path, ...handlers)` | Route handlers (`/items/:id` style paths) |
+
+| `PluginRouteContext` | |
+|---|---|
+| `req` | The `Request` |
+| `url` | The parsed `URL` |
+| `params` | Route parameters |
+| `state` | Per-request state shared by middleware and handlers |
+| `next()` | Run the rest of the chain (middleware) |
+
+That is enough for APIs, webhooks and anything that returns a `Response`. Core passes Fresh's real `App` and `FreshContext`, which satisfy these types. If you need Fresh-only features (`ctx.render()`, islands, `app.fsRoutes()`, `app.layout()`), depend on Fresh yourself: declare the handler with a `FreshContext` parameter (the contribution types declare `handler` as a method, so that is accepted) and cast `app` to Fresh's `App`. You then follow Fresh's versions; the contract no longer promises them. Both types are exported from `@dune/core/plugin-api`.
 
 ## Accessing plugin config in hooks
 
