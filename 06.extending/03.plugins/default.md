@@ -141,7 +141,7 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
 | `setup` | — | One-time initialization function called when the plugin is registered |
 | `dependencies` | — | Names of other plugins this plugin requires (soft warning at startup) |
 | `publicRoutes` | — | Fresh routes registered on the public site (see below) |
-| `adminPages` | — | Admin panel pages contributed by this plugin (see below) |
+| `capabilities` (via `setup(api)`) | — | What this plugin provides to core and other plugins: admin pages, guarded admin routes, inline editing, bar buttons, ... (see [Plugin capabilities](#plugin-capabilities)) |
 
 ## Request interception
 
@@ -272,9 +272,13 @@ Use `onRequest` when:
 - You need to intercept or modify requests that Dune itself handles
 - You need to run logic before every request regardless of path
 
-## Admin pages
+## Admin pages and routes
 
-Plugins can contribute pages to the admin panel via `adminPages`. Each entry adds a route under `/admin/` that is rendered inside the admin shell (sidebar, header, auth) automatically.
+A plugin adds to the admin panel by **contributing** to it from `setup()`; the admin reads the contributions and mounts them behind its own login, CSRF check and permission check. Your handler does not check anything itself, and runs only for a request that passed all of that. (If no admin plugin is installed, nothing is mounted.) Two contribution points cover it:
+
+### `admin.pages` — GET pages with a sidebar entry
+
+Each entry adds a route under `/admin/` that is rendered inside the admin shell (sidebar, header, auth) automatically.
 
 ```typescript
 import type { DunePlugin } from "@dune/core/plugins";
@@ -283,11 +287,12 @@ export default {
   name: "my-plugin",
   version: "1.0.0",
   hooks: {},
-  adminPages: [
-    {
+  setup(api) {
+    api.capabilities.contribute("admin.pages", {
       path: "/my-plugin", // relative to the admin prefix — registers at /admin/my-plugin
       label: "My Plugin",
       icon: "🔌",
+      permission: "pages.read", // optional — omit to allow any authenticated admin
       handler: async (ctx) => {
         return ctx.render(
           <div>
@@ -296,12 +301,34 @@ export default {
           </div>
         );
       },
-    },
-  ],
+    });
+  },
 } satisfies DunePlugin;
 ```
 
 The page appears in the admin sidebar under the label and icon you provide. The `handler` receives a Fresh `FreshContext` and must return a response via `ctx.render()`.
+
+### `admin.routes` — guarded routes of any method
+
+For a `POST`, `PUT`, `PATCH` or `DELETE` endpoint, or a `GET` API route that is not a sidebar page:
+
+```typescript
+setup(api) {
+  api.capabilities.contribute("admin.routes", {
+    method: "POST",
+    path: "/my-plugin/rebuild-index", // relative to the admin prefix → /admin/my-plugin/rebuild-index
+    permission: "pages.publish",      // optional — omit to allow any authenticated admin
+    handler: async (_fc) => {
+      // The requester is an authenticated admin, passed the CSRF check
+      // (every non-GET method) and holds pages.publish.
+      await rebuildMyIndex();
+      return Response.json({ ok: true });
+    },
+  });
+},
+```
+
+An authenticated admin is required whether or not you set `permission`; `permission` narrows it (any string works and maps to an action in the authz schema, including ones the plugin declares with `authzActions`). An anonymous request is sent to the admin login like any other admin route. The CSRF check cannot be turned off.
 
 ## Search plugins
 
@@ -497,6 +524,8 @@ interface PluginApi {
   storage: StorageAdapter;
   /** Services built by core: security policy, sessions, users, passwords, rate limiting, logger (0.36) */
   services: PluginServices;
+  /** Declare what this plugin provides: `provide(slot, factory)` and `contribute(point, item)` (0.36) */
+  capabilities: CapabilityRegistrar;
 }
 ```
 
@@ -535,7 +564,7 @@ export default function createCache(config: CacheConfig = {}): DunePlugin {
 
 ## The `mount()` function
 
-`mount()` is called after `setup()`, once the Fresh `App` instance is ready. It is the correct place to register Fresh routes, middleware, and admin pages that require an `App` reference.
+`mount()` is called after `setup()`, once the Fresh `App` instance is ready. It is the correct place to register Fresh routes and middleware that require an `App` reference. (Admin pages and guarded admin routes are not registered here: contribute them from `setup()`, see [Admin pages and routes](#admin-pages-and-routes).)
 
 ```typescript
 interface MountApi {
@@ -543,10 +572,10 @@ interface MountApi {
   app: App<any>;
   /** Bootstrap result — content engine, config, storage, etc. */
   bootstrap: BootstrapResult;
-  /** Merged admin services collected from all plugins (content editor, inline edit, etc.) */
-  adminServices: AdminServices;
   /** The same `PluginServices` object `setup()` received (0.36) */
   services: PluginServices;
+  /** What plugins provide: `get(slot)`, `list(point)`, `providers()`. Read it lazily, at request time (0.36) */
+  capabilities: CapabilityReader;
 }
 ```
 
@@ -575,31 +604,28 @@ export default function createMyPlugin(): DunePlugin {
 
 That example is intentionally public — it doesn't touch anything a visitor shouldn't see. **If your route mutates data or reads anything private, gate it.** The next section covers that.
 
-### Registering an admin-guarded route
+### Routes in `mount()` are not behind the admin
 
-`@dune/plugin-admin` ships `withGuards()` — a composable helper that checks the requester's admin permission and (for mutating requests) CSRF, before your handler runs. It reads `ctx.state.adminContext` and `ctx.state.auth`, both populated by middleware the admin plugin registers via `mountEarly()` (see below) — so a guarded route works from *any* plugin's `mount()`, not just admin's own routes. **Register it under the admin path prefix** (default `/admin`, e.g. `/admin/my-plugin/…`): the auth middleware that sets `ctx.state.auth` only runs for requests under that prefix, exactly like every built-in admin route:
+A route you register with `app.get()`/`app.post()` in `mount()` runs outside the admin's middleware: plugins mount in registration order and the admin mounts last, so it has no admin login, no CSRF check and no permission check. **Do not put an admin-only operation there; contribute it as an [`admin.routes`](#admin-pages-and-routes) route.**
+
+A public route that behaves differently for a signed-in admin asks the `auth.session` capability, at request time:
 
 ```typescript
-import type { App } from "jsr:@fresh/core";
 import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
-import { withGuards } from "jsr:@dune/plugin-admin/admin/guards";
 
 export default function createMyPlugin(): DunePlugin {
   return {
-    name: "my-admin-plugin",
+    name: "my-export-plugin",
     version: "1.0.0",
 
-    async mount({ app }: MountApi) {
-      app.post(
-        "/admin/my-plugin/rebuild-index",
-        withGuards({ permission: "pages.publish" }, async (fc) => {
-          // withGuards already confirmed the requester holds pages.publish
-          // and, for this POST, passed CSRF — your handler only runs if
-          // both checks passed.
-          await rebuildMyIndex();
-          return Response.json({ ok: true });
-        }),
-      );
+    async mount({ app, capabilities }: MountApi) {
+      app.get("/export/report", async (fc) => {
+        // `auth.session` is provided by the admin plugin; with none installed
+        // it is undefined and every visitor is anonymous.
+        const who = await capabilities.get("auth.session")?.authenticate(fc.req);
+        if (!who?.authenticated) return new Response("Unauthorized", { status: 401 });
+        return Response.json({ report: await buildReport(), requestedBy: who.user?.id });
+      });
     },
 
     hooks: {},
@@ -607,22 +633,15 @@ export default function createMyPlugin(): DunePlugin {
 }
 ```
 
-This depends on the admin plugin being present and enabled (`admin.enabled !== false` in site config) — `ctx.state.adminContext` is `undefined` otherwise, and `withGuards()` treats that as unauthenticated rather than throwing. See `@dune/plugin-admin`'s own docs for the full list of built-in permission strings.
+`authenticate()` resolves to `{ authenticated, user? }`, where `user` always has an `id` and may have `username`, `email`, `name` and `roles`. It tells you *who*; whether they may do this is a permission decision, which the admin's `authz` makes for `admin.routes`.
 
-### `mountEarly()` — middleware other plugins' routes depend on
-
-Fresh compiles each route's middleware chain at the moment the route is registered, not per-request — a route registered before some `app.use()` call never sees it, even when both are unscoped. Plugin `mount()` hooks run in plugin registration order, and the built-in admin plugin registers late (`bootstrap()` doesn't construct it until authz, the HMAC key, and the history engine are ready), so **a route registered from your own `mount()` is compiled before admin's own `mount()` runs** — which is exactly why both `ctx.state.adminContext` and `ctx.state.auth` (the admin auth middleware) need a separate hook to reach you.
-
-`mountEarly()` exists for this: Dune calls every plugin's `mountEarly()` — admin's first, regardless of registration order — before calling *any* plugin's `mount()`. You will not need to implement `mountEarly()` yourself unless you're contributing middleware that other plugins' routes must depend on; consuming `ctx.state.adminContext` from your own `mount()`-registered route (as in the example above) already works without touching this hook.
-
-`setup()`, `mountEarly()`, and `mount()` lifecycle relative to app startup:
+### Lifecycle
 
 | Phase | When | What's available |
 |-------|------|-----------------|
-| `setup()` | During `bootstrap()` | `hooks`, `config`, `storage` |
-| `adminServices()` | After core infra, before admin routes mount | `storage`, `config`, `dataDir`, `contentDir`, `history`, `hooks` |
-| `mountEarly()` | After `createDuneApp()`, before any plugin's `mount()` | `app`, `bootstrap`, `adminServices` |
-| `mount()` | After `createDuneApp()`, after every plugin's `mountEarly()` | `app`, `bootstrap`, `adminServices` |
+| `setup()` | During `bootstrap()` | `hooks`, `config`, `storage`, `services`, `capabilities` (declare only) |
+| Capability resolution | After every plugin's `setup()` has settled, before any `mount()` | factories receive `storage`, `config`, `history`, `hooks`, `services`, `dataDir`, `contentDir` |
+| `mount()` | After `createDuneApp()` | `app`, `bootstrap`, `services`, `capabilities` |
 | Hook events | Per-request / per-rebuild | Full runtime context |
 
 ## Plugin services
@@ -732,64 +751,110 @@ try {
 
 A plugin written before 0.36 keeps working: the old imports from `@dune/core` still resolve. They are the ones that can drift from the running core's policy, so move to `services` when you next touch the plugin.
 
-## Registering admin services
+## Plugin capabilities
 
-`adminServices()` is a factory a plugin exports to contribute services into the admin panel — most notably a custom inline-edit manager or a replacement page editor. It's called during bootstrap, after core infrastructure (storage, history) is ready but before admin routes are mounted:
+Since 0.36 a plugin *provides* things to core and to other plugins through a typed registry; core no longer reaches into the admin plugin's internals. [Plugin services](#plugin-services) go the other way: core implements them and your plugin uses them. A **capability** is implemented by a plugin and used by core or another plugin. It is optional by nature: when nobody provides it, the consumer carries on without that feature.
+
+There are two shapes. A **slot** has at most one active provider; a **contribution point** collects one item from each contributing plugin.
+
+| Slot | Contract | Typically provided by | Used by | If nobody provides it |
+|------|----------|----------------------|---------|-----------------------|
+| `auth.session` | `authenticate(req) → { authenticated, user? }` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
+| `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
+| `inline-edit` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
+| `editor.content` | `ContentEditorPlugin` | an editor plugin | the admin | the admin uses its built-in block editor |
+
+| Contribution point | Item | Used by |
+|--------------------|------|---------|
+| `admin.pages` | `AdminPageRegistration` | the admin (sidebar pages) |
+| `admin.routes` | `AdminRouteRegistration` | the admin (guarded routes) |
+| `bar.actions` | `(ctx) => AdminBarAction[]` | the admin bar, via `ResponseTransformContext.barActions` |
+
+The key set is closed in 1.0: these are the only names. Third-party keys are not supported.
+
+### Providing and contributing
+
+Declare in `setup()`; this only records the declaration. Slots are given as a factory:
 
 ```typescript
-interface DunePlugin {
-  adminServices?(ctx: AdminServicesContext): Promise<AdminServices> | AdminServices;
+import type { DunePlugin } from "jsr:@dune/core/hooks";
+
+export default {
+  name: "my-editor",
+  version: "1.0.0",
+  hooks: {},
+  setup(api) {
+    // A slot: one provider. The factory runs once, after every setup() has settled.
+    api.capabilities.provide("editor.content", ({ storage, history, hooks }) =>
+      createMyEditor({ storage, history, hooks }));
+
+    // A contribution: appended to the point, in plugin registration order.
+    api.capabilities.contribute("bar.actions", ({ page }) =>
+      page?.template === "worksheet"
+        ? [{ id: "my-editor:open", label: "Open in editor", href: `/editor?path=${encodeURIComponent(page.sourcePath)}` }]
+        : []);
+  },
+} satisfies DunePlugin;
+```
+
+The factory receives a `CapabilityContext`:
+
+```typescript
+interface CapabilityContext {
+  storage: StorageAdapter;   // the site's storage (content and data files)
+  config: DuneConfig;        // merged site configuration
+  history: HistoryEngine;    // records content revisions
+  hooks: HookRegistry;       // the engine's hook registry
+  services: PluginServices;  // the services described above
+  dataDir: string;           // plugin runtime data directory (admin.runtime_dir)
+  contentDir: string;        // content directory relative to the site root
 }
 ```
 
-Core collects every plugin's `adminServices()` output, in registration order, into a single merged object — later plugins win on key conflicts, so a user plugin can replace the built-in inline-edit manager. The merged result is exposed as `adminServices` on both `MountApi` (see above) and `bootstrap.adminServices`.
+Resolution rules:
 
-### `AdminServicesContext` shape
+- Factories run **once each, in plugin registration order**, after core infrastructure exists and before any `mount()`; they may be `async`.
+- A second provider for the same slot **replaces** the first and logs a warning naming both, so a site plugin can replace a built-in provider.
+- A factory that **throws** is logged and leaves the slot empty; the site keeps serving. A factory that returns `undefined` declines the slot.
+- `capabilities.providers()` lists who provides what and each slot's status (`unresolved`, `active`, `declined`, `failed`).
+
+### Reading capabilities
+
+`MountApi.capabilities` (and `bootstrap.capabilities`) is the read side. Read it lazily, at request time, and treat a missing provider as normal:
 
 ```typescript
-interface AdminServicesContext {
-  /** Storage adapter for the site (reads/writes content and data files). */
-  storage: StorageAdapter;
-  /** Merged site configuration. */
-  config: DuneConfig;
-  /** Absolute data directory path (e.g. ".dune/data"). */
-  dataDir: string;
-  /** Content directory path relative to site root (e.g. "content"). */
-  contentDir: string;
-  /** History engine for recording content revisions. */
-  history: HistoryEngine;
-  /** The engine's hook registry — see below for why services need this. */
-  hooks: HookRegistry;
+mount({ app, capabilities }) {
+  app.get("/whoami", async (fc) => {
+    const who = await capabilities.get("auth.session")?.authenticate(fc.req);
+    return Response.json({ signedIn: who?.authenticated ?? false });
+  });
+  const extraPages = capabilities.list("admin.pages"); // readonly array
 }
 ```
 
-### `AdminServices` shape
+### Firing hooks from a provider
+
+A provider that writes content outside the standard admin CRUD routes (`/admin/api/pages/...`), which are what normally fire `onPageCreate`/`onPageUpdate`/`onPageDelete` after a successful write, must fire the matching event itself, because nothing else will. Otherwise search indexes, webhooks and cache invalidation miss the write. The factory's `hooks` is the registry to fire on:
 
 ```typescript
-interface AdminServices {
-  /** Inline editing manager — the service behind the inline-edit admin endpoints. */
-  inlineEdit?: InlineEditManager;
-  /** Custom page editor — replaces the built-in block editor when set. */
-  contentEditor?: ContentEditorPlugin;
-}
-```
+import type { CapabilityContext } from "jsr:@dune/core/plugin-api";
+import type { DunePlugin } from "jsr:@dune/core/hooks";
+import type { InlineEditManager } from "jsr:@dune/core/inline-edit";
 
-### Firing hooks from a service
-
-Services instantiated through `adminServices()` write content outside the standard admin CRUD routes (`/admin/api/pages/...`), which are what normally fire `onPageCreate`/`onPageUpdate`/`onPageDelete` after a successful write. A service built this way has no other path to those events — if it writes a page directly through `storage`, it must fire the matching hook itself using the `hooks` field on `AdminServicesContext`:
-
-```typescript
-import type { AdminServices, AdminServicesContext, DunePlugin } from "jsr:@dune/core/hooks";
-
-function createAutosaveService(ctx: AdminServicesContext) {
+function createAutosaveManager(ctx: CapabilityContext): InlineEditManager {
   const { storage, hooks } = ctx;
 
   return {
-    async save(sourcePath: string, content: string) {
-      await storage.write(sourcePath, content);
-      // The admin CRUD route fires this inline on a normal save; this
-      // service writes directly through storage, so it must fire it too —
-      // otherwise search indexes, webhooks, and cache invalidation miss the write.
+    handleUpgrade: (req, user) => openAutosaveSocket(req, user), // your transport
+    getPresence: () => [],
+    async commit(sourcePath, _author) {
+      await storage.write(sourcePath, await currentDraft(sourcePath));
+      // The admin CRUD route fires this inline on a normal save; this manager
+      // writes directly through storage, so it must fire it too.
+      await hooks.fire("onPageUpdate", { sourcePath });
+    },
+    async patchFields(sourcePath, fields, _author) {
+      await applyFields(storage, sourcePath, fields);
       await hooks.fire("onPageUpdate", { sourcePath });
     },
   };
@@ -799,15 +864,26 @@ export default function createAutosavePlugin(): DunePlugin {
   return {
     name: "autosave",
     version: "1.0.0",
-
-    adminServices(ctx: AdminServicesContext): AdminServices {
-      return { inlineEdit: createAutosaveService(ctx) };
-    },
-
     hooks: {},
+    setup(api) {
+      api.capabilities.provide("inline-edit", createAutosaveManager);
+    },
   };
 }
 ```
+
+### Moving a plugin from 0.35
+
+| Before (0.35) | Now (0.36) |
+|---------------|------------|
+| `adminServices() → { inlineEdit }` | `capabilities.provide("inline-edit", factory)` in `setup()` |
+| `adminServices() → { contentEditor }` | `capabilities.provide("editor.content", factory)` |
+| `adminPages: [...]` | `capabilities.contribute("admin.pages", page)` |
+| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` and `ctx.barActions` |
+| `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute("admin.routes", { method, path, permission, handler })` |
+| `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("auth.session")?.authenticate(req)` |
+| `mountEarly()` | removed: nothing needs admin middleware to mount first |
+| `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
 
 ## Accessing plugin config in hooks
 
