@@ -167,7 +167,7 @@ Fires `onPageCreate` — the same hook the admin panel fires when creating a pag
 | `--dry-run` | Preview what would be deleted without writing any changes. |
 | `--json` | Output result as JSON. |
 
-Fires `onPageDelete` — the same hook the admin panel fires when deleting a page through the UI.
+Fires `onPageDelete` — the same hook every other page writer fires when deleting a page.
 
 ## Packages
 

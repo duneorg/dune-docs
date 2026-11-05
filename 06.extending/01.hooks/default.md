@@ -75,13 +75,16 @@ Fired during bootstrap when the search engine is created. They let a plugin add 
 
 ### Content mutation hooks
 
-Fired by the admin panel after CRUD operations. Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../webhooks).
+Fired by whoever writes a page: the admin panel, the MCP server, the `dune content:*` commands, inline editing, or your own plugin. Core never fires them on a writer's behalf, so a plugin that writes pages must fire the matching event itself (see [writing your own admin](../plugins)). Useful for triggering external systems (CDN purges, search re-indexing, notifications) without using outbound [webhooks](../webhooks).
+
+Paths in the payloads are relative to the content directory. Edits made outside Dune (an editor, `git pull`) fire no per-page event; they show up as `onRebuild`.
 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
 | `onPageCreate` | New page created and index rebuilt | Notify external search, invalidate CDN |
 | `onPageUpdate` | Page saved and index rebuilt | Notify external search, invalidate CDN |
 | `onPageDelete` | Page deleted and index rebuilt | Remove from external search, purge CDN |
+| `onPageMove` | Pages renamed or reordered | Re-index moved pages, redirect old URLs |
 | `onWorkflowChange` | Page workflow status changed | Trigger review notifications, update CMS |
 
 ### Public feature hooks
@@ -220,9 +223,10 @@ The payload objects are mutable — handlers populate them in place (push record
 
 | Hook | `data` shape | Description |
 |------|--------------|-------------|
-| `onPageCreate` | `{ sourcePath: string, title: string }` | Fired after a new page is created via the admin panel |
-| `onPageUpdate` | `{ sourcePath: string, title: string }` | Fired after a page is saved via the admin panel |
-| `onPageDelete` | `{ sourcePath: string }` | Fired after a page is deleted via the admin panel |
+| `onPageCreate` | `{ sourcePath: string, title: string }` | Fired after a new page is created |
+| `onPageUpdate` | `{ sourcePath: string }` | Fired after a page is saved |
+| `onPageDelete` | `{ sourcePath: string }` | Fired after a page is deleted |
+| `onPageMove` | `{ moves: { from: string, to: string }[] }` | Fired after pages are renamed or reordered. Each entry is a folder (or file) that was renamed; every page below `from` now lives below `to`. One event per operation |
 | `onWorkflowChange` | `{ sourcePath: string, from: WorkflowStatus, to: WorkflowStatus }` | Fired after a page's workflow status changes |
 
 `WorkflowStatus` is `"draft" | "in_review" | "published" | "archived"`.

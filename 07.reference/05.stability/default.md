@@ -151,10 +151,11 @@ All hook events as of v0.6.0:
 | API | `onApiResponse` | `Response` |
 | Engine | `onRebuild` | `void` |
 | Engine | `onThemeSwitch` | `string` (theme name) |
-| Admin CRUD | `onPageCreate` | `PageIndex` |
-| Admin CRUD | `onPageUpdate` | `PageIndex` |
-| Admin CRUD | `onPageDelete` | `string` (sourcePath) |
-| Admin CRUD | `onWorkflowChange` | `{ sourcePath, status }` |
+| Content mutation | `onPageCreate` | `{ sourcePath, title }` |
+| Content mutation | `onPageUpdate` | `{ sourcePath }` |
+| Content mutation | `onPageDelete` | `{ sourcePath }` |
+| Content mutation | `onPageMove` | `{ moves: { from, to }[] }` (`PageMovePayload`) |
+| Content mutation | `onWorkflowChange` | `{ sourcePath, from, to }` |
 
 New events will be added in minor versions. Exhaustive `switch`/`if` chains over `HookEvent` values should have a fallthrough case.
 

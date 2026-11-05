@@ -37,6 +37,7 @@ admin:
         - onPageCreate
         - onPageUpdate
         - onPageDelete
+        - onPageMove
         - onWorkflowChange
 ```
 
@@ -57,8 +58,9 @@ The second endpoint reads its signing secret from the `WEBHOOK_SECRET_ALL` envir
 | Event | Fires when | Payload shape |
 |-------|-----------|---------------|
 | `onPageCreate` | A new page is created and the content index has been rebuilt. | `{ sourcePath: string, title: string }` |
-| `onPageUpdate` | A page is saved. | `{ sourcePath: string, title: string }` |
+| `onPageUpdate` | A page is saved. | `{ sourcePath: string }` |
 | `onPageDelete` | A page is deleted. | `{ sourcePath: string }` |
+| `onPageMove` | Pages are renamed or reordered. | `{ moves: { from: string, to: string }[] }` |
 | `onWorkflowChange` | A page's workflow status changes. | `{ sourcePath: string, from: WorkflowStatus, to: WorkflowStatus }` |
 
 `WorkflowStatus` is one of: `"draft"`, `"in_review"`, `"published"`, `"archived"`.

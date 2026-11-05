@@ -287,6 +287,7 @@ admin:
         - onPageCreate
         - onPageUpdate
         - onPageDelete
+        - onPageMove
         - onWorkflowChange
 
   # Removed in 0.36 (a config that still has them refuses to load):
@@ -295,7 +296,7 @@ admin:
   #   data_dir → data_dir (top level of system.yaml)
 ```
 
-Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
+Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onPageMove`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
 `data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtime_dir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
 
