@@ -306,6 +306,7 @@ This is a set of counters, not a request log, so it stays small whatever your tr
 - It keeps at most **2000 distinct queries**. Beyond that the least-searched query is dropped to make room, so a flood of one-off queries cannot push out the frequent ones. Counts are only approximate once more than 2000 distinct queries have been seen; the top of the list stays accurate.
 - The counters live in `{admin.runtime_dir}/search-analytics.json` in the site root. The file is rewritten at most every 30 seconds and only when something changed, and is also written when `dune serve` shuts down. A crash loses at most the last 30 seconds.
 - The file is machine-local and not git-tracked (it lives in `runtime_dir`). Delete it to reset the counts.
+- Each site is expected to run as one process. Several processes on the same site would each keep their own counters and overwrite each other's file. Only `dune serve` writes on shutdown; other entry points lose at most the last 30 seconds.
 
 The admin panel exposes the summary at:
 
