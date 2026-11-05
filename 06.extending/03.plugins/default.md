@@ -759,7 +759,7 @@ There are two shapes. A **slot** has at most one active provider; a **contributi
 
 | Slot | Contract | Typically provided by | Used by | If nobody provides it |
 |------|----------|----------------------|---------|-----------------------|
-| `auth.session` | `authenticate(req) → { authenticated, user? }` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
+| `auth.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
 | `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
 | `inline-edit` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
 | `editor.content` | `ContentEditorPlugin` | an editor plugin | the admin | the admin uses its built-in block editor |
@@ -831,6 +831,30 @@ mount({ app, capabilities }) {
   const extraPages = capabilities.list("admin.pages"); // readonly array
 }
 ```
+
+### Writing your own admin: the `auth.session` contract
+
+The built-in admin is just a provider. Any plugin can be *the* admin by providing `auth.session`, and core treats it exactly the same: it calls `authenticate(req)` on public pages to decide whether to inject the admin bar and whether editing markers survive, and in the inline-edit WebSocket. What it needs from you:
+
+```typescript
+interface RequestAuthenticator {
+  authenticate(req: Request): Promise<{
+    authenticated: boolean;
+    // Only `id` is guaranteed; OAuth and magic-link accounts have no username.
+    user?: { id: string; username?: string; email?: string; name?: string; roles?: string[] };
+  }>;
+  /** Cookies that carry your session. Declare them. */
+  readonly sessionCookies?: readonly string[];
+}
+```
+
+- **Declare `sessionCookies`.** Core uses the names for two cheap decisions that must not depend on a particular admin: whether to call `authenticate()` at all on a public page, and whether to keep the response out of the shared page cache (a response rendered for an editor must never be cached for anonymous visitors). If you leave it out, core treats *any* request with a `Cookie` header as possibly signed in: always correct, but every visitor with an analytics cookie costs a lookup and bypasses the cache.
+- **Be cheap without a session.** `authenticate()` runs on public pages. Return `{ authenticated: false }` straight away, without touching a session store, when the request carries no session of yours.
+- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `auth.session`, even with `admin.enabled: false`. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
+- **You are the writer.** If your admin writes content itself, fire `onPageUpdate` (and `onPageCreate` / `onPageDelete` / `onWorkflowChange`) after each write: core does not fire them for you.
+- Set `admin.enabled: false` in `system.yaml` if you replace the built-in admin entirely.
+
+[`@dune/testing`](https://jsr.io/@dune/testing) ships `createStubAdmin()`, a minimal admin built only on these services and capabilities, and `createAppHarness()`, which serves the full app in process. Use them to test a plugin against an admin that is not the built-in one, or as a reference for your own.
 
 ### Firing hooks from a provider
 
