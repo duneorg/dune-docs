@@ -292,7 +292,7 @@ export default {
       path: "/my-plugin", // relative to the admin prefix — registers at /admin/my-plugin
       label: "My Plugin",
       icon: "🔌",
-      permission: "pages.read", // optional — omit to allow any authenticated admin
+      permission: "pages.read", // required — who may view this page
       handler: async (ctx) => {
         return ctx.render(
           <div>
@@ -317,7 +317,7 @@ setup(api) {
   api.capabilities.contribute("admin.routes", {
     method: "POST",
     path: "/my-plugin/rebuild-index", // relative to the admin prefix → /admin/my-plugin/rebuild-index
-    permission: "pages.publish",      // optional — omit to allow any authenticated admin
+    permission: "pages.publish",      // required — who may call this route
     handler: async (_fc) => {
       // The requester is an authenticated admin, passed the CSRF check
       // (every non-GET method) and holds pages.publish.
@@ -328,7 +328,7 @@ setup(api) {
 },
 ```
 
-An authenticated admin is required whether or not you set `permission`; `permission` narrows it (any string works and maps to an action in the authz schema, including ones the plugin declares with `authzActions`). An anonymous request is sent to the admin login like any other admin route. The CSRF check cannot be turned off.
+`permission` is required on both `admin.pages` and `admin.routes`: the request must be an authenticated admin who holds it (any string works and maps to an action in the authz schema, including ones the plugin declares with `authzActions`). There is no "any authenticated admin" default, so a page or a mutation endpoint cannot be exposed to every admin by leaving a field out. An anonymous request is sent to the admin login like any other admin route. The CSRF check cannot be turned off.
 
 ## Search plugins
 
