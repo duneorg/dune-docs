@@ -291,18 +291,36 @@ input.addEventListener("input", () => {
 
 ## Query analytics
 
-Every search against `GET /api/search` is recorded fire-and-forget to a JSONL file at `{admin.runtime_dir}/search-analytics.jsonl`. The admin panel exposes aggregated statistics at:
+Search analytics are **off by default**, because the data is what your visitors typed. Turn them on in `system.yaml`:
+
+```yaml
+# config/system.yaml
+search:
+  analytics: true
+```
+
+Core then counts every `GET /api/search` query: the normalised query text (trimmed, lowercased, whitespace collapsed, at most 100 characters) and how many results it returned. No IP address or user data is kept. Only the first page of a search counts (`offset=0`), so paging through results is not a new search.
+
+This is a set of counters, not a request log, so it stays small whatever your traffic:
+
+- It keeps at most **2000 distinct queries**. Beyond that the least-searched query is dropped to make room, so a flood of one-off queries cannot push out the frequent ones. Counts are only approximate once more than 2000 distinct queries have been seen; the top of the list stays accurate.
+- The counters live in `{admin.runtime_dir}/search-analytics.json` in the site root. The file is rewritten at most every 30 seconds and only when something changed, and is also written when `dune serve` shuts down. A crash loses at most the last 30 seconds.
+- The file is machine-local and not git-tracked (it lives in `runtime_dir`). Delete it to reset the counts.
+
+The admin panel exposes the summary at:
 
 ```
 GET /admin/api/search/analytics
 ```
 
-Requires authentication with `pages.read` permission.
+Requires authentication with `pages.read` permission. Plugins read the same summary through `services.search.analytics.summarize()` (see [Plugin services](/docs/extending/plugins#plugin-services)).
 
 Response:
 
 ```json
 {
+  "enabled": true,
+  "since": 1762300000000,
   "totalSearches": 1842,
   "topQueries": [
     { "query": "deno", "count": 142, "avgResults": 7 },
@@ -315,9 +333,7 @@ Response:
 }
 ```
 
-`zeroResultQueries` lists queries that returned no results on average — useful for discovering missing content.
-
-The analytics file is machine-local and not git-tracked (it lives in `runtime_dir`). It is not pruned automatically — trim or rotate the file periodically on high-traffic sites.
+`since` is the time (Unix milliseconds) of the first counted search, or `null` when there is none. With analytics off, `enabled` is `false` and the summary is empty. `zeroResultQueries` lists queries that returned no results on average — useful for discovering missing content.
 
 ## Build requirement
 

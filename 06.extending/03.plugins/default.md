@@ -657,11 +657,41 @@ interface PluginServices {
     readonly dummyHash: string;      // verify against this for unknown users, so a login costs the same either way
   };
   logger: Logger;
+  engines: {
+    workflow: WorkflowEngine;        // content status transitions, from site.workflow
+    scheduler: Scheduler;            // scheduled publish/unpublish store (CRUD; the serving process runs the polling loop)
+    staging: StagingEngine;          // staged drafts of published pages
+    mt: MachineTranslator | null;    // null unless site.machine_translation is configured
+    audit: AuditLogger | null;       // null when admin is disabled or admin.audit.enabled is false
+  };
+  authz: {
+    seedAdminTuples(users: Array<{ id: string; role: string }>): Promise<void>;   // idempotent; no-op without an authz system
+  };
+  blueprints: {
+    has(template: string): boolean;
+    resolve(template: string): ResolvedBlueprint | null;                          // `extends` chain flattened
+    validate(frontmatter: PageFrontmatter, template: string): BlueprintValidationError[];   // [] = valid, or no blueprint
+  };
+  search: {
+    analytics: {
+      readonly enabled: boolean;                                                  // system.search.analytics
+      summarize(limit?: number): Promise<SearchAnalyticsSummary>;                 // empty summary when off
+    };
+  };
+  paths: {
+    readonly dataDir: string;        // system.data_dir, default "data"
+    readonly runtimeDir: string;     // admin.runtime_dir, default ".dune/admin"
+  };
 }
 ```
 
 - **Sessions** use the backend configured in `system.session_store` (local files under `sessionsDir`, Deno KV or Redis). In a multisite install they are scoped to the site by the same key prefix core uses, so a plugin's sessions never share keys with another site's.
 - **Users** `createLocalStore` returns the flat-file store under `usersDir` in the site's storage. It is the same store shape core uses; `user_store: db` is not reflected here yet.
+- **Engines** are built once per site by core, under `admin.runtime_dir`, so a plugin uses them rather than calling the factories. The scheduler only stores scheduled actions; whatever runs `dune serve` starts its polling loop, so a plugin that wants scheduled actions to fire exposes an `executeScheduledAction` on the admin context for it to call. The `audit` trail is created for the admin panel and is `null` for a site with admin disabled.
+- **Authz** `seedAdminTuples` registers the access tuple for each given user's admin-tier role. Call it after creating or loading your users, as the admin panel does at mount.
+- **Blueprints** read the content engine's currently loaded blueprints on every call, so a reload is picked up. Use `resolve` for the form definition and `validate` before saving frontmatter.
+- **Search analytics** are recorded by core when `system.search.analytics` is on (see [Query analytics](../../reference/search#query-analytics)); a plugin only reads the summary.
+- **Paths** are site-relative storage paths. Use them instead of re-deriving `data_dir` and `runtime_dir` from the config.
 - **Types** only: the interfaces are what a plugin may rely on. Import them with `import type { PluginServices } from "@dune/core/plugin-api"`.
 
 ```typescript

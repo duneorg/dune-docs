@@ -190,6 +190,7 @@ typography:
 
 search:
   fail_on_startup: false         # boolean — Stop startup if a search engine fails to build (default: false = log, retry, fall back)
+  analytics: false               # boolean — Count GET /api/search queries in admin.runtime_dir/search-analytics.json (default: false; see Search → Query analytics)
   custom_fields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
