@@ -328,7 +328,7 @@ setup(api) {
 },
 ```
 
-`permission` is required on both `admin.pages` and `admin.routes`: the request must be an authenticated admin who holds it (any string works and maps to an action in the authz schema, including ones the plugin declares with `authzActions`). There is no "any authenticated admin" default, so a page or a mutation endpoint cannot be exposed to every admin by leaving a field out. An anonymous request is sent to the admin login like any other admin route. The CSRF check cannot be turned off.
+`permission` is required on both `admin.pages` and `admin.routes`: the request must be an authenticated admin who holds it (any string works and maps to an action in the authz schema, including ones the plugin declares with `authzActions`). There is no "any authenticated admin" default, so a page or a mutation endpoint cannot be exposed to every admin by leaving a field out. The type enforces it, and so does the admin at mount: an entry with no `permission`, an unknown `method`, or a `path` that does not start with `/` is skipped and logged (`admin.pages.invalid` / `admin.routes.invalid`) rather than mounted, which also covers a plugin written without type-checking. If your page or route is missing, check the log for those events. An anonymous request is sent to the admin login like any other admin route. The CSRF check cannot be turned off.
 
 ## Search plugins
 
