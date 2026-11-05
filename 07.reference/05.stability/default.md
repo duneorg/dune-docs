@@ -205,9 +205,12 @@ Core types frozen since v0.6.0 — no fields will be removed before v1.0:
 | `PageFrontmatter` | 0.1.0 |
 | `TemplateProps` | 0.1.0 |
 | `DuneConfig` / `SiteConfig` | 0.1.0 |
+| `TemplateConfig` | 0.36.0 |
 | `StorageAdapter` | 0.1.0 |
 | `SectionDef` | 0.6.0 |
 | `SectionInstance` | 0.6.0 |
+
+Since 0.36, `TemplateProps.config` is typed as `TemplateConfig` (`site`, `theme`, `system.languages`) instead of the whole `DuneConfig`: this is the part of the configuration a theme can rely on, and the rest is no longer typed for templates (the runtime value is unchanged). See [Templates](../../themes/templates#what-config-contains).
 
 New **optional** fields may be added to these types in minor versions. Code that spreads or destructures these types should use rest parameters to remain forward-compatible:
 
