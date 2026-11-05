@@ -856,6 +856,21 @@ interface RequestAuthenticator {
 
 [`@dune/testing`](https://jsr.io/@dune/testing) ships `createStubAdmin()`, a minimal admin built only on these services and capabilities, and `createAppHarness()`, which serves the full app in process. Use them to test a plugin against an admin that is not the built-in one, or as a reference for your own.
 
+To check your own admin against the contract, run the conformance suite. You supply a driver that builds an app with your admin installed and signs an editor in; the suite does the rest:
+
+```typescript
+import { runAdminConformance } from "jsr:@dune/testing/conformance";
+
+runAdminConformance({
+  name: "my-admin",
+  createApp: async ({ content, extraPlugins, withAdmin }) => { /* build the app; register extraPlugins before your admin */ },
+  signInEditor: async (app) => "my_sid=...", // the Cookie header value of a signed-in editor
+  // optional: signInViewer, editPage, adminPrefix
+});
+```
+
+It checks that you provide exactly one `auth.session`; that core recognises your editor's session and nothing else (no cookie, an unrelated cookie and a forged one get no admin bar and lose the editing markers); that `sessionCookies` includes the cookie your sign-in really sets; that a plugin mounted before you can read `auth.session`; that an edit fires `onPageUpdate` once (with `editPage`); that other plugins' `admin.pages` and `admin.routes` are mounted behind your login, CSRF check and permission (with `adminPrefix`); and that the site serves with your admin removed. Use `adminConformanceChecks(driver)` to get the checks as a list instead of registering `Deno.test`s.
+
 ### Firing hooks from a provider
 
 A provider that writes content outside the standard admin CRUD routes (`/admin/api/pages/...`), which are what normally fire `onPageCreate`/`onPageUpdate`/`onPageDelete` after a successful write, must fire the matching event itself, because nothing else will. Otherwise search indexes, webhooks and cache invalidation miss the write. The factory's `hooks` is the registry to fire on:
