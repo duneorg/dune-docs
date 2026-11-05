@@ -382,8 +382,8 @@ If you're developing Dune itself (not a site built with it), the local-dev insta
 $ dune config:show
 
 site.title: "My Site"                    ← config/site.yaml:1
-system.cache.enabled: false              ← config/env/development/system.yaml:3
-system.cache.driver: "memory"            ← default
+system.page_cache.enabled: false         ← config/env/development/system.yaml:3
+system.images.default_quality: 80        ← default
 system.debug: true                       ← config/env/development/system.yaml:5
 theme.name: "default"                    ← default
 ```

@@ -129,22 +129,6 @@ Result items include a `highlights` field when enabled:
 
 The `excerpt` field already has match terms wrapped in `<mark>` tags when `highlight: true`.
 
-## Indexing Flex Objects
-
-Include Flex Object records in the search index alongside pages:
-
-```yaml
-# config/system.yaml
-search:
-  include_flex:
-    - products
-    - events
-```
-
-Flex Object records are indexed by their title-like field (first `text` field) and all other string fields. They appear in search results with a `route` of `/flex/{type}/{id}` and `template: "flex"`.
-
-The `type` field in the search result identifies the Flex Object type: `{ route: "/flex/products/abc123", template: "flex", type: "products", title: "Ceramic Mug", ... }`.
-
 ## Query syntax
 
 Queries are split into terms by whitespace. A term is a sequence of two or more non-punctuation characters. Single-character terms are ignored.

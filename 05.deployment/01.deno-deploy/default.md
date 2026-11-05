@@ -23,16 +23,9 @@ Deno Deploy runs your site on a global edge network — your content is served f
 
 ## Setup
 
-### 1. Configure for KV storage
+### 1. Storage
 
-`config/env/production/system.yaml`:
-```yaml
-cache:
-  driver: "kv"
-  check: "hash"
-```
-
-Dune auto-detects Deno Deploy via the `DENO_DEPLOYMENT_ID` environment variable. When present, it switches to the KV storage adapter automatically.
+There is nothing to configure: Dune auto-detects Deno Deploy via the `DENO_DEPLOYMENT_ID` environment variable. When present, it switches to the KV storage adapter automatically (and sessions to KV).
 
 ### 2. Sync content
 

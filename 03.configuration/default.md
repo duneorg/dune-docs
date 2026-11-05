@@ -88,12 +88,25 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 | `auth.providers` | `magicLink` → `magic_link`; per provider `clientId` → `client_id`, `clientSecret` → `client_secret` |
 | `auth.jwt` | `jwksUrl` → `jwks_url`, `userIdClaim` → `user_id_claim`, `emailClaim` → `email_claim`, `rolesClaim` → `roles_claim` |
 | `auth.webhook` | `signatureHeader` → `signature_header` |
-| `site.yaml` `uploads:` | `maxSizeMb` → `max_size_mb`, `allowedTypes` → `allowed_types`, `requireAuth` → `require_auth` |
 | `system.yaml` `content:` | `allowTsxFormat` → `allow_tsx_format` |
 | `system.yaml` `search:` | `customFields` → `custom_fields` |
 | `system.yaml` `metrics:` | `slowQueryThresholdMs` → `slow_query_threshold_ms` |
 | `system.yaml` `admin:` | `sessionLifetime` → `session_lifetime`, `dataDir` → `data_dir`, `runtimeDir` → `runtime_dir`, `maxRevisions` → `max_revisions`, `maxUploadMb` → `max_upload_mb`, `authzStore` → `authz_store` |
 | `admin.audit` | `logFile` → `log_file` |
-| `admin.auth_provider` | `baseDn` → `base_dn`, `bindDn` → `bind_dn`, `bindPassword` → `bind_password`, `usernameAttr` → `username_attr`, `emailAttr` → `email_attr`, `nameAttr` → `name_attr`, `roleMap` → `role_map`, `defaultRole` → `default_role`, `entityId` → `entity_id`, `acsUrl` → `acs_url`, `idpMetadata` → `idp_metadata`, `roleAttr` → `role_attr` |
+
+### Keys that were removed
+
+These were declared and documented but nothing ever read them. A config that still sets one refuses to load and says so; delete the line.
+
+| Key | What to use |
+|-----|-------------|
+| `site.yaml` `uploads:` | Nothing: Dune never mounted a public upload endpoint. Accept visitor files with a `file` field in a [form](../forms) |
+| `system.yaml` `cache:` (`enabled`, `driver`, `lifetime`, `check`) | `page_cache:` is the rendered-page cache; see [Caching](../deployment/caching) |
+| `system.yaml` `timezone:` | Nothing |
+| `system.yaml` `content.markdown:` (`extra`, `auto_links`, `auto_url_links`) | Nothing: the markdown renderer has fixed settings |
+| `system.yaml` `search.include_flex:` | Nothing |
+| `admin.auth_provider` with `type: ldap` or `saml` (and its `base_dn`, `bind_dn`, ... keys) | Only `local` exists; inject your own provider ([Authentication Providers](../administration/auth-providers)) |
+
+Two keys the docs always described now work: `search.custom_fields`, `search.fields`, `search.highlight` and `search.excerpt_length` reach the search engine, and `flags:` (in **system.yaml**) is resolved at startup for `flag()`.
 
 Options passed to functions in code (`createDuneAuthSystem({ authzStore, dataDir })`, `createSearchEngine({ customFields })`) are not config keys and keep their camelCase names.

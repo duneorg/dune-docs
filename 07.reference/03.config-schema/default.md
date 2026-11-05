@@ -106,18 +106,6 @@ email:
   sendgrid:
     apiKey: "$SENDGRID_API_KEY"
 
-# ── Public file uploads ───────────────────────────────────────────────────────
-uploads:
-  max_size_mb: 10               # number — Max upload size in MB (default: 10)
-  allowed_types:                # string[] — Permitted MIME types (server-derived from extension)
-    - "image/jpeg"
-    - "image/png"
-    - "image/webp"
-    - "image/gif"
-    - "image/avif"
-    - "application/pdf"
-  require_auth: false           # boolean — Require a logged-in User (default: false)
-
 # ── Payments ──────────────────────────────────────────────────────────────────
 payments:
   provider: "stripe"            # "stripe" — only provider in this release
@@ -129,12 +117,6 @@ payments:
       price_id: "price_xxx"     # string — Stripe Price ID
       role: "member"            # string — Role assigned to user on successful payment
       mode: "subscription"      # "subscription" | "payment" (default: "subscription")
-
-# ── Feature flags ─────────────────────────────────────────────────────────────
-flags:
-  comments: true                # boolean — static value
-  new_editor: false
-  beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 ```
 
 ```yaml
@@ -157,16 +139,6 @@ forms:
 ```yaml
 content:
   dir: "content"                 # string — Content directory path
-  markdown:
-    extra: true                  # boolean — Extended markdown features
-    auto_links: true             # boolean — Auto-link URLs
-    auto_url_links: true         # boolean — Auto-link bare URLs
-
-cache:
-  enabled: true                  # boolean
-  driver: "filesystem"           # "memory" | "filesystem" | "kv"
-  lifetime: 3600                 # number — Seconds
-  check: "file"                  # "file" | "hash" | "none"
 
 images:
   default_quality: 80            # number — 1-100
@@ -195,8 +167,6 @@ search:
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
   excerpt_length: 160           # number — Character length of returned excerpts (default: 160)
-  include_flex: []              # string[] — Flex Object type names to include in search index
-                                 #   e.g. ["products", "events"]
   facets: []                    # Facet definitions for filtering search results
     # - field: "taxonomy.category"   # dot-path into frontmatter
     # - field: "template"
@@ -250,7 +220,12 @@ tracing:
   sample_rate: 1.0               # number — 0.0–1.0 fraction of requests sampled (default: 1.0)
 
 debug: false                     # boolean
-timezone: "UTC"                  # string — IANA timezone
+
+# Feature flags (resolved once at startup; read with flag())
+flags:
+  comments: true                # boolean — static value
+  new_editor: false
+  beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 
 data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces the removed admin.data_dir.
 

@@ -7,14 +7,16 @@ taxonomy:
   difficulty: [advanced]
   topic: [administration, security, authentication]
 metadata:
-  description: "Plug in LDAP, SAML, or other identity providers for admin panel authentication"
+  description: "Use the built-in local accounts, or plug in your own identity provider for admin panel authentication"
 ---
 
 # Authentication Providers
 
-By default, Dune manages admin users with local password accounts (PBKDF2-SHA256). For organizations that already have a central directory service, you can delegate authentication to an external provider.
+By default, Dune manages admin users with local password accounts (PBKDF2-SHA256). For organizations that already have a central directory service, you can delegate authentication to an identity provider you write.
 
 The `AuthProvider` interface abstracts the identity verification step. Once a provider confirms who the user is, Dune's session management and permission system take over — all existing roles, revision history, and audit logging work unchanged.
+
+> **LDAP and SAML are not built in.** Earlier versions listed them in the configuration but never implemented them (the providers threw), so they were removed in 0.36 and `admin.auth_provider.type` accepts only `local`. To use LDAP, SAML, OpenID Connect or an internal SSO, write a provider and inject it as shown below.
 
 ---
 
@@ -30,97 +32,6 @@ admin:
 
 ---
 
-## LDAP / Active Directory
-
-> **Status: stub** — the interface and configuration schema are stable. The `ldapts` integration is documented below and can be activated by implementing `src/admin/auth/ldap-provider.ts`.
-
-Configure in `site.yaml`:
-
-```yaml
-admin:
-  auth_provider:
-    type: "ldap"
-    url: "ldaps://ldap.example.com:636"
-    base_dn: "ou=users,dc=example,dc=com"
-
-    # Service account for search (optional — omit for direct bind)
-    bind_dn: "cn=dune-service,dc=example,dc=com"
-    bind_password: "$LDAP_BIND_PASSWORD"
-
-    # Attribute names (defaults shown)
-    username_attr: "sAMAccountName"   # Active Directory; use "uid" for OpenLDAP
-    email_attr: "mail"
-    name_attr: "cn"
-
-    # Group → role mapping (first match wins)
-    role_map:
-      - group: "cn=cms-admins,ou=groups,dc=example,dc=com"
-        role: "admin"
-      - group: "cn=cms-editors,ou=groups,dc=example,dc=com"
-        role: "editor"
-
-    default_role: "author"   # Role for users not in any mapped group
-```
-
-### How it works
-
-1. User enters username + password in the admin login form
-2. Dune's `LdapAuthProvider` binds to the LDAP server as a service account and searches for the user DN
-3. A second bind with the user's DN and submitted password verifies the credentials
-4. Group memberships are read and mapped to a Dune role via `role_map`
-5. The first time a user logs in, a local `User` record is auto-provisioned (no password set — only LDAP auth is used thereafter)
-6. A session cookie is issued and the user lands on the dashboard
-
-### Auto-provisioning
-
-Users authenticated via LDAP get a local `User` record created automatically on first login. The record stores role and display name (synced from LDAP on every login). You can still see and edit these users in Admin → Users, but their passwords are not used.
-
----
-
-## SAML 2.0
-
-> **Status: stub** — the interface and configuration schema are stable. The `samlify` integration is documented below and can be activated by implementing `src/admin/auth/saml-provider.ts`.
-
-Configure in `site.yaml`:
-
-```yaml
-admin:
-  auth_provider:
-    type: "saml"
-
-    # Your SP (Service Provider) settings
-    entity_id: "https://example.com/admin"
-    acs_url: "https://example.com/admin/saml/acs"   # POST /admin/saml/acs
-
-    # IdP metadata (URL or inline XML)
-    idp_metadata: "https://idp.example.com/metadata.xml"
-
-    # Attribute mapping (defaults shown)
-    username_attr: "username"
-    email_attr: "email"
-    name_attr: "displayName"
-    role_attr: "groups"
-
-    # Group value → role mapping
-    role_map:
-      - value: "cms-admins"
-        role: "admin"
-      - value: "cms-editors"
-        role: "editor"
-
-    default_role: "author"
-```
-
-### Login flow
-
-1. User visits `/admin/login` and clicks "Sign in with SSO"
-2. Dune's `SamlAuthProvider.initiateLogin()` constructs an AuthnRequest and redirects to the IdP
-3. After authentication, the IdP POSTs a signed SAML assertion to `POST /admin/saml/acs`
-4. `handleCallback()` parses the assertion, extracts attributes, maps to a Dune role
-5. The user is auto-provisioned (if new) and a session is created
-
----
-
 ## Building a custom provider
 
 Implement the `AuthProvider` interface from `src/admin/auth/provider.ts`:
@@ -129,7 +40,7 @@ Implement the `AuthProvider` interface from `src/admin/auth/provider.ts`:
 import type { AuthProvider, AuthCredentials, AuthProviderUser } from "./provider.ts";
 
 export class MyAuthProvider implements AuthProvider {
-  readonly type = "local" as const;  // use "local" for non-stub custom providers
+  readonly type = "my-sso";  // any string; "local" is the built-in password provider
 
   async authenticate(creds: AuthCredentials): Promise<AuthProviderUser | null> {
     // Verify credentials against your system
@@ -159,13 +70,13 @@ const ctx = await bootstrap("./", {
 });
 ```
 
-The injected provider takes precedence over anything set in `system.yaml`. Use this for fully custom providers (OpenID Connect, internal SSO, etc.) that aren't covered by the built-in LDAP/SAML config.
+The injected provider takes precedence over anything set in `system.yaml`. This is the way to use any identity source other than the built-in local accounts (LDAP, SAML, OpenID Connect, internal SSO, ...).
 
 ### `AuthProviderUser` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `externalId` | `string` | Stable external ID (LDAP DN, SAML NameID, etc.) |
+| `externalId` | `string` | Stable external ID (an LDAP DN, SAML NameID, OIDC `sub`, ...) |
 | `username` | `string` | Login name — used to find/create the local user |
 | `email` | `string?` | Used in the local user record |
 | `name` | `string?` | Display name |
@@ -179,13 +90,11 @@ The injected provider takes precedence over anything set in `system.yaml`. Use t
 # config/system.yaml
 admin:
   auth_provider:
-    type: ldap   # or saml — omit entirely for local passwords
-    # ... provider-specific fields as documented above
+    type: local   # the only value; omit the section entirely for the same result
 ```
 
 Selection priority:
 1. `authProvider` passed to `bootstrap()` — highest priority, ignores config
-2. `admin.auth_provider` in `system.yaml` — selects a built-in provider
-3. Default — local password authentication
+2. Default — local password authentication
 
-If `auth_provider` is not set and no provider is injected, local password authentication is used.
+Any other `admin.auth_provider.type` is a configuration error (`dune validate` reports it and the site refuses to start).

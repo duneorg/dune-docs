@@ -40,11 +40,12 @@ url: "https://example.com"
 
 `config/env/production/system.yaml`:
 ```yaml
-cache:
-  lifetime: 7200
+page_cache:
+  enabled: true
+  ttl: 60
 ```
 
-The production defaults are already sensible: `debug: false`, and the filesystem cache is enabled with the `file` staleness check. You don't need to repeat them. See [System Config](/docs/configuration/system-config#environment-specific-overrides) for the other cache drivers and the `hash` check.
+The production defaults are already sensible (`debug: false`); you don't need to repeat them. See [Caching](/docs/deployment/caching) for the page cache and HTTP caching options.
 
 ### 3. Build and serve
 
