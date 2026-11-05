@@ -588,10 +588,10 @@ export default function createMyPlugin(): DunePlugin {
     name: "my-api-plugin",
     version: "1.0.0",
 
-    async mount({ app, bootstrap }: MountApi) {
+    async mount({ app, runtime }: MountApi) {
       // Register a custom API route — unauthenticated, public data only.
       app.get("/api/my-plugin/status", (_req) => {
-        return Response.json({ ok: true, pages: bootstrap.engine.pages.length });
+        return Response.json({ ok: true, pages: runtime.engine.pages.length });
       });
     },
 
@@ -639,7 +639,7 @@ export default function createMyPlugin(): DunePlugin {
 |-------|------|-----------------|
 | `setup()` | During `bootstrap()` | `hooks`, `config`, `storage`, `services`, `capabilities` (declare only) |
 | Capability resolution | After every plugin's `setup()` has settled, before any `mount()` | factories receive `storage`, `config`, `history`, `hooks`, `services`, `dataDir`, `contentDir` |
-| `mount()` | After `createDuneApp()` | `app`, `bootstrap`, `services`, `capabilities` |
+| `mount()` | After `createDuneApp()` | `app`, `runtime`, `services`, `capabilities` |
 | Hook events | Per-request / per-rebuild | Full runtime context |
 
 ## Plugin services
@@ -818,7 +818,7 @@ Resolution rules:
 
 ### Reading capabilities
 
-`MountApi.capabilities` (and `bootstrap.capabilities`) is the read side. Read it lazily, at request time, and treat a missing provider as normal:
+`MountApi.capabilities` is the read side. Read it lazily, at request time, and treat a missing provider as normal:
 
 ```typescript
 mount({ app, capabilities }) {
@@ -921,6 +921,25 @@ export default function createAutosavePlugin(): DunePlugin {
 | `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("auth.session")?.authenticate(req)` |
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
 | `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
+| `mount({ bootstrap })` | `mount({ runtime })`: a curated `PluginRuntime` (see below) |
+
+### The runtime
+
+`mount()` receives `runtime`, the booted site as a plugin sees it. It is a curated slice, not core's whole internal state:
+
+| Field | What it is |
+|-------|-----------|
+| `engine` | The content engine: pages, routes, themes, `rebuild()` |
+| `config` | The loaded site configuration |
+| `storage` | Site storage (the site root, not only the content directory) |
+| `search` | Search across the content index |
+| `hooks` | The hook registry: fire the [page events](../hooks#content-mutation-hooks) when you write a page |
+| `contentApi` | Query API: `pages()`, `page()`, `search()`, `taxonomy()` |
+| `history`, `flexEngine`, `imageCache`, `metrics`, `submissions`, `sections` | The matching core subsystems |
+| `authz` | The authorisation system, when enabled |
+| `jobs` | The job scheduler of the serving process. It appears after `mount()`: read it lazily |
+
+Everything is read-only. Wiring that is core's business (the format registry, the image handler, the signing key, the capability registry) is not reachable from a plugin.
 
 ## Accessing plugin config in hooks
 
