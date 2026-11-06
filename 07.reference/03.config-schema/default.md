@@ -73,6 +73,8 @@ auth:
       client_secret: "$DISCORD_CLIENT_SECRET"
     magic_link:
       enabled: true              # boolean — Enable magic-link email login
+    password:
+      enabled: false             # boolean — Password login for local accounts (POST /auth/login); needs user_store other than "session"
   authz_store: "local"            # "local" — Permission tuple storage.
                                #   dune mode: defaults to "local".
                                #   external-jwt mode: no default — omit for JWT-claims-only authz,
