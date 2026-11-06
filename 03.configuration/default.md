@@ -96,7 +96,7 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 
 ### Keys that were removed
 
-These were declared and documented but nothing ever read them. A config that still sets one refuses to load and says so; delete the line.
+These were declared and documented but nothing ever read them, so setting one never changed anything. A config that still sets one **keeps booting**: Dune logs a `config.key.ignored` warning (once per file and key) and ignores it. `dune migrate:config` deletes the keys and their nested blocks. The one exception is `admin.auth_provider` with `ldap` or `saml`, which is refused because ignoring it would leave you without the login you configured.
 
 | Key | What to use |
 |-----|-------------|
