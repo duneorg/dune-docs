@@ -86,6 +86,8 @@ export default {
 
 Use this when your plugin needs to read its config at initialization time. The factory receives the merged plugin config (site.yaml static config merged with any admin-saved overrides):
 
+Since 0.36 the factory also receives a second argument with facts that exist before plugins load and that `PluginApi` cannot give you: `(config, { root, dev })`, where `root` is the absolute site root and `dev` is true under `dune dev`. `@dune/plugin-admin` is built this way, so listing it under `plugins:` is enough.
+
 ```typescript
 // plugins/analytics/mod.ts
 import type { DunePlugin } from "@dune/core/plugins";
@@ -847,10 +849,10 @@ interface RequestAuthenticator {
 
 - **Declare `sessionCookies`.** Core uses the names for two cheap decisions that must not depend on a particular admin: whether to call `authenticate()` at all on a public page, and whether to keep the response out of the shared page cache (a response rendered for an editor must never be cached for anonymous visitors). If you leave it out, core treats *any* request with a `Cookie` header as possibly signed in: always correct, but every visitor with an analytics cookie costs a lookup and bypasses the cache.
 - **Be cheap without a session.** `authenticate()` runs on public pages. Return `{ authenticated: false }` straight away, without touching a session store, when the request carries no session of yours.
-- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `auth.session`, even with `admin.enabled: false`. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
+- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `auth.session`, whether or not the built-in admin is listed. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
 - **You are the writer.** If your admin writes content itself, fire `onPageUpdate` (and `onPageCreate` / `onPageDelete` / `onPageMove` / `onWorkflowChange`) after each write: core does not fire them for you.
 - **Provide `admin.prefix`** with the path your admin is mounted at, e.g. `api.capabilities.provide("admin.prefix", () => ({ prefix: "/cms" }))`. Core never assumes `/admin`: without this slot your admin's pages can be served from the shared page cache and plugin routes can shadow them. `ResponseTransformContext.adminPrefix` is `""` when no admin provides one.
-- Set `admin.enabled: false` in `system.yaml` if you replace the built-in admin entirely.
+- Do not list `@dune/plugin-admin` if you replace the built-in admin entirely: core loads only what `plugins:` lists.
 
 [`@dune/testing`](https://jsr.io/@dune/testing) ships `createStubAdmin()`, a minimal admin built only on these services and capabilities, and `createAppHarness()`, which serves the full app in process. Use them to test a plugin against an admin that is not the built-in one, or as a reference for your own.
 

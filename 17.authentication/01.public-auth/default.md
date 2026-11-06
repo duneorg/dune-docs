@@ -83,7 +83,7 @@ Routes for unconfigured providers return `404`. The session cookie is `dune_auth
 
 ## Password login
 
-For sites whose logged-in users have passwords, including sites with `admin.enabled: false`. Accounts are `provider: "local"` users in the shared user store: create them with `dune users:create <email> --password-prompt` (an admin can also create them). There is no self-service sign-up and no password reset by email yet.
+For sites whose logged-in users have passwords, including sites that run no admin plugin. Accounts are `provider: "local"` users in the shared user store: create them with `dune users:create <email> --password-prompt` (an admin can also create them). There is no self-service sign-up and no password reset by email yet.
 
 ```yaml
 # site.yaml

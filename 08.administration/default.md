@@ -55,14 +55,15 @@ export default {
 };
 ```
 
-Disable the panel entirely for read-only / public deployments:
+The admin panel is a plugin, `@dune/plugin-admin`, and core runs it only when `config/site.yaml` lists it under `plugins:` (`dune new` writes the entry, and `dune migrate:config` adds it to an existing site):
 
 ```yaml
-admin:
-  enabled: false
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
 ```
 
-> **Headless / API-only deployments:** setting `admin.enabled: false` in `system.yaml` fully suppresses the admin panel — no routes, no admin user pool, no related overhead. The admin panel is implemented as `@dune/plugin-admin`, a separate JSR package that Dune registers automatically. Advanced users can replace it with a custom admin implementation by providing their own `DunePlugin` that calls `mountDuneAdmin` internally.
+> **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `auth.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-authsession-contract).
 
 ## Roles and permissions
 

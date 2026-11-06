@@ -58,15 +58,17 @@ export class MyAuthProvider implements AuthProvider {
 }
 ```
 
-Pass it to `bootstrap()` via the `authProvider` option:
+Build the admin plugin yourself, give it the provider, and pass it to `bootstrap()` instead of listing the admin in `site.yaml`:
 
 ```typescript
 // main.ts (headless mode) or your own entry point
 import { bootstrap } from "@dune/core";
+import { createAdminPlugin } from "@dune/plugin-admin";
 import { MyAuthProvider } from "./auth/my-auth-provider.ts";
 
-const ctx = await bootstrap("./", {
-  authProvider: new MyAuthProvider(),
+const root = Deno.cwd();
+const ctx = await bootstrap(root, {
+  plugins: [createAdminPlugin({ root, dev: false, authProvider: new MyAuthProvider() })],
 });
 ```
 
@@ -94,7 +96,7 @@ admin:
 ```
 
 Selection priority:
-1. `authProvider` passed to `bootstrap()` — highest priority, ignores config
+1. `authProvider` passed to `createAdminPlugin()` — highest priority, ignores config
 2. Default — local password authentication
 
 Any other `admin.auth_provider.type` is a configuration error (`dune validate` reports it and the site refuses to start).

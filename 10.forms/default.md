@@ -14,7 +14,7 @@ metadata:
 
 Dune includes a blueprint-driven form system. You define forms as YAML files and the engine handles validation, spam protection, file uploads, email notifications, and submission storage — no backend code required.
 
-Forms are part of Dune itself. They work with the admin panel turned off (`admin.enabled: false`) or without an admin plugin at all; the admin panel only adds a screen for reading the submissions.
+Forms are part of Dune itself. They work without an admin plugin at all (core loads none unless `plugins:` lists it); the admin panel only adds a screen for reading the submissions.
 
 ## Creating a form
 
