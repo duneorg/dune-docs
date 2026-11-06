@@ -164,7 +164,7 @@ typography:
 
 search:
   fail_on_startup: false         # boolean — Stop startup if a search engine fails to build (default: false = log, retry, fall back)
-  analytics: false               # boolean — Count GET /api/search queries in admin.runtime_dir/search-analytics.json (default: false; see Search → Query analytics)
+  analytics: false               # boolean — Count GET /api/search queries in runtime_dir/search-analytics.json (default: false; see Search → Query analytics)
   custom_fields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
@@ -230,6 +230,8 @@ flags:
   beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 
 data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces the removed admin.data_dir.
+runtime_dir: ".dune/admin"       # string — Machine-local runtime state (job state, revision history, staging, scheduled actions, search analytics, sessions). Not git-tracked. Replaces the removed admin.runtime_dir. The default still carries the admin's name so existing sites keep their state.
+max_revisions: 50                # number — Revisions kept per page; the oldest is pruned on each save, 0 keeps all (default: 50). Replaces the removed admin.max_revisions.
 
 # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
 webhooks:
@@ -250,8 +252,6 @@ admin:
   path: "/admin"                 # string — URL prefix for the admin panel
   session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
   data_dir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
-  runtime_dir: ".dune/admin"      # string — Runtime data directory (sessions, revisions, staging, analytics). Not git-tracked.
-  max_revisions: 50               # number — Maximum revisions retained per page (default: 50)
   git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
 
   # Outbound webhooks — fired on content mutation events
@@ -271,6 +271,8 @@ admin:
   #   incoming_webhooks → webhooks.incoming (system.yaml)
   #   honeypot, notifications → forms.honeypot, forms.notifications (site.yaml)
   #   data_dir → data_dir (top level of system.yaml)
+  #   runtime_dir → runtime_dir (top level of system.yaml)
+  #   max_revisions → max_revisions (top level of system.yaml)
 ```
 
 Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onPageMove`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.

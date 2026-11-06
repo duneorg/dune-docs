@@ -237,7 +237,7 @@ The URL can be shared with reviewers who don't have admin access — no login re
 
 ### How it works
 
-- Draft content (frontmatter + body) is saved to the staging area in `admin.runtime_dir` (default `.dune/admin/staging/`).
+- Draft content (frontmatter + body) is saved to the staging area in `system.runtime_dir` (default `.dune/admin/staging/`).
 - A random opaque token is generated and tied to the draft. The token is preserved across subsequent saves so shared links remain valid.
 - `GET /__preview` verifies the token and renders the draft through the active theme, with an orange "Draft preview" banner injected so viewers know the page is not live.
 - Staging files are ephemeral — they live in `runtime_dir` and are not committed to version control.
@@ -278,7 +278,7 @@ Every time a page is saved through the admin panel, a revision is recorded. Revi
 
 ### Storage
 
-Revisions are written to the runtime data directory (configured as `admin.runtime_dir`, default `.dune/admin`). Each page gets its own folder:
+Revisions are written to the runtime data directory (configured as `system.runtime_dir`, default `.dune/admin`). Each page gets its own folder:
 
 ```
 .dune/admin/history/{url-encoded-source-path}/{revision-number}.json
@@ -290,11 +290,11 @@ This directory is ephemeral — it should be in `.gitignore` and is not committe
 
 ### Capacity
 
-Up to 50 revisions per page are kept by default. Older revisions are automatically pruned when a new save would exceed the limit. Configure the limit via `admin.max_revisions`:
+Up to 50 revisions per page are kept by default. Older revisions are automatically pruned when a new save would exceed the limit. Configure the limit via `system.max_revisions`:
 
 ```yaml
-admin:
-  max_revisions: 100   # keep more history (uses more disk)
+# config/system.yaml
+max_revisions: 100   # keep more history (uses more disk); 0 keeps all
 ```
 
 ### Accessing revisions

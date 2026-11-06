@@ -78,6 +78,8 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 | `admin.notifications` | `forms.notifications` in `site.yaml` |
 | `admin.incoming_webhooks` | `webhooks.incoming` in `system.yaml` |
 | `admin.data_dir` (and `admin.dataDir`) | `data_dir` at the top level of `system.yaml` |
+| `admin.runtime_dir` (and `admin.runtimeDir`) | `runtime_dir` at the top level of `system.yaml` |
+| `admin.max_revisions` (and `admin.maxRevisions`) | `max_revisions` at the top level of `system.yaml` |
 | `forms.notifications.email.smtp` | `site.email` |
 
 `@dune/plugin-admin` reads the `admin:` block, so the rename ships with admin 4.0.0. With an older admin, core refuses to start if you have customised any renamed admin key, rather than falling back to defaults.
@@ -91,7 +93,7 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 | `system.yaml` `content:` | `allowTsxFormat` → `allow_tsx_format` |
 | `system.yaml` `search:` | `customFields` → `custom_fields` |
 | `system.yaml` `metrics:` | `slowQueryThresholdMs` → `slow_query_threshold_ms` |
-| `system.yaml` `admin:` | `sessionLifetime` → `session_lifetime`, `dataDir` → `data_dir`, `runtimeDir` → `runtime_dir`, `maxRevisions` → `max_revisions`, `maxUploadMb` → `max_upload_mb`, `authzStore` → `authz_store` |
+| `system.yaml` `admin:` | `sessionLifetime` → `session_lifetime`, `maxUploadMb` → `max_upload_mb`, `authzStore` → `authz_store` |
 | `admin.audit` | `logFile` → `log_file` |
 
 ### Keys that were removed

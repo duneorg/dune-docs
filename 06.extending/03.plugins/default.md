@@ -697,14 +697,14 @@ interface PluginServices {
   };
   paths: {
     readonly dataDir: string;        // system.data_dir, default "data"
-    readonly runtimeDir: string;     // admin.runtime_dir, default ".dune/admin"
+    readonly runtimeDir: string;     // system.runtime_dir, default ".dune/admin"
   };
 }
 ```
 
 - **Sessions** use the backend configured in `system.session_store` (local files under `sessionsDir`, Deno KV or Redis). In a multisite install they are scoped to the site by the same key prefix core uses, so a plugin's sessions never share keys with another site's.
 - **Users** `createLocalStore` returns the flat-file store under `usersDir` in the site's storage. It is the same store shape core uses; `user_store: db` is not reflected here yet.
-- **Engines** are built once per site by core, under `admin.runtime_dir`, so a plugin uses them rather than calling the factories. The scheduler only stores scheduled actions; whatever runs `dune serve` starts its polling loop, so a plugin that wants scheduled actions to fire exposes an `executeScheduledAction` on the admin context for it to call. The `audit` trail is created for the admin panel and is `null` for a site with admin disabled.
+- **Engines** are built once per site by core, under `system.runtime_dir`, so a plugin uses them rather than calling the factories. The scheduler only stores scheduled actions; whatever runs `dune serve` starts its polling loop, so a plugin that wants scheduled actions to fire exposes an `executeScheduledAction` on the admin context for it to call. The `audit` trail is created for the admin panel and is `null` for a site with admin disabled.
 - **Authz** `seedAdminTuples` registers the access tuple for each given user's admin-tier role. Call it after creating or loading your users, as the admin panel does at mount.
 - **Blueprints** read the content engine's currently loaded blueprints on every call, so a reload is picked up. Use `resolve` for the form definition and `validate` before saving frontmatter.
 - **Search analytics** are recorded by core when `system.search.analytics` is on (see [Query analytics](../../reference/search#query-analytics)); a plugin only reads the summary.
@@ -804,7 +804,7 @@ interface CapabilityContext {
   history: HistoryEngine;    // records content revisions
   hooks: HookRegistry;       // the engine's hook registry
   services: PluginServices;  // the services described above
-  dataDir: string;           // plugin runtime data directory (admin.runtime_dir)
+  dataDir: string;           // plugin runtime data directory (system.runtime_dir)
   contentDir: string;        // content directory relative to the site root
 }
 ```
