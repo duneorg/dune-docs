@@ -757,6 +757,7 @@ There are two shapes. A **slot** has at most one active provider; a **contributi
 
 | Slot | Contract | Typically provided by | Used by | If nobody provides it |
 |------|----------|----------------------|---------|-----------------------|
+| `admin.prefix` | `{ prefix }`: the URL path the admin is mounted at (starts with `/`, no trailing slash) | the admin plugin | core: keeps these paths out of the page cache and response transforms, reserves them against plugin `publicRoutes`, forwards them in `dune build --hybrid`, prints the admin URL in `dune dev` / `dune serve` | there is no admin: `/admin` is an ordinary path and nothing is reserved |
 | `auth.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
 | `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
 | `inline-edit` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
@@ -850,6 +851,7 @@ interface RequestAuthenticator {
 - **Be cheap without a session.** `authenticate()` runs on public pages. Return `{ authenticated: false }` straight away, without touching a session store, when the request carries no session of yours.
 - **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `auth.session`, even with `admin.enabled: false`. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
 - **You are the writer.** If your admin writes content itself, fire `onPageUpdate` (and `onPageCreate` / `onPageDelete` / `onPageMove` / `onWorkflowChange`) after each write: core does not fire them for you.
+- **Provide `admin.prefix`** with the path your admin is mounted at, e.g. `api.capabilities.provide("admin.prefix", () => ({ prefix: "/cms" }))`. Core never assumes `/admin`: without this slot your admin's pages can be served from the shared page cache and plugin routes can shadow them. `ResponseTransformContext.adminPrefix` is `""` when no admin provides one.
 - Set `admin.enabled: false` in `system.yaml` if you replace the built-in admin entirely.
 
 [`@dune/testing`](https://jsr.io/@dune/testing) ships `createStubAdmin()`, a minimal admin built only on these services and capabilities, and `createAppHarness()`, which serves the full app in process. Use them to test a plugin against an admin that is not the built-in one, or as a reference for your own.
