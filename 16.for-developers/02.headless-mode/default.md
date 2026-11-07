@@ -103,7 +103,7 @@ Deno.serve({ port: 3000, handler: app.handler() });
 ### `mountDuneAdmin(app, ctx)`
 
 Registers on the Fresh app:
-- Admin panel routes under `/admin` (or your configured `admin.path`)
+- Admin panel routes under `/admin` (or the `path` of the admin plugin's config)
 - Per-site admin context middleware
 - The plugins' `admin.pages` and `admin.routes`
 
@@ -248,7 +248,7 @@ For a more responsive dev loop, `bootstrap()` accepts a `dev: true` option that 
 
 ## Admin panel
 
-The admin panel is available at `/admin` (or your configured `admin.path`) automatically via `mountDuneAdmin()`. Dune creates no default admin, so create the first one before you log in: `dune users:create admin@example.com --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](/docs/administration#creating-the-first-admin).
+The admin panel is available at `/admin` (or the `path` of the admin plugin's config) automatically via `mountDuneAdmin()`. Dune creates no default admin, so create the first one before you log in: `dune users:create admin@example.com --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](/docs/administration#creating-the-first-admin).
 
 The admin panel is fully functional in headless mode: create and edit pages, manage users, view metrics, configure plugins.
 

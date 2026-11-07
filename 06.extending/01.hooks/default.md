@@ -237,7 +237,7 @@ Two more hooks come from the public form and webhook endpoints, which run in Dun
 | `onFormSubmit` | `{ form: string, submission: Submission }` | After the submission is stored. Not fired for honeypot hits or validation failures. `submission` has `id`, `fields`, `meta` and any `files`. |
 | `onSystemAction` | `{ action: "rebuild" \| "purge-cache", ip: string \| null, userAgent: string \| null }` | Once per action an incoming webhook runs. `@dune/plugin-admin` uses it to write its audit log. |
 
-These same events also trigger [outbound webhooks](../../webhooks) when `admin.webhooks` is configured — hooks and webhooks fire in parallel.
+These same events also trigger [outbound webhooks](../../webhooks) when the admin plugin's `webhooks` are configured — hooks and webhooks fire in parallel.
 
 > **Note:** The startup hooks (`onConfigLoaded`, `onStorageReady`, `onContentIndexReady`) and engine lifecycle hooks (`onRebuild`, `onThemeSwitch`) are fired automatically by Dune. The request and API hooks can also be fired by custom server code using `hooks.fire(event, data)` when integrating Dune into a custom server.
 

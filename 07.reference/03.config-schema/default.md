@@ -244,40 +244,44 @@ webhooks:
 
 Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` (clears the processed image cache). See [Webhooks](../webhooks).
 
-## admin.yaml (or admin: block in dune.config.ts)
+## Admin plugin config
+
+The admin is a plugin; its settings are the `config:` of its entry in `plugins:` (`config/site.yaml`), not a core section. Core has no `admin:` key and refuses one in `system.yaml`.
 
 ```yaml
-admin:
-  enabled: true                  # boolean — Enable admin panel (default: true)
-  path: "/admin"                 # string — URL prefix for the admin panel
-  session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
-  data_dir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
-  git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
-
-  # Outbound webhooks — fired on content mutation events
-  webhooks:
-    - url: "https://hooks.example.com/content"
-      secret: "$WEBHOOK_SECRET"   # string — HMAC-SHA256 signing secret ("$ENV_VAR" expansion supported)
-      label: "My integration"     # string — Human-readable label for delivery logs (optional)
-      enabled: true               # boolean — Disable without removing (default: true)
-      events:                     # WebhookContentEvent[] — which events trigger this endpoint
-        - onPageCreate
-        - onPageUpdate
-        - onPageDelete
-        - onPageMove
-        - onWorkflowChange
-
-  # Removed in 0.36 (a config that still has them refuses to load):
-  #   incoming_webhooks → webhooks.incoming (system.yaml)
-  #   honeypot, notifications → forms.honeypot, forms.notifications (site.yaml)
-  #   data_dir → data_dir (top level of system.yaml)
-  #   runtime_dir → runtime_dir (top level of system.yaml)
-  #   max_revisions → max_revisions (top level of system.yaml)
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      path: "/admin"                 # string — URL prefix for the admin panel (default: "/admin")
+      session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
+      max_upload_mb: 100              # number — Upload limit in MB (default: 100)
+      git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
+      auth_provider:
+        type: local                  # the only supported value; omit for the same result
+      audit:
+        enabled: true                # boolean — Audit log (default: true)
+        log_file: "audit.log"        # string — must resolve under the site root
+      machine_translation:           # optional; see Machine translation
+        provider: deepl              # "deepl" | "google" | "libretranslate"
+        api_key: "$DEEPL_API_KEY"
+        base_url: "https://..."      # libretranslate only
+      # Outbound webhooks — fired on content mutation events
+      webhooks:
+        - url: "https://hooks.example.com/content"
+          secret: "$WEBHOOK_SECRET"   # string — HMAC-SHA256 signing secret ("$ENV_VAR" expansion supported)
+          label: "My integration"     # string — Human-readable label for delivery logs (optional)
+          enabled: true               # boolean — Disable without removing (default: true)
+          events:                     # WebhookContentEvent[] — which events trigger this endpoint
+            - onPageCreate
+            - onPageUpdate
+            - onPageDelete
+            - onPageMove
+            - onWorkflowChange
 ```
 
 Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onPageMove`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
-`data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtime_dir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
+`data_dir` (system.yaml) contains user accounts, form submissions, and editorial comments — it should be committed to version control. `runtime_dir` (system.yaml) contains ephemeral session, revision, staging, and analytics data — keep it in `.gitignore`.
 
 ## theme config
 

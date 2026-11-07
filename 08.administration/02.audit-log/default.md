@@ -40,11 +40,13 @@ Use the filter controls to narrow by event type or actor.
 ## Configuration
 
 ```yaml
-# config/admin.yaml (or admin: block in dune.config.ts)
-admin:
-  audit:
-    enabled: true          # boolean — Enable audit logging (default: true)
-    log_file: "audit.log"   # string  — Log file path, relative to runtime_dir (default: "audit.log")
+# config/site.yaml: the admin plugin's config
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      audit:
+        enabled: true          # boolean — Enable audit logging (default: true)
+        log_file: "audit.log"   # string  — Log file path, must resolve under the site root (default: {runtime_dir}/audit.log)
 ```
 
 The default log file is `{runtime_dir}/audit.log` (typically `.dune/admin/audit.log`). This path is outside version control and persists across restarts.
@@ -52,9 +54,11 @@ The default log file is `{runtime_dir}/audit.log` (typically `.dune/admin/audit.
 To disable audit logging entirely:
 
 ```yaml
-admin:
-  audit:
-    enabled: false
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      audit:
+        enabled: false
 ```
 
 ---

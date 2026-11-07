@@ -80,6 +80,8 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 | `admin.data_dir` (and `admin.dataDir`) | `data_dir` at the top level of `system.yaml` |
 | `admin.runtime_dir` (and `admin.runtimeDir`) | `runtime_dir` at the top level of `system.yaml` |
 | `admin.max_revisions` (and `admin.maxRevisions`) | `max_revisions` at the top level of `system.yaml` |
+| the whole `admin:` block of `system.yaml` | the admin plugin's `config:` (under its entry in `plugins:` in `site.yaml`); `dune migrate:config` moves it, and lifts `runtime_dir`, `max_revisions` and `data_dir` to the top level of `system.yaml`. A block in an environment overlay, or one holding `honeypot`, `notifications` or `incoming_webhooks`, you move by hand |
+| `machine_translation` (site.yaml) | the admin plugin's `config:`, with `apiKey` → `api_key` and `baseUrl` → `base_url`; `dune migrate:config` moves it |
 | `admin.enabled` | removed. Core loads the admin only when `plugins:` lists `jsr:@dune/plugin-admin@^4`; `dune migrate:config` deletes the key and adds the entry (or, for `enabled: false`, just deletes it) |
 | `admin.authz_store` (and `admin.authzStore`) | removed. The admin's authz store is always local |
 | `forms.notifications.email.smtp` | `site.email` |
@@ -95,8 +97,7 @@ Some settings did not just change spelling, they moved, so the migrator reports 
 | `system.yaml` `content:` | `allowTsxFormat` → `allow_tsx_format` |
 | `system.yaml` `search:` | `customFields` → `custom_fields` |
 | `system.yaml` `metrics:` | `slowQueryThresholdMs` → `slow_query_threshold_ms` |
-| `system.yaml` `admin:` | `sessionLifetime` → `session_lifetime`, `maxUploadMb` → `max_upload_mb` |
-| `admin.audit` | `logFile` → `log_file` |
+| the admin plugin's `config:` | `sessionLifetime` → `session_lifetime`, `maxUploadMb` → `max_upload_mb`, `audit.logFile` → `audit.log_file` (the `dune migrate:config` rewrite happens before the move below) |
 
 ### Keys that were removed
 

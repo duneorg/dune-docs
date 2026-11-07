@@ -42,10 +42,6 @@ languages:
 typography:
   orphan_protection: true         # prevent single-word last lines in paragraphs
 
-# Admin settings
-admin:
-  max_upload_mb: 100                 # max media upload size in MB (default: 100)
-
 # Where form submissions (and admin users) are stored; git-track it
 data_dir: data
 

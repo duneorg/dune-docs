@@ -18,27 +18,29 @@ Webhooks fire asynchronously and never block the editor's HTTP response.
 
 ## Configuration
 
-Define webhook endpoints in the `admin.webhooks` array in your site configuration. Each entry is a `WebhookEndpointConfig` object.
+Define webhook endpoints in the `webhooks` array of the admin plugin's config (`config:` under its entry in `plugins:`). Each entry is a `WebhookEndpointConfig` object.
 
 ```yaml
-# site.config.yaml
-admin:
-  webhooks:
-    - url: "https://api.example.com/hooks/pages"
-      label: "Page change notifier"
-      events:
-        - onPageCreate
-        - onPageUpdate
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      webhooks:
+        - url: "https://api.example.com/hooks/pages"
+          label: "Page change notifier"
+          events:
+            - onPageCreate
+            - onPageUpdate
 
-    - url: "https://hooks.example.com/all-events"
-      label: "Full event sink"
-      secret: "$WEBHOOK_SECRET_ALL"
-      events:
-        - onPageCreate
-        - onPageUpdate
-        - onPageDelete
-        - onPageMove
-        - onWorkflowChange
+        - url: "https://hooks.example.com/all-events"
+          label: "Full event sink"
+          secret: "$WEBHOOK_SECRET_ALL"
+          events:
+            - onPageCreate
+            - onPageUpdate
+            - onPageDelete
+            - onPageMove
+            - onWorkflowChange
 ```
 
 The second endpoint reads its signing secret from the `WEBHOOK_SECRET_ALL` environment variable. Any `secret` value prefixed with `$` is resolved from the environment at startup — the raw value is never written to disk or logs.

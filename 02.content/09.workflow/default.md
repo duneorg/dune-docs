@@ -248,15 +248,14 @@ Clicking **Publish** in the panel writes the staged draft to the content files, 
 
 ### Git auto-commit
 
-When `admin.git_commit: true` is set in your config, every page save and staged publish triggers a `git add` + `git commit` automatically:
+When `git_commit: true` is set in the admin plugin's config, every page save and staged publish triggers a `git add` + `git commit` automatically:
 
 ```yaml
-# dune.config.ts
-export default {
-  admin: {
-    git_commit: true,
-  },
-};
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      git_commit: true
 ```
 
 The commit message includes the page path and the editor's username:

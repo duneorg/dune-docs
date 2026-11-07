@@ -23,7 +23,7 @@ The two systems share no state, no user records, and no session cookies. An admi
 
 ## Admin authentication
 
-Covered in [Administration](../08.administration). Login at `{admin.path}/login` (default `/admin/login`). Users managed via the admin panel UI or `data/users/` YAML files.
+Covered in [Administration](../08.administration). Login at `{path}/login` of the admin plugin (default `/admin/login`). Users managed via the admin panel UI or `data/users/` YAML files.
 
 ## Public site authentication
 

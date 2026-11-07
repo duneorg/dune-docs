@@ -44,16 +44,17 @@ If both `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` are set and the site has no
 - Both variables must be set, or neither. A weak password, an invalid email, a username that is taken, or an email that belongs to a non-admin account stops boot with a message saying which.
 - The password stays in the process environment. Remove `DUNE_ADMIN_PASSWORD` from your deployment config after the first boot.
 
-Change the URL prefix with `admin.path` in your config:
+Change the URL prefix with `path` in the admin plugin's config (`config:` under its entry in `plugins:`):
 
 ```yaml
-# dune.config.ts
-export default {
-  admin: {
-    path: "/cms",   # panel available at /cms
-  },
-};
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      path: /cms   # panel available at /cms
 ```
+
+The admin plugin's settings are listed in [the admin plugin's configuration](#admin-plugin-configuration) below; core has no `admin:` section.
 
 The admin panel is a plugin, `@dune/plugin-admin`, and core runs it only when `config/site.yaml` lists it under `plugins:` (`dune new` writes the entry, and `dune migrate:config` adds it to an existing site):
 
@@ -64,6 +65,23 @@ plugins:
 ```
 
 > **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `auth.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-authsession-contract).
+
+## Admin plugin configuration
+
+The admin's settings are its plugin config: `config:` under its entry in `plugins:` (`config/site.yaml`). Core reads none of them. A `path` that is not a clean prefix, or an `auth_provider` other than `local`, stops the site at boot.
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `path` | `/admin` | URL prefix of the panel |
+| `session_lifetime` | `86400` | Session lifetime in seconds |
+| `max_upload_mb` | `100` | Upload limit for the media library and content attachments |
+| `git_commit` | `false` | Commit to git after every page save |
+| `webhooks` | none | [Outbound webhooks](../webhooks) on content events |
+| `auth_provider` | local | Only `type: local` is supported; see [Auth providers](04.auth-providers) |
+| `audit` | on | [Audit log](02.audit-log): `enabled`, `log_file` |
+| `machine_translation` | none | [Machine translation](../../content/machine-translation) provider |
+
+`runtime_dir` (sessions, revisions, audit log), `max_revisions` and `data_dir` (users, submissions) are core settings in `system.yaml`.
 
 ## Roles and permissions
 
@@ -134,15 +152,14 @@ Staging files are ephemeral (live in `runtime_dir`, not committed to git). They 
 
 ## Git auto-commit
 
-When `admin.git_commit: true` is enabled, every page save and staging publish triggers an automatic `git add` + `git commit`:
+When `git_commit: true` is set in the admin plugin's config, every page save and staging publish triggers an automatic `git add` + `git commit`:
 
 ```yaml
-# dune.config.ts (or config/system.yaml)
-export default {
-  admin: {
-    git_commit: true,
-  },
-};
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      git_commit: true
 ```
 
 The commit message includes the file path and editor username:
@@ -161,7 +178,7 @@ The session cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` (in production
 
 ## Security considerations
 
-- Admin routes are isolated under `admin.path` and require authentication on every request
+- Admin routes are isolated under the admin plugin's `path` and require authentication on every request
 - Sessions use PBKDF2-hashed passwords with per-user salts
 - The `admin` role is required to create other `admin`-role accounts — editors and authors cannot escalate their own privileges
 - Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `system.runtime_dir` (gitignored) — keep these locations separate

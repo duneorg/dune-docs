@@ -25,9 +25,10 @@ The `AuthProvider` interface abstracts the identity verification step. Once a pr
 No configuration needed. Users are managed in Admin → Users.
 
 ```yaml
-# site.yaml — this is the implicit default
-admin:
-  # auth_provider: not set → local passwords
+# config/site.yaml: this is the implicit default
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    # config.auth_provider: not set → local passwords
 ```
 
 ---
@@ -89,14 +90,16 @@ The injected provider takes precedence over anything set in `system.yaml`. This 
 ## Configuration reference
 
 ```yaml
-# config/system.yaml
-admin:
-  auth_provider:
-    type: local   # the only value; omit the section entirely for the same result
+# config/site.yaml: the admin plugin's config
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      auth_provider:
+        type: local   # the only value; omit the section entirely for the same result
 ```
 
 Selection priority:
 1. `authProvider` passed to `createAdminPlugin()` — highest priority, ignores config
 2. Default — local password authentication
 
-Any other `admin.auth_provider.type` is a configuration error (`dune validate` reports it and the site refuses to start).
+Any other `auth_provider.type` stops the site at boot: the admin plugin validates its own config.
