@@ -234,7 +234,7 @@ See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full 
 
 | Command | Description |
 |---------|-------------|
-| `dune users:create <email> [--role x[,y]] [--name "..."]` | Create a `User` record before the person has ever logged in, marked `provider: "invited"`. An admin-tier role (`admin`/`editor`/`author`) syncs the `app:admin` authz tuple immediately, same as `users:grant-role`. |
+| `dune users:create <email> [--role x[,y]] [--name "..."]` | Create a `User` record before the person has ever logged in, marked `provider: "invited"`. An admin-tier role (`admin`/`editor`/`author`) syncs the `app:site` authz tuple immediately, same as `users:grant-role`. |
 | `dune users:create <email> --password-prompt [--username x] [--role x[,y]]` | Create a **local-password** account (`provider: "local"`) instead of an invited one: the explicit way to create the first admin. The password is never an argument. It is prompted for twice with no echo, or taken with `--stdin` (scripts) or `--generate` (printed once). `--username` is the login name and defaults to the part of the email before the `@`. The password and username are checked before anything is written, so a weak password or a taken username leaves no half-created account. Example: `dune users:create admin@example.com --role admin --username admin --password-prompt`. |
 | `dune users:grant-role <email> <role>` | Grant an admin-tier role (`admin`, `editor`, or `author`) to an existing user, identified by email. Updates `roles[]` and syncs the corresponding authz tuple — the same two things the admin panel's user-edit UI does over HTTP. |
 | `dune users:revoke-role <email> <role>` | Revoke an admin-tier role from an existing user. |

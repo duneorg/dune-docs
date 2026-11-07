@@ -225,19 +225,29 @@ mountPaymentRoutes(app, {
 
 Without this, the granted role is present in `userStore` but `authz.check()` returns false until the next restart.
 
-## Admin panel authz
+## Site-wide permissions
 
-Admin users (`User`) are bootstrapped into the authz tuple store at startup via `bootstrapAdminTuples()`. Each admin user gets a direct relation tuple on `{ type: "app", id: "admin" }` matching their role:
+Everything an editor may do (`pages.update`, `pages.create`, `config.read`, ...) is checked with `authz.check()` against one object, `{ type: "app", id: "site" }`, mapped through the canonical `actionToRelations` schema. The object names what is protected (this site's content), not the admin panel, so it is the same with no admin, with `@dune/plugin-admin`, or with another admin plugin. There is no parallel role table.
 
-```
-admin  → tuple: (user:alice, admin,  app:admin)
-editor → tuple: (user:bob,   editor, app:admin)
-author → tuple: (user:carol, author, app:admin)
-```
+Who holds a relation on it:
 
-The admin panel middleware enforces panel access via `authz.check()`. If `authz` is undefined (creation failed at startup), the gate fails closed (403). Role changes and user deletes via the admin API automatically sync the tuple store.
+- **Site users** hold it through their role. Core grants `admin`, `editor` and `author` once, at group level, and site auth already keeps `member of group:<role>` in sync, so having the role is enough:
 
-**Granular admin permission checks** (`pages.create`, `config.read`, etc.) use the same `authz.check()` against `{ type: "app", id: "admin" }`, mapped through the canonical `actionToRelations` schema. There is no parallel role table.
+  ```
+  (group:admin,  admin,  app:site)
+  (group:editor, editor, app:site)
+  (group:author, author, app:site)
+  ```
+
+  A role that is only a content tag (`member`, `subscriber`, ...) grants nothing here.
+- **The admin plugin's own accounts** get a direct tuple matching their role, seeded at startup through `services.authz.seedAdminTuples()` (`bootstrapAdminTuples()` in core):
+
+  ```
+  (user:alice, admin,  app:site)
+  (user:bob,   editor, app:site)
+  ```
+
+The authz system exists whenever something uses it: the site has a login (`site.auth`), a plugin provides `auth.session`, or a plugin declares `authzActions`. If creation fails at startup, checks fail closed (403). Tuples are derived data, re-seeded at every start; after changing this resource's name on an existing site, run `dune authz:sign` once if the store is HMAC-protected.
 
 ## Limitations
 
