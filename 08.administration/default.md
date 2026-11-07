@@ -64,7 +64,7 @@ plugins:
   - src: jsr:@dune/plugin-admin@^4
 ```
 
-> **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `auth.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-authsession-contract).
+> **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `editor.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-editorsession-contract).
 
 ## Admin plugin configuration
 

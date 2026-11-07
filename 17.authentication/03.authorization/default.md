@@ -249,7 +249,7 @@ Membership follows the user record: user stores that core creates (the site auth
   (user:bob,   editor, app:site)
   ```
 
-The authz system exists whenever something uses it: the site has a login (`site.auth`), a plugin provides `auth.session`, or a plugin declares `authzActions`. If creation fails at startup, checks fail closed (403). Tuples are derived data, re-seeded at every start; after changing this resource's name on an existing site, run `dune authz:sign` once if the store is HMAC-protected.
+The authz system exists whenever something uses it: the site has a login (`site.auth`), a plugin provides `editor.session`, or a plugin declares `authzActions`. If creation fails at startup, checks fail closed (403). Tuples are derived data, re-seeded at every start; after changing this resource's name on an existing site, run `dune authz:sign` once if the store is HMAC-protected.
 
 ## Limitations
 

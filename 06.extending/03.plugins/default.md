@@ -608,7 +608,7 @@ That example is intentionally public — it doesn't touch anything a visitor sho
 
 A route you register with `app.get()`/`app.post()` in `mount()` runs outside the admin's middleware: plugins mount in registration order and the admin mounts last, so it has no admin login, no CSRF check and no permission check. **Do not put an admin-only operation there; contribute it as an [`admin.routes`](#admin-pages-and-routes) route.**
 
-A public route that behaves differently for a signed-in admin asks the `auth.session` capability, at request time:
+A public route that behaves differently for a signed-in admin asks the `editor.session` capability, at request time:
 
 ```typescript
 import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
@@ -620,9 +620,9 @@ export default function createMyPlugin(): DunePlugin {
 
     async mount({ app, capabilities }: MountApi) {
       app.get("/export/report", async (fc) => {
-        // `auth.session` is provided by the admin plugin; with none installed
+        // `editor.session` is provided by the admin plugin; with none installed
         // it is undefined and every visitor is anonymous.
-        const who = await capabilities.get("auth.session")?.authenticate(fc.req);
+        const who = await capabilities.get("editor.session")?.authenticate(fc.req);
         if (!who?.authenticated) return new Response("Unauthorized", { status: 401 });
         return Response.json({ report: await buildReport(), requestedBy: who.user?.id });
       });
@@ -758,9 +758,9 @@ There are two shapes. A **slot** has at most one active provider; a **contributi
 | Slot | Contract | Typically provided by | Used by | If nobody provides it |
 |------|----------|----------------------|---------|-----------------------|
 | `admin.prefix` | `{ prefix }`: the URL path the admin is mounted at (starts with `/`, no trailing slash) | the admin plugin | core: keeps these paths out of the page cache and response transforms, reserves them against plugin `publicRoutes`, forwards them in `dune build --hybrid`, prints the admin URL in `dune dev` / `dune serve` | there is no admin: `/admin` is an ordinary path and nothing is reserved |
-| `auth.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
+| `editor.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
 | `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
-| `inline-edit` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
+| `editor.inline` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
 | `editor.content` | `ContentEditorPlugin` | an editor plugin | the admin | the admin uses its built-in block editor |
 
 | Contribution point | Item | Used by |
@@ -824,16 +824,16 @@ Resolution rules:
 ```typescript
 mount({ app, capabilities }) {
   app.get("/whoami", async (fc) => {
-    const who = await capabilities.get("auth.session")?.authenticate(fc.req);
+    const who = await capabilities.get("editor.session")?.authenticate(fc.req);
     return Response.json({ signedIn: who?.authenticated ?? false });
   });
   const extraPages = capabilities.list("admin.pages"); // readonly array
 }
 ```
 
-### Writing your own admin: the `auth.session` contract
+### Writing your own admin: the `editor.session` contract
 
-The built-in admin is just a provider. Any plugin can be *the* admin by providing `auth.session`, and core treats it exactly the same: it calls `authenticate(req)` on public pages to decide whether to inject the admin bar and whether editing markers survive, and in the inline-edit WebSocket. What it needs from you:
+The built-in admin is just a provider. Any plugin can be *the* admin by providing `editor.session`, and core treats it exactly the same: it calls `authenticate(req)` on public pages to decide whether to inject the admin bar and whether editing markers survive, and in the inline-edit WebSocket. What it needs from you:
 
 ```typescript
 interface RequestAuthenticator {
@@ -849,7 +849,7 @@ interface RequestAuthenticator {
 
 - **Declare `sessionCookies`.** Core uses the names for two cheap decisions that must not depend on a particular admin: whether to call `authenticate()` at all on a public page, and whether to keep the response out of the shared page cache (a response rendered for an editor must never be cached for anonymous visitors). If you leave it out, core treats *any* request with a `Cookie` header as possibly signed in: always correct, but every visitor with an analytics cookie costs a lookup and bypasses the cache.
 - **Be cheap without a session.** `authenticate()` runs on public pages. Return `{ authenticated: false }` straight away, without touching a session store, when the request carries no session of yours.
-- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `auth.session`, whether or not the built-in admin is listed. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
+- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `editor.session`, whether or not the built-in admin is listed. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
 - **You are the writer.** If your admin writes content itself, fire `onPageUpdate` (and `onPageCreate` / `onPageDelete` / `onPageMove` / `onWorkflowChange`) after each write: core does not fire them for you.
 - **Provide `admin.prefix`** with the path your admin is mounted at, e.g. `api.capabilities.provide("admin.prefix", () => ({ prefix: "/cms" }))`. Core never assumes `/admin`: without this slot your admin's pages can be served from the shared page cache and plugin routes can shadow them. `ResponseTransformContext.adminPrefix` is `""` when no admin provides one.
 - Do not list `@dune/plugin-admin` if you replace the built-in admin entirely: core loads only what `plugins:` lists.
@@ -869,7 +869,7 @@ runAdminConformance({
 });
 ```
 
-It checks that you provide exactly one `auth.session`; that core recognises your editor's session and nothing else (no cookie, an unrelated cookie and a forged one get no admin bar and lose the editing markers); that `sessionCookies` includes the cookie your sign-in really sets; that a plugin mounted before you can read `auth.session`; that an edit fires `onPageUpdate` once (with `editPage`); that other plugins' `admin.pages` and `admin.routes` are mounted behind your login, CSRF check and permission (with `adminPrefix`); and that the site serves with your admin removed. Use `adminConformanceChecks(driver)` to get the checks as a list instead of registering `Deno.test`s.
+It checks that you provide exactly one `editor.session`; that core recognises your editor's session and nothing else (no cookie, an unrelated cookie and a forged one get no admin bar and lose the editing markers); that `sessionCookies` includes the cookie your sign-in really sets; that a plugin mounted before you can read `editor.session`; that an edit fires `onPageUpdate` once (with `editPage`); that other plugins' `admin.pages` and `admin.routes` are mounted behind your login, CSRF check and permission (with `adminPrefix`); and that the site serves with your admin removed. Use `adminConformanceChecks(driver)` to get the checks as a list instead of registering `Deno.test`s.
 
 ### Firing hooks from a provider
 
@@ -905,7 +905,7 @@ export default function createAutosavePlugin(): DunePlugin {
     version: "1.0.0",
     hooks: {},
     setup(api) {
-      api.capabilities.provide("inline-edit", createAutosaveManager);
+      api.capabilities.provide("editor.inline", createAutosaveManager);
     },
   };
 }
@@ -915,12 +915,12 @@ export default function createAutosavePlugin(): DunePlugin {
 
 | Before (0.35) | Now (0.36) |
 |---------------|------------|
-| `adminServices() → { inlineEdit }` | `capabilities.provide("inline-edit", factory)` in `setup()` |
+| `adminServices() → { inlineEdit }` | `capabilities.provide("editor.inline", factory)` in `setup()` |
 | `adminServices() → { contentEditor }` | `capabilities.provide("editor.content", factory)` |
 | `adminPages: [...]` | `capabilities.contribute("admin.pages", page)` |
 | `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` and `ctx.barActions` |
 | `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute("admin.routes", { method, path, permission, handler })` |
-| `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("auth.session")?.authenticate(req)` |
+| `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("editor.session")?.authenticate(req)` |
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
 | `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
 | `mount({ bootstrap })` | `mount({ runtime })`: a curated `PluginRuntime` (see below) |

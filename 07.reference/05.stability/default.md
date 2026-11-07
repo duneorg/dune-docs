@@ -90,7 +90,7 @@ export default plugin;
 
 ### Plugin capabilities (since 0.36)
 
-`PluginApi.capabilities` and `MountApi.capabilities` (see [Plugin capabilities](/docs/extending/plugins#plugin-capabilities)) are new required fields, so code that builds those objects by hand has to supply them. The slot and contribution-point names (`auth.session`, `scheduler.executor`, `inline-edit`, `editor.content`; `admin.pages`, `admin.routes`, `bar.actions`) and their contracts are the plugin-facing surface. The key set is closed in 1.0.
+`PluginApi.capabilities` and `MountApi.capabilities` (see [Plugin capabilities](/docs/extending/plugins#plugin-capabilities)) are new required fields, so code that builds those objects by hand has to supply them. The slot and contribution-point names (`editor.session`, `scheduler.executor`, `editor.inline`, `editor.content`; `admin.pages`, `admin.routes`, `bar.actions`) and their contracts are the plugin-facing surface. The key set is closed in 1.0.
 
 0.36 **removed** the members they replace, with no deprecation period: `DunePlugin.adminServices`, `adminPages`, `adminBarActions` and `mountEarly`; `MountApi.adminServices`; `BootstrapResult.adminServices` and `adminContext`; `ResponseTransformContext.plugins` (use `barActions`); and the `AdminServices` / `AdminServicesContext` types. A plugin that used them fails type-checking until it moves to the registry; the [migration table](/docs/extending/plugins#moving-a-plugin-from-035) lists each replacement.
 
