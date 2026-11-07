@@ -7,12 +7,12 @@ taxonomy:
   difficulty: [intermediate]
   topic: [authentication, security]
 metadata:
-  description: "Set up OAuth, magic link, or external JWT authentication for public site visitors"
+  description: "Set up OAuth, magic link, password, or external JWT authentication for public site visitors"
 ---
 
 # Public Authentication
 
-Dune's public auth system lets site visitors register and log in — completely separate from the admin panel. Login methods: OAuth (GitHub, Google, Discord), magic link (passwordless email), and external JWT (Clerk, Auth0, etc.).
+Dune's public auth system lets site visitors register and log in — completely separate from the admin panel. Login methods: OAuth (GitHub, Google, Discord), magic link (passwordless email), password (for accounts you create), and external JWT (Clerk, Auth0, etc.).
 
 **As of 0.31.7, writing `auth:` in `site.yaml` is enough on its own** — `createDuneApp()` (the code path both `dune serve` and `dune dev` go through) calls `mountDuneAuth(app, ctx)` automatically whenever `site.auth` is configured. A site that never writes an `auth:` block gets zero behavior change: no new directories, no `/auth/*` routes, no added per-request middleware. On earlier versions, `mountDuneAuth()` had no public export under any `@dune/core/*` subpath at all, and there was no supported way to call it, manually or otherwise.
 
@@ -37,19 +37,21 @@ await mountDuneAuth(app, ctx); // populates ctx.state.siteUser on every request 
 # site.yaml
 auth:
   mode: "dune"                   # "dune" | "external-jwt"
-  sessionLifetime: 2592000       # Session TTL in seconds (default: 30 days)
+  session_lifetime: 2592000       # Session TTL in seconds (default: 30 days)
   providers:
     github:
-      clientId: "$GITHUB_CLIENT_ID"
-      clientSecret: "$GITHUB_CLIENT_SECRET"
+      client_id: "$GITHUB_CLIENT_ID"
+      client_secret: "$GITHUB_CLIENT_SECRET"
     google:
-      clientId: "$GOOGLE_CLIENT_ID"
-      clientSecret: "$GOOGLE_CLIENT_SECRET"
+      client_id: "$GOOGLE_CLIENT_ID"
+      client_secret: "$GOOGLE_CLIENT_SECRET"
     discord:
-      clientId: "$DISCORD_CLIENT_ID"
-      clientSecret: "$DISCORD_CLIENT_SECRET"
-    magicLink:
+      client_id: "$DISCORD_CLIENT_ID"
+      client_secret: "$DISCORD_CLIENT_SECRET"
+    magic_link:
       enabled: true
+    password:
+      enabled: true                # accounts with a password: see "Password login" below
 ```
 
 Only configure the providers you need. Each OAuth provider requires a registered OAuth app pointing its callback to `{site.url}/auth/{provider}/callback`.
@@ -58,7 +60,8 @@ Only configure the providers you need. Each OAuth provider requires a registered
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| `GET` | `/auth/login` | Default login page (renders `LoginForm` or theme's `auth/login.tsx`) |
+| `GET` | `/auth/login` | Login page: the theme's `templates/login.tsx`, or a built-in page (providers, magic link, and the password form when enabled) |
+| `POST` | `/auth/login` | Password login (`404` unless `password.enabled`); see [Password login](#password-login) |
 | `GET` | `/auth/logout` | Destroy session cookie and redirect to `/` (GET, not POST) |
 | `GET` | `/auth/me` | Return current `User` as JSON, or `401` if not logged in |
 | `GET` | `/auth/github` | Start GitHub OAuth flow |
@@ -78,6 +81,66 @@ Only configure the providers you need. Each OAuth provider requires a registered
 
 Routes for unconfigured providers return `404`. The session cookie is `dune_auth` (HttpOnly, SameSite=Lax, Secure outside `DUNE_ENV=dev`).
 
+## Password login
+
+For sites whose logged-in users have passwords, including sites that run no admin plugin. Accounts are `provider: "local"` users in the shared user store: create them with `dune users:create <email> --password-prompt` (an admin can also create them). There is no self-service sign-up and no password reset by email yet.
+
+```yaml
+# site.yaml
+auth:
+  providers:
+    password:
+      enabled: true
+```
+
+`POST /auth/login` takes `identifier` (an email or a username), `password` and an optional `next`, form-encoded or JSON, from the same origin:
+
+| | Form (`application/x-www-form-urlencoded`) | JSON |
+|---|---|---|
+| Success | `303` to `next`, session cookie set | `200 { "ok": true, "next": "/…" }`, cookie set |
+| Wrong credentials | `303` to `/auth/login?error=invalid` | `401 { "error": "Invalid credentials" }` |
+| Too many attempts | `429`, the login page with `error: "rate_limited"` | `429 { "error": "Too many attempts" }` + `Retry-After` |
+
+`next` is only followed when it is a path on your site (`/account`, `/members?tab=2`); anything else (`https://…`, `//host`, `javascript:`) falls back to `/`.
+
+Every failure looks the same, whether the account does not exist, is disabled, signs in with GitHub rather than a password, or has the wrong password: same status, same body, and the password is verified against a dummy hash for the accounts that cannot sign in this way, so timing does not tell them apart. Attempts are limited to ten per IP address and ten failures per identifier (including identifiers that do not exist) per 15 minutes. Behind a reverse proxy, set `system.trusted_proxies: true` so the real client address is used. Old password hashes are upgraded on a successful login.
+
+The session is the site session (`dune_auth`). It is separate from the admin session: logging in here does not log anyone into `/admin`, and the other way round. Password login needs persistent user records, so it is unavailable with `user_store: session`.
+
+### A themed login page
+
+Add `templates/login.tsx` to your theme and `GET /auth/login` renders it (also for the `429` case). Like `error.tsx`, it receives a synthetic page, and the details are in `page.frontmatter`:
+
+| Field | Meaning |
+|-------|---------|
+| `providers` | Configured OAuth providers, e.g. `["github"]`; each signs in at `/auth/<name>` |
+| `magicLink` | `true` when magic-link login is on (`POST /auth/magic/send` with JSON `{ "email" }`) |
+| `passwordLogin` | `true` when password login is on |
+| `error` | `"invalid"` or `"rate_limited"` after a failed attempt, else absent |
+| `next` | Where to go after signing in; already a safe path |
+
+```tsx
+/** @jsxImportSource preact */
+export default function Login({ page, site, Layout }: any) {
+  const { passwordLogin, error, next } = page.frontmatter;
+  return (
+    <Layout site={site}>
+      {error === "invalid" && <p role="alert">Wrong email or password.</p>}
+      {passwordLogin && (
+        <form method="POST" action="/auth/login">
+          <input type="hidden" name="next" value={next} />
+          <input name="identifier" autocomplete="username" required />
+          <input name="password" type="password" autocomplete="current-password" required />
+          <button>Log in</button>
+        </form>
+      )}
+    </Layout>
+  );
+}
+```
+
+A theme without `login.tsx` keeps working: the built-in page is served.
+
 ## Linking an additional provider
 
 Any logged-in user can connect another OAuth provider to their account:
@@ -90,7 +153,7 @@ Any logged-in user can connect another OAuth provider to their account:
 
 If the provider identity being linked already belongs to a *different* account, `/callback` doesn't error — it logs into that account instead (redirects to `/?dune_link=linked_elsewhere`), since completing that provider's OAuth consent screen is real proof of controlling it. Check `?dune_link=` (`linked` | `already_linked` | `linked_elsewhere`) to show your own message — there's no built-in UI for any of this.
 
-`POST /auth/{provider}/unlink` refuses to remove your last *additional* identity while magic link is disabled site-wide (your original signup provider is unaffected either way). Only works with `userStore: local` or `db` — `400`s under `userStore: session` (no persistent record to attach a link to).
+`POST /auth/{provider}/unlink` refuses to remove your last *additional* identity while magic link is disabled site-wide (your original signup provider is unaffected either way). Only works with `user_store: local` or `db` — `400`s under `user_store: session` (no persistent record to attach a link to).
 
 ## OAuth login
 
@@ -128,10 +191,10 @@ Use `mode: "external-jwt"` to delegate authentication entirely to an external pr
 auth:
   mode: "external-jwt"
   jwt:
-    jwksUrl: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
-    userIdClaim: "sub"         # default
-    emailClaim: "email"        # default
-    rolesClaim: "roles"        # default — string or string[]
+    jwks_url: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
+    user_id_claim: "sub"         # default
+    email_claim: "email"        # default
+    roles_claim: "roles"        # default — string or string[]
 ```
 
 For HS256 shared-secret tokens:
@@ -147,7 +210,7 @@ In external-JWT mode, there are no session cookies and no `/auth/*` login routes
 
 ## User store backends
 
-The `userStore` setting controls where `User` records are persisted:
+The `user_store` setting controls where `User` records are persisted:
 
 | Value | Description |
 |-------|-------------|
@@ -157,19 +220,19 @@ The `userStore` setting controls where `User` records are persisted:
 
 ```yaml
 auth:
-  userStore: "db"   # default: "local"
+  user_store: "db"   # default: "local"
 ```
 
 Sessions themselves (not user records) use `system.session_store` — see [System Configuration](/docs/configuration/system-config#session-store) for the full backend reference (`local`, `kv`, `redis`). Public-auth sessions and admin sessions share this same setting; there's no separate config for either.
 
 ## IdP webhook (user deletion)
 
-When using `mode: external-jwt` with `authzStore: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
+When using `mode: external-jwt` with `authz_store: local`, configure a webhook so Dune can clean up authorization tuples when a user is deleted in the external provider:
 
 ```yaml
 auth:
   mode: "external-jwt"
-  authzStore: local
+  authz_store: local
   webhook:
     provider: "clerk"               # "clerk" | "auth0" | "generic"
     secret: "$DUNE_CLERK_WEBHOOK_SECRET"
@@ -177,7 +240,7 @@ auth:
 
 This activates `POST /auth/webhook`. On receiving a `user.deleted` event (provider-specific payload format), Dune revokes all authz tuples for that user. Role-change events are handled automatically by per-request fingerprint reconciliation and do not require a webhook.
 
-For `provider: "generic"`, the signature header defaults to `x-dune-signature`. Override with `signatureHeader: "x-my-sig"`.
+For `provider: "generic"`, the signature header defaults to `x-dune-signature`. Override with `signature_header: "x-my-sig"`.
 
 The webhook endpoint verifies the provider's HMAC signature before processing. Configure the webhook URL in your IdP's dashboard as `{site.url}/auth/webhook`.
 

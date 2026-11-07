@@ -217,4 +217,5 @@ The content file controls collection query settings via frontmatter — the temp
 - **Run `dune dev`** — templates reload automatically on file change; no restart needed
 - **`theme.custom` config** — pass theme-specific settings via `config.theme.custom` (type-unsafe; validate in your template)
 - **Error template** — add `templates/error.tsx` to customize 404 and 500 pages; it receives `{ statusCode, message }` in frontmatter
+- **Login template** — add `templates/login.tsx` to style `/auth/login` for sites with [public auth](/docs/authentication/public-auth#a-themed-login-page); it receives the providers, the `error` and the safe `next` target in frontmatter
 - **Watch the console** — Dune logs warnings for static layout imports and MDX load failures during startup

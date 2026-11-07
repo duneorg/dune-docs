@@ -56,7 +56,7 @@ To run the `dune` you invoked against such a site anyway (for example when worki
 | `dune cache:rebuild` | Rebuild content index from scratch. Use after bulk content changes. |
 | `dune validate` | Whole-project lint: config, plugins, templates, schemas, and content. |
 | `dune doctor` | Environment/runtime health checks — distinct from `validate`'s project-correctness checks: can this site's dependency graph actually resolve and boot, on this machine, right now? Checks Deno version, dependency resolution (`deno cache main.ts`, reformatting an npm-cache-mismatch error into actionable steps instead of a raw stack trace), and lockfile staleness. Fast — no live boot. |
-| `dune doctor --boot` | Also spawns the site for real (on a free ephemeral port) and makes a request against it. Slower and more failure-prone than the default checks, hence opt-in. |
+| `dune doctor --boot` | Also spawns the site for real (on a free ephemeral port) and makes a request against it. Slower and more failure-prone than the default checks, hence opt-in. It also lists which plugin provides each [capability](../../extending/plugins) (`auth.session`, `scheduler.executor`, …), and errors when the admin is enabled but nothing provides `auth.session` (nobody could sign in) or a provider's factory threw; it warns when scheduled actions are queued but no plugin runs them. |
 | `dune doctor --json` | Machine-parseable output for either form above. |
 
 `dune validate` checks:
@@ -167,7 +167,7 @@ Fires `onPageCreate` — the same hook the admin panel fires when creating a pag
 | `--dry-run` | Preview what would be deleted without writing any changes. |
 | `--json` | Output result as JSON. |
 
-Fires `onPageDelete` — the same hook the admin panel fires when deleting a page through the UI.
+Fires `onPageDelete` — the same hook every other page writer fires when deleting a page.
 
 ## Packages
 
@@ -217,13 +217,14 @@ If the installed theme declares a `parent:` in its `theme.yaml` (see [Theme Inhe
 | `dune migrate:run` | Apply all pending SQL migration files. |
 | `dune migrate:status` | Show which migrations have been applied and which are pending. |
 | `dune migrate:users` | Reshape existing `data/users/` records (added by earlier admin-account/public-auth accounts before they shared one store) to the current unified `User` shape — adds a `by-email/` index entry, backfills missing fields. Idempotent. |
+| `dune migrate:config` | Rename the camelCase config keys in `config/site.yaml`, `config/system.yaml` and `config/env/*/` to snake_case (0.36), keeping comments and order. Idempotent. Settings that moved to another place in 0.36 (`admin.honeypot`, `admin.notifications`, `admin.incoming_webhooks`, `admin.data_dir`, the `smtp:` block of form notifications) are reported for a manual move and make the command exit 1; see [Key naming](/docs/configuration#key-naming). |
 
 ### Migration options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--out <dir>` | `<root>/content` | Content directory to import into (import commands only) |
-| `--dry-run` | — | Report what would be imported/migrated without writing any files |
+| `--dry-run` | — | Report what would be imported/migrated without writing any files (also `migrate:config`) |
 | `--verbose` | — | Print each imported page |
 | `--trust-source` | — | Skip HTML sanitization — only use for sources you fully trust |
 
@@ -241,7 +242,7 @@ See [Flex Object Schema Migrations](../flex-objects#schema-migrations) for full 
 
 For operators without (or before) web access: first-admin bootstrap on a headless install, scripted/CI-driven site provisioning, or granting admin access to an existing OAuth/magic-link account that has never had one. Idempotent — granting a role already held, or revoking one not held, is a no-op. Accepts `--dry-run`.
 
-`users:passwd` is the recovery path when the only admin has forgotten their password, and the way to rotate a password nobody has the plaintext of. Running it needs shell access to the site's data directory, the same access the other `users:*` commands need, so it adds no new trust boundary. It resolves the user directory from `data_dir` (falling back to the deprecated `admin.dataDir`), like the rest of core.
+`users:passwd` is the recovery path when the only admin has forgotten their password, and the way to rotate a password nobody has the plaintext of. Running it needs shell access to the site's data directory, the same access the other `users:*` commands need, so it adds no new trust boundary. It resolves the user directory from `data_dir` (falling back to the deprecated `admin.data_dir`), like the rest of core.
 
 ```bash
 dune users:passwd admin
@@ -381,8 +382,8 @@ If you're developing Dune itself (not a site built with it), the local-dev insta
 $ dune config:show
 
 site.title: "My Site"                    ← config/site.yaml:1
-system.cache.enabled: false              ← config/env/development/system.yaml:3
-system.cache.driver: "memory"            ← default
+system.page_cache.enabled: false         ← config/env/development/system.yaml:3
+system.images.default_quality: 80        ← default
 system.debug: true                       ← config/env/development/system.yaml:5
 theme.name: "default"                    ← default
 ```

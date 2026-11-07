@@ -486,7 +486,7 @@ Returns a live snapshot of the engine's runtime state — useful for agents and 
 ```json
 {
   "pages": { "total": 42, "published": 38, "drafts": 4 },
-  "plugins": [{ "name": "my-plugin", "version": "1.0.0", "hooks": ["onPageLoaded"] }],
+  "plugins": [{ "name": "my-plugin", "version": "1.0.0", "hooks": ["onBeforeRender"] }],
   "theme": { "name": "default", "templates": ["default", "post", "landing"] },
   "forms": [{ "name": "contact", "enabled": true }],
   "config": { "title": "My Site", "url": "https://example.com" }
@@ -549,7 +549,7 @@ Supported operations:
 | `write` | `path`, `content` | Write a file at `path` with `content`. Validates YAML frontmatter if the file is `.md`. |
 | `delete` | `path` | Delete the file at `path`. |
 | `frontmatter` | `path`, `patch` | Merge `patch` keys into the frontmatter of an existing content file. Creates the file if absent. |
-| `config` | `key`, `value` | Set a dot-notation key in `config/site.yaml` (e.g. `"admin.path"`). |
+| `config` | `key`, `value` | Set a dot-notation key in `config/site.yaml` (e.g. `"theme.name"`). |
 | `plugin.install` | `spec` | Append a plugin specifier to the `plugins:` list in `config/site.yaml`. No-op if already present. |
 
 Request body:
@@ -560,7 +560,7 @@ Request body:
   "changes": [
     { "op": "write", "path": "content/01.home/default.md", "content": "---\ntitle: Home\npublished: true\n---\n\n# Home\n" },
     { "op": "frontmatter", "path": "content/02.blog/post.md", "patch": { "published": true } },
-    { "op": "config", "key": "admin.path", "value": "/cms" },
+    { "op": "config", "key": "theme.name", "value": "paper" },
     { "op": "plugin.install", "spec": "jsr:@dune/blog@1.0.0" }
   ]
 }
@@ -576,7 +576,7 @@ Response:
   "results": [
     { "op": "write", "path": "content/01.home/default.md", "status": "would_create", "errors": [] },
     { "op": "frontmatter", "path": "content/02.blog/post.md", "status": "would_update", "errors": [] },
-    { "op": "config", "key": "admin.path", "status": "would_update", "errors": [] },
+    { "op": "config", "key": "theme.name", "status": "would_update", "errors": [] },
     { "op": "plugin.install", "spec": "jsr:@dune/blog@1.0.0", "status": "would_create", "errors": [] }
   ],
   "summary": { "total": 4, "valid": 4, "errors": 0 }

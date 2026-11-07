@@ -7,14 +7,16 @@ taxonomy:
   difficulty: [advanced]
   topic: [administration, security, authentication]
 metadata:
-  description: "Plug in LDAP, SAML, or other identity providers for admin panel authentication"
+  description: "Use the built-in local accounts, or plug in your own identity provider for admin panel authentication"
 ---
 
 # Authentication Providers
 
-By default, Dune manages admin users with local password accounts (PBKDF2-SHA256). For organizations that already have a central directory service, you can delegate authentication to an external provider.
+By default, Dune manages admin users with local password accounts (PBKDF2-SHA256). For organizations that already have a central directory service, you can delegate authentication to an identity provider you write.
 
 The `AuthProvider` interface abstracts the identity verification step. Once a provider confirms who the user is, Dune's session management and permission system take over — all existing roles, revision history, and audit logging work unchanged.
+
+> **LDAP and SAML are not built in.** Earlier versions listed them in the configuration but never implemented them (the providers threw), so they were removed in 0.36 and `admin.auth_provider.type` accepts only `local`. To use LDAP, SAML, OpenID Connect or an internal SSO, write a provider and inject it as shown below.
 
 ---
 
@@ -23,101 +25,11 @@ The `AuthProvider` interface abstracts the identity verification step. Once a pr
 No configuration needed. Users are managed in Admin → Users.
 
 ```yaml
-# site.yaml — this is the implicit default
-admin:
-  # auth_provider: not set → local passwords
+# config/site.yaml: this is the implicit default
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    # config.auth_provider: not set → local passwords
 ```
-
----
-
-## LDAP / Active Directory
-
-> **Status: stub** — the interface and configuration schema are stable. The `ldapts` integration is documented below and can be activated by implementing `src/admin/auth/ldap-provider.ts`.
-
-Configure in `site.yaml`:
-
-```yaml
-admin:
-  auth_provider:
-    type: "ldap"
-    url: "ldaps://ldap.example.com:636"
-    baseDn: "ou=users,dc=example,dc=com"
-
-    # Service account for search (optional — omit for direct bind)
-    bindDn: "cn=dune-service,dc=example,dc=com"
-    bindPassword: "$LDAP_BIND_PASSWORD"
-
-    # Attribute names (defaults shown)
-    usernameAttr: "sAMAccountName"   # Active Directory; use "uid" for OpenLDAP
-    emailAttr: "mail"
-    nameAttr: "cn"
-
-    # Group → role mapping (first match wins)
-    roleMap:
-      - group: "cn=cms-admins,ou=groups,dc=example,dc=com"
-        role: "admin"
-      - group: "cn=cms-editors,ou=groups,dc=example,dc=com"
-        role: "editor"
-
-    defaultRole: "author"   # Role for users not in any mapped group
-```
-
-### How it works
-
-1. User enters username + password in the admin login form
-2. Dune's `LdapAuthProvider` binds to the LDAP server as a service account and searches for the user DN
-3. A second bind with the user's DN and submitted password verifies the credentials
-4. Group memberships are read and mapped to a Dune role via `roleMap`
-5. The first time a user logs in, a local `User` record is auto-provisioned (no password set — only LDAP auth is used thereafter)
-6. A session cookie is issued and the user lands on the dashboard
-
-### Auto-provisioning
-
-Users authenticated via LDAP get a local `User` record created automatically on first login. The record stores role and display name (synced from LDAP on every login). You can still see and edit these users in Admin → Users, but their passwords are not used.
-
----
-
-## SAML 2.0
-
-> **Status: stub** — the interface and configuration schema are stable. The `samlify` integration is documented below and can be activated by implementing `src/admin/auth/saml-provider.ts`.
-
-Configure in `site.yaml`:
-
-```yaml
-admin:
-  auth_provider:
-    type: "saml"
-
-    # Your SP (Service Provider) settings
-    entityId: "https://example.com/admin"
-    acsUrl: "https://example.com/admin/saml/acs"   # POST /admin/saml/acs
-
-    # IdP metadata (URL or inline XML)
-    idpMetadata: "https://idp.example.com/metadata.xml"
-
-    # Attribute mapping (defaults shown)
-    usernameAttr: "username"
-    emailAttr: "email"
-    nameAttr: "displayName"
-    roleAttr: "groups"
-
-    # Group value → role mapping
-    roleMap:
-      - value: "cms-admins"
-        role: "admin"
-      - value: "cms-editors"
-        role: "editor"
-
-    defaultRole: "author"
-```
-
-### Login flow
-
-1. User visits `/admin/login` and clicks "Sign in with SSO"
-2. Dune's `SamlAuthProvider.initiateLogin()` constructs an AuthnRequest and redirects to the IdP
-3. After authentication, the IdP POSTs a signed SAML assertion to `POST /admin/saml/acs`
-4. `handleCallback()` parses the assertion, extracts attributes, maps to a Dune role
-5. The user is auto-provisioned (if new) and a session is created
 
 ---
 
@@ -129,7 +41,7 @@ Implement the `AuthProvider` interface from `src/admin/auth/provider.ts`:
 import type { AuthProvider, AuthCredentials, AuthProviderUser } from "./provider.ts";
 
 export class MyAuthProvider implements AuthProvider {
-  readonly type = "local" as const;  // use "local" for non-stub custom providers
+  readonly type = "my-sso";  // any string; "local" is the built-in password provider
 
   async authenticate(creds: AuthCredentials): Promise<AuthProviderUser | null> {
     // Verify credentials against your system
@@ -147,25 +59,27 @@ export class MyAuthProvider implements AuthProvider {
 }
 ```
 
-Pass it to `bootstrap()` via the `authProvider` option:
+Build the admin plugin yourself, give it the provider, and pass it to `bootstrap()` instead of listing the admin in `site.yaml`:
 
 ```typescript
 // main.ts (headless mode) or your own entry point
 import { bootstrap } from "@dune/core";
+import { createAdminPlugin } from "@dune/plugin-admin";
 import { MyAuthProvider } from "./auth/my-auth-provider.ts";
 
-const ctx = await bootstrap("./", {
-  authProvider: new MyAuthProvider(),
+const root = Deno.cwd();
+const ctx = await bootstrap(root, {
+  plugins: [createAdminPlugin({ root, dev: false, authProvider: new MyAuthProvider() })],
 });
 ```
 
-The injected provider takes precedence over anything set in `system.yaml`. Use this for fully custom providers (OpenID Connect, internal SSO, etc.) that aren't covered by the built-in LDAP/SAML config.
+The injected provider takes precedence over anything set in `system.yaml`. This is the way to use any identity source other than the built-in local accounts (LDAP, SAML, OpenID Connect, internal SSO, ...).
 
 ### `AuthProviderUser` fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `externalId` | `string` | Stable external ID (LDAP DN, SAML NameID, etc.) |
+| `externalId` | `string` | Stable external ID (an LDAP DN, SAML NameID, OIDC `sub`, ...) |
 | `username` | `string` | Login name — used to find/create the local user |
 | `email` | `string?` | Used in the local user record |
 | `name` | `string?` | Display name |
@@ -176,16 +90,16 @@ The injected provider takes precedence over anything set in `system.yaml`. Use t
 ## Configuration reference
 
 ```yaml
-# config/system.yaml
-admin:
-  auth_provider:
-    type: ldap   # or saml — omit entirely for local passwords
-    # ... provider-specific fields as documented above
+# config/site.yaml: the admin plugin's config
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      auth_provider:
+        type: local   # the only value; omit the section entirely for the same result
 ```
 
 Selection priority:
-1. `authProvider` passed to `bootstrap()` — highest priority, ignores config
-2. `admin.auth_provider` in `system.yaml` — selects a built-in provider
-3. Default — local password authentication
+1. `authProvider` passed to `createAdminPlugin()` — highest priority, ignores config
+2. Default — local password authentication
 
-If `auth_provider` is not set and no provider is injected, local password authentication is used.
+Any other `auth_provider.type` stops the site at boot: the admin plugin validates its own config.

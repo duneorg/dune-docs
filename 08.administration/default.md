@@ -44,25 +44,44 @@ If both `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` are set and the site has no
 - Both variables must be set, or neither. A weak password, an invalid email, a username that is taken, or an email that belongs to a non-admin account stops boot with a message saying which.
 - The password stays in the process environment. Remove `DUNE_ADMIN_PASSWORD` from your deployment config after the first boot.
 
-Change the URL prefix with `admin.path` in your config:
+Change the URL prefix with `path` in the admin plugin's config (`config:` under its entry in `plugins:`):
 
 ```yaml
-# dune.config.ts
-export default {
-  admin: {
-    path: "/cms",   # panel available at /cms
-  },
-};
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      path: /cms   # panel available at /cms
 ```
 
-Disable the panel entirely for read-only / public deployments:
+The admin plugin's settings are listed in [the admin plugin's configuration](#admin-plugin-configuration) below; core has no `admin:` section.
+
+The admin panel is a plugin, `@dune/plugin-admin`, and core runs it only when `config/site.yaml` lists it under `plugins:` (`dune new` writes the entry, and `dune migrate:config` adds it to an existing site):
 
 ```yaml
-admin:
-  enabled: false
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
 ```
 
-> **Headless / API-only deployments:** setting `admin.enabled: false` in `system.yaml` fully suppresses the admin panel — no routes, no admin user pool, no related overhead. The admin panel is implemented as `@dune/plugin-admin`, a separate JSR package that Dune registers automatically. Advanced users can replace it with a custom admin implementation by providing their own `DunePlugin` that calls `mountDuneAdmin` internally.
+> **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `auth.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-authsession-contract).
+
+## Admin plugin configuration
+
+The admin's settings are its plugin config: `config:` under its entry in `plugins:` (`config/site.yaml`). Core reads none of them. A `path` that is not a clean prefix, or an `auth_provider` other than `local`, stops the site at boot.
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `path` | `/admin` | URL prefix of the panel |
+| `session_lifetime` | `86400` | Session lifetime in seconds |
+| `max_upload_mb` | `100` | Upload limit for the media library and content attachments |
+| `git_commit` | `false` | Commit to git after every page save |
+| `webhooks` | none | [Outbound webhooks](../webhooks) on content events |
+| `auth_provider` | local | Only `type: local` is supported; see [Auth providers](04.auth-providers) |
+| `audit` | on | [Audit log](02.audit-log): `enabled`, `log_file` |
+| `machine_translation` | none | [Machine translation](../../content/machine-translation) provider |
+
+`runtime_dir` (sessions, revisions, audit log), `max_revisions` and `data_dir` (users, submissions) are core settings in `system.yaml`.
 
 ## Roles and permissions
 
@@ -87,7 +106,7 @@ There is no default account; see [Creating the first admin](#creating-the-first-
 | **Draft preview** | Save a draft and get a shareable preview URL that renders through the active theme. Reviewers don't need admin access. See [Draft preview](content/workflow#draft-preview). |
 | **Workflow** | Move pages through `draft → in_review → published → archived` states. |
 | **Scheduled actions** | Set a date/time for automatic publish or unpublish. |
-| **Revision history** | Browse and restore previous versions of any page. Up to `admin.maxRevisions` (default 50) saved per page. The current revision count is shown in the editor toolbar. |
+| **Revision history** | Browse and restore previous versions of any page. Up to `system.max_revisions` (default 50) saved per page. The current revision count is shown in the editor toolbar. |
 | **Comments & annotations** | Leave threaded comments on pages with @mention support and a resolve workflow for editorial sign-off. See [Comments](comments). |
 | **Webhooks** | Fire outbound HTTP POST requests when pages are created, updated, deleted, or workflow status changes. See [Webhooks](webhooks). |
 | **Flex Objects** | Create, edit, and delete records for schema-driven custom data types (products, team members, events, etc.). Schemas defined in `flex-objects/{type}.yaml`. See [Flex Objects](flex-objects). |
@@ -115,13 +134,13 @@ Every save to a page creates a revision snapshot. The page editor toolbar shows 
 
 From the history view you can restore any previous version — this creates a new revision rather than overwriting the current one, so you can always undo a restore by reverting again.
 
-Revisions are stored in `admin.runtimeDir` (default `.dune/admin/`) and are **not** committed to version control. The maximum number of revisions kept per page is controlled by `admin.maxRevisions` (default 50); older revisions are pruned automatically.
+Revisions are stored in `system.runtime_dir` (default `.dune/admin/`) and are **not** committed to version control. The maximum number of revisions kept per page is controlled by `system.max_revisions` (default 50); older revisions are pruned automatically.
 
 ## Draft staging
 
 Staging lets editors save work-in-progress content and share a live preview with reviewers — before the page goes public.
 
-Saving a draft from the page editor stores a staging file in `admin.runtimeDir/staging/`. Each draft gets a random opaque token. The preview URL is:
+Saving a draft from the page editor stores a staging file in `runtime_dir/staging/`. Each draft gets a random opaque token. The preview URL is:
 
 ```
 https://example.com/__preview?path={encoded-source-path}&token={token}
@@ -129,19 +148,18 @@ https://example.com/__preview?path={encoded-source-path}&token={token}
 
 The token is stable across saves, so sharing the link once is enough — it stays valid as the editor continues working. When the draft is published, the staging file is removed.
 
-Staging files are ephemeral (live in `runtimeDir`, not committed to git). They are lost if you wipe `runtimeDir` or deploy to a fresh server. To keep drafts across deploys, back up `runtimeDir` or mount it on persistent storage.
+Staging files are ephemeral (live in `runtime_dir`, not committed to git). They are lost if you wipe `runtime_dir` or deploy to a fresh server. To keep drafts across deploys, back up `runtime_dir` or mount it on persistent storage.
 
 ## Git auto-commit
 
-When `admin.git_commit: true` is enabled, every page save and staging publish triggers an automatic `git add` + `git commit`:
+When `git_commit: true` is set in the admin plugin's config, every page save and staging publish triggers an automatic `git add` + `git commit`:
 
 ```yaml
-# dune.config.ts (or config/system.yaml)
-export default {
-  admin: {
-    git_commit: true,
-  },
-};
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      git_commit: true
 ```
 
 The commit message includes the file path and editor username:
@@ -154,14 +172,14 @@ Commit failures are logged as warnings and never block the save. Git must be ava
 
 ## Sessions
 
-Sessions are cookie-based and stored in `admin.runtimeDir` (default `.dune/admin/sessions/`). They expire after `admin.sessionLifetime` seconds (default 24 hours). Sessions are ephemeral — they are lost on restart or deploy.
+Sessions are cookie-based and stored in `system.runtime_dir` (default `.dune/admin/sessions/`). They expire after `admin.session_lifetime` seconds (default 24 hours). Sessions are ephemeral — they are lost on restart or deploy.
 
 The session cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` (in production). In development (`DUNE_ENV=dev`), the `Secure` flag is omitted to allow HTTP.
 
 ## Security considerations
 
-- Admin routes are isolated under `admin.path` and require authentication on every request
+- Admin routes are isolated under the admin plugin's `path` and require authentication on every request
 - Sessions use PBKDF2-hashed passwords with per-user salts
 - The `admin` role is required to create other `admin`-role accounts — editors and authors cannot escalate their own privileges
-- Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `admin.runtimeDir` (gitignored) — keep these locations separate
+- Form submission data lives in `data_dir` (git-tracked); session and revision data lives in `system.runtime_dir` (gitignored) — keep these locations separate
 - If you expose the panel publicly, put it behind HTTPS and consider restricting access by IP at the infrastructure level for higher-security sites

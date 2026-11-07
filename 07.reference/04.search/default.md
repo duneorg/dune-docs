@@ -22,7 +22,7 @@ Search uses an in-memory inverted index built from:
 - Page **taxonomy values** (boosted 2×)
 - Page **body text** (stripped of Markdown/HTML syntax)
 - Page **template** name
-- Any **custom frontmatter fields** you add via `system.search.customFields`
+- Any **custom frontmatter fields** you add via `system.search.custom_fields`
 
 The index is built once at startup (`dune serve`) or rebuilt on each content change in dev mode (`dune dev`). It is not persisted to disk — a restart triggers a full rebuild.
 
@@ -33,7 +33,7 @@ By default only the fields above are indexed. To make additional frontmatter fie
 ```yaml
 # config/system.yaml
 search:
-  customFields:
+  custom_fields:
     - summary
     - author
     - series
@@ -128,22 +128,6 @@ Result items include a `highlights` field when enabled:
 ```
 
 The `excerpt` field already has match terms wrapped in `<mark>` tags when `highlight: true`.
-
-## Indexing Flex Objects
-
-Include Flex Object records in the search index alongside pages:
-
-```yaml
-# config/system.yaml
-search:
-  include_flex:
-    - products
-    - events
-```
-
-Flex Object records are indexed by their title-like field (first `text` field) and all other string fields. They appear in search results with a `route` of `/flex/{type}/{id}` and `template: "flex"`.
-
-The `type` field in the search result identifies the Flex Object type: `{ route: "/flex/products/abc123", template: "flex", type: "products", title: "Ceramic Mug", ... }`.
 
 ## Query syntax
 
@@ -291,18 +275,37 @@ input.addEventListener("input", () => {
 
 ## Query analytics
 
-Every search against `GET /api/search` is recorded fire-and-forget to a JSONL file at `{admin.runtimeDir}/search-analytics.jsonl`. The admin panel exposes aggregated statistics at:
+Search analytics are **off by default**, because the data is what your visitors typed. Turn them on in `system.yaml`:
+
+```yaml
+# config/system.yaml
+search:
+  analytics: true
+```
+
+Core then counts every `GET /api/search` query: the normalised query text (trimmed, lowercased, whitespace collapsed, at most 100 characters) and how many results it returned. No IP address or user data is kept. Only the first page of a search counts (`offset=0`), so paging through results is not a new search.
+
+This is a set of counters, not a request log, so it stays small whatever your traffic:
+
+- It keeps at most **2000 distinct queries**. Beyond that the least-searched query is dropped to make room, so a flood of one-off queries cannot push out the frequent ones. Counts are only approximate once more than 2000 distinct queries have been seen; the top of the list stays accurate.
+- The counters live in `{runtime_dir}/search-analytics.json` in the site root. The file is rewritten at most every 30 seconds and only when something changed, and is also written when `dune serve` shuts down. A crash loses at most the last 30 seconds.
+- The file is machine-local and not git-tracked (it lives in `runtime_dir`). Delete it to reset the counts.
+- Each site is expected to run as one process. Several processes on the same site would each keep their own counters and overwrite each other's file. Only `dune serve` writes on shutdown; other entry points lose at most the last 30 seconds.
+
+The admin panel exposes the summary at:
 
 ```
 GET /admin/api/search/analytics
 ```
 
-Requires authentication with `pages.read` permission.
+Requires authentication with `pages.read` permission. Plugins read the same summary through `services.search.analytics.summarize()` (see [Plugin services](/docs/extending/plugins#plugin-services)).
 
 Response:
 
 ```json
 {
+  "enabled": true,
+  "since": 1762300000000,
   "totalSearches": 1842,
   "topQueries": [
     { "query": "deno", "count": 142, "avgResults": 7 },
@@ -315,9 +318,7 @@ Response:
 }
 ```
 
-`zeroResultQueries` lists queries that returned no results on average — useful for discovering missing content.
-
-The analytics file is machine-local and not git-tracked (it lives in `runtimeDir`). It is not pruned automatically — trim or rotate the file periodically on high-traffic sites.
+`since` is the time (Unix milliseconds) of the first counted search, or `null` when there is none. With analytics off, `enabled` is `false` and the summary is empty. `zeroResultQueries` lists queries that returned no results on average — useful for discovering missing content.
 
 ## Build requirement
 
@@ -328,7 +329,7 @@ const search = createSearchEngine({ pages, storage, contentDir, formats });
 await search.build();  // required before calling search.search() or search.suggest()
 ```
 
-Pass `customFields` to index additional frontmatter:
+Pass `customFields` (the programmatic option) to index additional frontmatter:
 
 ```ts
 const search = createSearchEngine({

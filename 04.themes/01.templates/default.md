@@ -51,7 +51,7 @@ export default function PostTemplate({ page, pageTitle, site, config, nav, Layou
 | `page` | `Page` | The full page object (frontmatter, content, media, relations) |
 | `pageTitle` | `string` | Pre-formatted title: "Title - Descriptor \| Site Name" |
 | `site` | `SiteConfig` | Site configuration (title, URL, metadata) |
-| `config` | `DuneConfig` | Full merged configuration |
+| `config` | `TemplateConfig` | The configuration a template may rely on: `site`, `theme` (including `theme.custom`) and `system.languages` — see [What `config` contains](#what-config-contains) |
 | `nav` | `PageIndex[]` | Top-level navigation pages |
 | `t` | `(key: string, fallback?: string) => string` | Theme UI-string translator, built from the theme chain's merged `locales/{lang}.json` (see [Theme Inheritance](../02.inheritance#locale-strings)). `t(key)` returns the key itself if missing — a visible, debuggable signal outside production, an empty string when `DUNE_ENV=production` — and warns once per distinct missing key. `t(key, fallback)` returns `fallback` instead when the key is missing, with no warning; this is the normal path while a locale file is incrementally filled in, not an error. |
 | `navAll` | `PageIndex[]?` | Full site navigation for the page's language — every page in the index with `depth`, `order`, `parentPath` (same data as `/api/nav`) |
@@ -62,6 +62,22 @@ export default function PostTemplate({ page, pageTitle, site, config, nav, Layou
 | `searchQuery` | `string?` | Set when rendering the `/search` page. The raw query string from `?q=`. |
 | `searchResults` | `SearchResult[]?` | Set when rendering the `/search` page. Ranked results from the search engine. |
 | `content` | `ContentApi?` | The content query API (`.pages()`, `.page()`, `.search()`, `.taxonomy()`) — the same instance `bootstrap.contentApi` exposes. Optional on the type, but populated on every normal render; only the bare-HTML fallback used when no theme resolves at all omits it. Added in 0.31.7. |
+
+### What `config` contains
+
+Since 0.36 `config` is typed as `TemplateConfig`, not the whole `DuneConfig`:
+
+```typescript
+interface TemplateConfig {
+  site: SiteConfig;                              // same object as the `site` prop
+  theme: ThemeConfig;                            // name, src, parent, custom
+  system: {
+    languages: { supported: string[]; default: string; include_default_in_url: boolean };
+  };
+}
+```
+
+That is the contract: these keys are what a theme may read and what stays stable. The value at runtime is still the full configuration, so templates that read other keys keep rendering, but they no longer type-check. Rather than reaching into `config.system.*`, `config.admin` or `config.plugins`, take settings from the theme's own `theme.custom` or the [theme config](../07.theme-config) file, or let a plugin supply the data.
 
 ### Using the Layout prop
 

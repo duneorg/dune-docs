@@ -74,7 +74,7 @@ const app = new App();
 // 2. Static file serving
 app.use(staticFiles());
 
-// 3. Admin panel + public API (contact forms, webhooks)
+// 3. Admin panel
 await mountDuneAdmin(app, ctx);
 
 // 4. Make the content API available to your own routes via ctx.state —
@@ -103,20 +103,11 @@ Deno.serve({ port: 3000, handler: app.handler() });
 ### `mountDuneAdmin(app, ctx)`
 
 Registers on the Fresh app:
-- Admin panel routes under `/admin` (or your configured `admin.path`)
+- Admin panel routes under `/admin` (or the `path` of the admin plugin's config)
 - Per-site admin context middleware
-- Plugin public routes
-- Public form and incoming-webhook endpoints (`/api/forms/:name`, `/api/webhook/incoming`, and the deprecated `/api/contact`), by calling `registerFormRoutes()`
+- The plugins' `admin.pages` and `admin.routes`
 
-Those endpoints are served by Dune itself, not by the admin panel. If you build the app from `bootstrap()` and don't call `mountDuneAdmin()`, register them yourself:
-
-```ts
-import { registerFormRoutes } from "@dune/core/forms";
-
-registerFormRoutes(app, ctx);
-```
-
-Calling it more than once for the same app is harmless.
+It does **not** register plugins' `publicRoutes` or the public form and incoming-webhook endpoints (`/api/forms/:name`, `/api/webhook/incoming`). Those are served by Dune itself, and `createDuneApp()` registers them. An app built by hand from `bootstrap()` gets neither from `mountDuneAdmin()`: build it with `createDuneApp()`.
 
 ### `getDuneAdminIslands()`
 
@@ -257,7 +248,7 @@ For a more responsive dev loop, `bootstrap()` accepts a `dev: true` option that 
 
 ## Admin panel
 
-The admin panel is available at `/admin` (or your configured `admin.path`) automatically via `mountDuneAdmin()`. Dune creates no default admin, so create the first one before you log in: `dune users:create admin@example.com --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](/docs/administration#creating-the-first-admin).
+The admin panel is available at `/admin` (or the `path` of the admin plugin's config) automatically via `mountDuneAdmin()`. Dune creates no default admin, so create the first one before you log in: `dune users:create admin@example.com --role admin --password-prompt`, or set `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` for the first boot. See [Creating the first admin](/docs/administration#creating-the-first-admin).
 
 The admin panel is fully functional in headless mode: create and edit pages, manage users, view metrics, configure plugins.
 

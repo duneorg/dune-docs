@@ -71,21 +71,28 @@ const plugin: DunePlugin = {
   version: "1.0.0",
   description: "Does something useful",
   hooks: {
-    onPageLoaded: async ({ data, config }) => {
-      // data is the Page that was just loaded
-    },
-    onAfterRender: async ({ data, setData }) => {
-      // data is the rendered HTML string; setData() replaces it
-      setData(data.replace("</body>", "<script>…</script></body>"));
+    onBeforeRender: async ({ data, setData }) => {
+      // data is { req, page, props }; setData() replaces what the template receives
+      setData({ ...data, props: { ...data.props, extra: true } });
     },
   },
   setup: async (api) => {
-    // api.hooks, api.config, api.storage
+    // api.hooks, api.config, api.storage, api.services (0.36)
   },
 };
 
 export default plugin;
 ```
+
+### Plugin services (since 0.36)
+
+`PluginApi.services` and `MountApi.services` (see [Plugin services](/docs/extending/plugins#plugin-services)) are new required fields, so code that builds those objects by hand, such as a test harness, has to supply them. The service interfaces and `isDuneError` in `@dune/core/plugin-api` are the plugin-facing contract. The implementations behind them are not: they change with core patch releases, which is the point.
+
+### Plugin capabilities (since 0.36)
+
+`PluginApi.capabilities` and `MountApi.capabilities` (see [Plugin capabilities](/docs/extending/plugins#plugin-capabilities)) are new required fields, so code that builds those objects by hand has to supply them. The slot and contribution-point names (`auth.session`, `scheduler.executor`, `inline-edit`, `editor.content`; `admin.pages`, `admin.routes`, `bar.actions`) and their contracts are the plugin-facing surface. The key set is closed in 1.0.
+
+0.36 **removed** the members they replace, with no deprecation period: `DunePlugin.adminServices`, `adminPages`, `adminBarActions` and `mountEarly`; `MountApi.adminServices`; `BootstrapResult.adminServices` and `adminContext`; `ResponseTransformContext.plugins` (use `barActions`); and the `AdminServices` / `AdminServicesContext` types. A plugin that used them fails type-checking until it moves to the registry; the [migration table](/docs/extending/plugins#moving-a-plugin-from-035) lists each replacement.
 
 ### Plugin API version
 
@@ -125,12 +132,8 @@ All hook events as of v0.6.0:
 | Startup | `onStorageReady` | `StorageAdapter` |
 | Startup | `onContentIndexReady` | `PageIndex[]` |
 | Request | `onRequest` | `Request` — replace with a `Response` + call `stopPropagation()` to short-circuit routing |
-| Request | `onRouteResolved` | `RouteMatch` |
-| Request | `onPageLoaded` | `Page` |
 | Request | `onCollectionResolved` | `Collection` |
 | Request | `onBeforeRender` | `TemplateProps` |
-| Request | `onAfterRender` | `string` (HTML) |
-| Request | `onResponse` | `Response` |
 | Content | `onMarkdownProcess` | `string` (raw markdown) |
 | Content | `onMarkdownProcessed` | `string` (HTML) |
 | Content | `onMediaDiscovered` | `MediaFile` |
@@ -141,10 +144,11 @@ All hook events as of v0.6.0:
 | API | `onApiResponse` | `Response` |
 | Engine | `onRebuild` | `void` |
 | Engine | `onThemeSwitch` | `string` (theme name) |
-| Admin CRUD | `onPageCreate` | `PageIndex` |
-| Admin CRUD | `onPageUpdate` | `PageIndex` |
-| Admin CRUD | `onPageDelete` | `string` (sourcePath) |
-| Admin CRUD | `onWorkflowChange` | `{ sourcePath, status }` |
+| Content mutation | `onPageCreate` | `{ sourcePath, title }` |
+| Content mutation | `onPageUpdate` | `{ sourcePath }` |
+| Content mutation | `onPageDelete` | `{ sourcePath }` |
+| Content mutation | `onPageMove` | `{ moves: { from, to }[] }` (`PageMovePayload`) |
+| Content mutation | `onWorkflowChange` | `{ sourcePath, from, to }` |
 
 New events will be added in minor versions. Exhaustive `switch`/`if` chains over `HookEvent` values should have a fallthrough case.
 
@@ -201,9 +205,12 @@ Core types frozen since v0.6.0 — no fields will be removed before v1.0:
 | `PageFrontmatter` | 0.1.0 |
 | `TemplateProps` | 0.1.0 |
 | `DuneConfig` / `SiteConfig` | 0.1.0 |
+| `TemplateConfig` | 0.36.0 |
 | `StorageAdapter` | 0.1.0 |
 | `SectionDef` | 0.6.0 |
 | `SectionInstance` | 0.6.0 |
+
+Since 0.36, `TemplateProps.config` is typed as `TemplateConfig` (`site`, `theme`, `system.languages`) instead of the whole `DuneConfig`: this is the part of the configuration a theme can rely on, and the rest is no longer typed for templates (the runtime value is unchanged). See [Templates](../../themes/templates#what-config-contains).
 
 New **optional** fields may be added to these types in minor versions. Code that spreads or destructures these types should use rest parameters to remain forward-compatible:
 
@@ -217,7 +224,7 @@ const fm: PageFrontmatter = { title: "…" };
 
 ## Config schema stability
 
-Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0.
+Fields in `site.yaml` and `system.yaml` that are documented in [Config Schema](config-schema) are stable. New optional keys may be added in minor versions. Keys will not be removed before v1.0, with one exception: 0.36 renamed the camelCase keys to snake_case in a single breaking step (see [Key naming](/docs/configuration#key-naming)). After that the convention is fixed.
 
 ## What is NOT stable
 
