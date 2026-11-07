@@ -240,6 +240,8 @@ Who holds a relation on it:
   ```
 
   A role that is only a content tag (`member`, `subscriber`, ...) grants nothing here.
+
+Membership follows the user record: user stores that core creates (the site auth store, and `services.users.createLocalStore()` for plugins) keep `member of group:<role>` equal to `roles[]` on every create, role update and delete, so granting or revoking a role applies at once, without a restart. At startup the tuples are re-seeded from the records as well. A plugin that builds its own user store must call `syncUserRoles()` itself.
 - **The admin plugin's own accounts** get a direct tuple matching their role, seeded at startup through `services.authz.seedAdminTuples()` (`bootstrapAdminTuples()` in core):
 
   ```
