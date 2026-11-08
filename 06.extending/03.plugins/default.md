@@ -282,13 +282,14 @@ Each entry adds a route under `/admin/` that is rendered inside the admin shell 
 
 ```typescript
 import type { DunePlugin } from "@dune/core/plugins";
+import { ADMIN_PAGES } from "@dune/plugin-admin";
 
 export default {
   name: "my-plugin",
   version: "1.0.0",
   hooks: {},
   setup(api) {
-    api.capabilities.contribute("admin.pages", {
+    api.capabilities.contribute(ADMIN_PAGES, {
       path: "/my-plugin", // relative to the admin prefix — registers at /admin/my-plugin
       label: "My Plugin",
       icon: "🔌",
@@ -313,8 +314,10 @@ The page appears in the admin sidebar under the label and icon you provide. The 
 For a `POST`, `PUT`, `PATCH` or `DELETE` endpoint, or a `GET` API route that is not a sidebar page:
 
 ```typescript
+import { ADMIN_ROUTES } from "@dune/plugin-admin";
+
 setup(api) {
-  api.capabilities.contribute("admin.routes", {
+  api.capabilities.contribute(ADMIN_ROUTES, {
     method: "POST",
     path: "/my-plugin/rebuild-index", // relative to the admin prefix → /admin/my-plugin/rebuild-index
     permission: "pages.publish",      // required — who may call this route
@@ -766,27 +769,26 @@ These are the keys core itself consumes. Core has no contribution points of its 
 
 ### Extension points a plugin declares
 
-A plugin that other plugins can extend declares its own keys, next to its types, by declaration merging. Core's contract does not grow with every plugin's features, and core never reads a key it did not declare. The rule: **a key is prefixed with the name of the plugin that consumes it**; unprefixed names belong to core.
+A plugin that other plugins can extend declares its own keys as typed tokens and exports them next to its types. Core's contract does not grow with every plugin's features, and core never reads a key it did not declare. The rule: **a key's name is prefixed with the name of the plugin that consumes it**; unprefixed names belong to core.
 
-| Key | Kind | Item | Declared and read by |
-|-----|------|------|----------------------|
-| `admin.editor` | slot | `ContentEditorPlugin`, a replacement page editor | `@dune/plugin-admin` (its built-in block editor is the fallback) |
-| `admin.pages` | contribution | `AdminPageRegistration` (a sidebar page) | `@dune/plugin-admin` |
-| `admin.routes` | contribution | `AdminRouteRegistration` (a guarded route) | `@dune/plugin-admin` |
-| `bar.actions` | contribution | `(ctx) => BarAction[]` | `@dune/plugin-inline-edit`, which renders the bar |
+| Key | Export | Kind | Item | Declared and read by |
+|-----|--------|------|------|----------------------|
+| `admin.editor` | `ADMIN_EDITOR` | slot | `ContentEditorPlugin`, a replacement page editor | `@dune/plugin-admin` (its built-in block editor is the fallback) |
+| `admin.pages` | `ADMIN_PAGES` | contribution | `AdminPageRegistration` (a sidebar page) | `@dune/plugin-admin` |
+| `admin.routes` | `ADMIN_ROUTES` | contribution | `AdminRouteRegistration` (a guarded route) | `@dune/plugin-admin` |
+| `bar.actions` | `BAR_ACTIONS` | contribution | `(ctx) => BarAction[]` | `@dune/plugin-inline-edit`, which renders the bar |
 
-Importing a plugin's types is what makes its keys known to TypeScript (`import type { AdminPageRegistration } from "jsr:@dune/plugin-admin"`). At runtime nothing is needed: the registry is keyed by string, and a key nobody reads is simply never used. To offer an extension point yourself:
+A key carries its item type, so `contribute(ADMIN_PAGES, page)` and `list(ADMIN_PAGES)` are type-checked without any module augmentation (which JSR does not accept in a published package). Import the key from the plugin that declares it. At runtime the registry is keyed by name, so two keys with the same name are the same capability: a plugin that does not want a dependency on another's package can recreate the key from its documented name, `capabilityKey<…>("bar.actions")`. A key nobody reads is simply never used. To offer an extension point yourself:
 
 ```typescript
-declare module "jsr:@dune/plugin-api" {
-  interface Contributions {
-    /** A tab on the billing page. Consumer: my-billing. */
-    "my-billing.tabs": { id: string; label: string; render(): string };
-  }
-}
+import { type CapabilityKey, capabilityKey } from "jsr:@dune/core/plugin-api";
+
+/** A tab on the billing page. Consumer: my-billing. */
+export const BILLING_TABS: CapabilityKey<{ id: string; label: string; render(): string }> =
+  capabilityKey("my-billing.tabs");
 ```
 
-and read it in `mount()` with `capabilities.list("my-billing.tabs")`, or in `transformResponse` from `ctx.capabilities`.
+and read it in `mount()` with `capabilities.list(BILLING_TABS)`, or in `transformResponse` from `ctx.capabilities`. Annotate the exported constant with its `CapabilityKey<…>` type (JSR requires explicit types on a package's exports).
 
 ### Providing and contributing
 
@@ -794,8 +796,8 @@ Declare in `setup()`; this only records the declaration. Slots are given as a fa
 
 ```typescript
 import type { DunePlugin } from "jsr:@dune/core/hooks";
-import type { ContentEditorPlugin } from "jsr:@dune/plugin-admin"; // also declares the `admin.editor` key
-import type { BarAction } from "jsr:@dune/plugin-inline-edit"; // also declares `bar.actions`
+import { ADMIN_EDITOR } from "jsr:@dune/plugin-admin"; // the `admin.editor` key
+import { BAR_ACTIONS } from "jsr:@dune/plugin-inline-edit"; // the `bar.actions` key
 
 export default {
   name: "my-editor",
@@ -803,11 +805,11 @@ export default {
   hooks: {},
   setup(api) {
     // A slot: one provider. The factory runs once, after every setup() has settled.
-    api.capabilities.provide("admin.editor", ({ storage, history, hooks }) =>
+    api.capabilities.provide(ADMIN_EDITOR, ({ storage, history, hooks }) =>
       createMyEditor({ storage, history, hooks }));
 
     // A contribution: appended to the point, in plugin registration order.
-    api.capabilities.contribute("bar.actions", ({ page }) =>
+    api.capabilities.contribute(BAR_ACTIONS, ({ page }) =>
       page?.template === "worksheet"
         ? [{ id: "my-editor:open", label: "Open in editor", href: `/editor?path=${encodeURIComponent(page.sourcePath)}` }]
         : []);
@@ -846,7 +848,7 @@ mount({ app, capabilities }) {
     const who = await capabilities.get("editor.session")?.authenticate(fc.req);
     return Response.json({ signedIn: who?.authenticated ?? false });
   });
-  const extraPages = capabilities.list("admin.pages"); // readonly array
+  const extraPages = capabilities.list(ADMIN_PAGES); // readonly array
 }
 ```
 
@@ -936,10 +938,10 @@ export default function createAutosavePlugin(): DunePlugin {
 | Before (0.35) | Now (0.36) |
 |---------------|------------|
 | `adminServices() → { inlineEdit }` | `capabilities.provide("editor.inline", factory)` in `setup()` |
-| `adminServices() → { contentEditor }` | `capabilities.provide("admin.editor", factory)` (the admin declares the key) |
-| `adminPages: [...]` | `capabilities.contribute("admin.pages", page)` |
-| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` (the bar plugin declares it) and `ctx.capabilities.list("bar.actions")` |
-| `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute("admin.routes", { method, path, permission, handler })` |
+| `adminServices() → { contentEditor }` | `capabilities.provide(ADMIN_EDITOR, factory)` (the admin exports the key) |
+| `adminPages: [...]` | `capabilities.contribute(ADMIN_PAGES, page)` |
+| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute(BAR_ACTIONS, fn)` (the bar plugin exports the key) and `ctx.capabilities.list(BAR_ACTIONS)` |
+| `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute(ADMIN_ROUTES, { method, path, permission, handler })` |
 | `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("editor.session")?.authenticate(req)` |
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
 | `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
