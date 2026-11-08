@@ -41,13 +41,12 @@ import {
 } from "@dune/core";
 ```
 
-The following sub-module exports are also available:
+The following sub-module exports are also available. (Theme helpers such as `paginate`, `formatDate` and `getSearchUrl` are in the separate `@dune/theme-api` package, not in core; `@dune/core/theme-helpers` was removed in 0.36.)
 
 | Import path | Contents |
 |---|---|
 | `@dune/core/plugins` | `PLUGIN_API_VERSION`, `CORE_VERSION`, `CORE_INSTANCE`, `loadPlugins`, `loadPluginAdminConfigs` |
 | `@dune/core/sections` | `SectionRegistry`, `sectionRegistry`, `renderSections`, section types |
-| `@dune/core/theme-helpers` | `paginate`, `formatDate`, `getCanonicalUrl`, `getSearchUrl`, `sortPages`, `groupByYear`, `truncate`, `buildPageTitle`, template/config types |
 | `@dune/core/content` | `ContentApi`, `createContentApi()` — content query API for headless Fresh routes, obtained via `BootstrapResult.contentApi` |
 | `@dune/core/admin` | `mountDuneAdmin()`, `getDuneAdminIslands()` — headless admin mounting |
 
