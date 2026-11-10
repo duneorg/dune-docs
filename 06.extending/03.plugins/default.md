@@ -761,15 +761,32 @@ There are two shapes. A **slot** has at most one active provider; a **contributi
 | `editor.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
 | `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
 | `editor.inline` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
-| `editor.content` | `ContentEditorPlugin` | an editor plugin | the admin | the admin uses its built-in block editor |
 
-| Contribution point | Item | Used by |
-|--------------------|------|---------|
-| `admin.pages` | `AdminPageRegistration` | the admin (sidebar pages) |
-| `admin.routes` | `AdminRouteRegistration` | the admin (guarded routes) |
-| `bar.actions` | `(ctx) => AdminBarAction[]` | the admin bar, via `ResponseTransformContext.barActions` |
+These are the keys core itself consumes. Core has no contribution points of its own.
 
-The key set is closed in 1.0: these are the only names. Third-party keys are not supported.
+### Extension points a plugin declares
+
+A plugin that other plugins can extend declares its own keys, next to its types, by declaration merging. Core's contract does not grow with every plugin's features, and core never reads a key it did not declare. The rule: **a key is prefixed with the name of the plugin that consumes it**; unprefixed names belong to core.
+
+| Key | Kind | Item | Declared and read by |
+|-----|------|------|----------------------|
+| `admin.editor` | slot | `ContentEditorPlugin`, a replacement page editor | `@dune/plugin-admin` (its built-in block editor is the fallback) |
+| `admin.pages` | contribution | `AdminPageRegistration` (a sidebar page) | `@dune/plugin-admin` |
+| `admin.routes` | contribution | `AdminRouteRegistration` (a guarded route) | `@dune/plugin-admin` |
+| `bar.actions` | contribution | `(ctx) => BarAction[]` | `@dune/plugin-inline-edit`, which renders the bar |
+
+Importing a plugin's types is what makes its keys known to TypeScript (`import type { AdminPageRegistration } from "jsr:@dune/plugin-admin"`). At runtime nothing is needed: the registry is keyed by string, and a key nobody reads is simply never used. To offer an extension point yourself:
+
+```typescript
+declare module "jsr:@dune/plugin-api" {
+  interface Contributions {
+    /** A tab on the billing page. Consumer: my-billing. */
+    "my-billing.tabs": { id: string; label: string; render(): string };
+  }
+}
+```
+
+and read it in `mount()` with `capabilities.list("my-billing.tabs")`, or in `transformResponse` from `ctx.capabilities`.
 
 ### Providing and contributing
 
@@ -777,6 +794,8 @@ Declare in `setup()`; this only records the declaration. Slots are given as a fa
 
 ```typescript
 import type { DunePlugin } from "jsr:@dune/core/hooks";
+import type { ContentEditorPlugin } from "jsr:@dune/plugin-admin"; // also declares the `admin.editor` key
+import type { BarAction } from "jsr:@dune/plugin-inline-edit"; // also declares `bar.actions`
 
 export default {
   name: "my-editor",
@@ -784,7 +803,7 @@ export default {
   hooks: {},
   setup(api) {
     // A slot: one provider. The factory runs once, after every setup() has settled.
-    api.capabilities.provide("editor.content", ({ storage, history, hooks }) =>
+    api.capabilities.provide("admin.editor", ({ storage, history, hooks }) =>
       createMyEditor({ storage, history, hooks }));
 
     // A contribution: appended to the point, in plugin registration order.
@@ -916,9 +935,9 @@ export default function createAutosavePlugin(): DunePlugin {
 | Before (0.35) | Now (0.36) |
 |---------------|------------|
 | `adminServices() → { inlineEdit }` | `capabilities.provide("editor.inline", factory)` in `setup()` |
-| `adminServices() → { contentEditor }` | `capabilities.provide("editor.content", factory)` |
+| `adminServices() → { contentEditor }` | `capabilities.provide("admin.editor", factory)` (the admin declares the key) |
 | `adminPages: [...]` | `capabilities.contribute("admin.pages", page)` |
-| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` and `ctx.barActions` |
+| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` (the bar plugin declares it) and `ctx.capabilities.list("bar.actions")` |
 | `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute("admin.routes", { method, path, permission, handler })` |
 | `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("editor.session")?.authenticate(req)` |
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
