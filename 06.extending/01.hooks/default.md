@@ -68,7 +68,7 @@ Fired during bootstrap when the search engine is created. They let a plugin add 
 
 | Hook | When it fires | Use case |
 |------|--------------|----------|
-| `onSearchRecordsCollect` | Before the search index is built | Inject extra records (e.g. extracted PDF text) into the index |
+| `onSearchRecordsCollect` | Before the search index is built, and again after every content rebuild | Inject extra records (e.g. extracted PDF text) into the index |
 | `onSearchEngineCreate` | When the search engine is created | Replace the built-in engine with an alternative backend (e.g. Meilisearch). If it fails to build, Dune [falls back and retries](../../reference/search#when-a-search-backend-is-down) instead of stopping |
 
 ### Content mutation hooks
@@ -213,7 +213,7 @@ The payload objects are mutable — handlers populate them in place (push record
 
 | Hook | `data` shape | Description |
 |------|--------------|-------------|
-| `onSearchRecordsCollect` | `{ records: InjectedSearchRecord[] }` | Push records to index them alongside content pages. Each record carries its own result `route` and is indexed from memory (no file read). |
+| `onSearchRecordsCollect` | `{ records: InjectedSearchRecord[] }` | Push records to index them alongside content pages. Each record carries its own result `route` and is indexed from memory (no file read). Fires at startup and after every rebuild, so return the current set each time; a record you no longer return drops out of the index. |
 | `onSearchEngineCreate` | `{ engine, pages, injectedRecords, storage, contentDir, config, formats, loadText }` | Assign `engine` to replace the built-in engine. `loadText(page)` returns a page's plain-text body so an alternative engine can index the same text. Leaving `engine` unset keeps the built-in engine. |
 
 `InjectedSearchRecord` is `{ route: string, title: string, body: string, fields?: Record<string, string>, template?: string }`.
