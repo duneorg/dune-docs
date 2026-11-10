@@ -12,11 +12,11 @@ metadata:
 
 # Inline Editing
 
-Inline editing lets logged-in admins edit page content directly in the public site view — no need to navigate to the admin panel, find the page, and use the full editor. Hover the title or body content and click the floating **✎ Edit** button to rename the title in place, or rewrite the body with a TipTap WYSIWYG editor that edits the Markdown source directly — with a bubble formatting toolbar, live presence, and conflict-free merging when several admins edit at once.
+Inline editing lets signed-in editors edit page content directly in the public site view — no need to navigate to the admin panel, find the page, and use the full editor. Hover the title or body content and click the floating **✎ Edit** button to rename the title in place, or rewrite the body with a TipTap WYSIWYG editor that edits the Markdown source directly — with a bubble formatting toolbar, live presence, and conflict-free merging when several editors edit at once.
 
 ## Installation
 
-Inline editing is provided by the `@dune/plugin-inline-edit` plugin. Add it to your site to enable the admin bar and all editing features.
+Inline editing is provided by the `@dune/plugin-inline-edit` plugin. Add it to your site to enable the editing bar and all editing features.
 
 **1. Add the plugin to `site.yaml`:**
 
@@ -35,29 +35,31 @@ plugins:
 }
 ```
 
-Without the plugin, admins see no admin bar and no edit controls on the public site.
+Without the plugin, nobody sees the bar or any edit controls on the public site.
 
 ## How it activates
 
-Log in at `/admin`. From that point forward, every page you browse on your site gets an **admin bar** injected at the top — a thin fixed strip showing the page title, editing controls, and a link back to the full admin editor.
+Sign in as someone who may edit pages. From that point forward, every page you browse on your site gets an **editing bar** injected at the top — a thin fixed strip showing the page title and the editing controls.
 
-No template changes needed. The admin bar is injected server-side into the response whenever a valid admin session is detected. It appears on the default-language pages and on all language-prefixed variants (`/de/`, `/fr/`, etc.) alike.
+Who counts as an editor: anyone holding the `admin`, `editor` or `author` role (the `pages.update` permission), signed in either through the admin panel or through the site's own login (`auth:` in `site.yaml`). **The admin panel is not required.** A site with a login and `@dune/plugin-inline-edit` and no admin plugin lets its editors edit in place, and their role decides what they may touch: authors can save only pages they created, and `.tsx` pages need a role listed in `content.allow_tsx_format` (admin only by default).
+
+No template changes needed. The bar is injected server-side into the response whenever a valid editor session is detected. It appears on the default-language pages and on all language-prefixed variants (`/de/`, `/fr/`, etc.) alike.
 
 Log out (or clear cookies) and the bar disappears immediately — anonymous visitors never see it.
 
 ## Admin bar
 
-The admin bar appears at the top of every page while you are logged in:
+The bar appears at the top of every page while you are signed in:
 
 ```
-✦ DUNE  [page title]  ✎ Editing  Save  Open in admin →  username
+✦ DUNE  [page title]  ✎ Editing  Save  [buttons from other plugins]  username
 ```
 
 | Control | Action |
 |---------|--------|
 | **✎ Editing / 👁 Preview** | Toggle between edit mode (outlines appear on editable elements) and preview mode (page looks exactly as visitors see it) |
 | **Save** | Commits any pending edits to the page file |
-| **Open in admin →** | Opens the full admin editor for this page |
+| **Buttons from other plugins** | Any plugin can add buttons through the bar's `bar.actions` point. With the admin panel installed these are **✎ Edit source** (the page's full source editor in an overlay) and **Open in admin →** (the full admin editor for this page) |
 
 ## Starting an edit
 
@@ -77,7 +79,7 @@ The save is debounced — it writes to disk after you stop typing, not on every 
 
 In edit mode, hover over the page body content and click the **✎ Edit** button:
 
-- A floating **Save / Cancel** toolbar appears, sticky below the admin bar as you scroll
+- A floating **Save / Cancel** toolbar appears, sticky below the bar as you scroll
 - A WYSIWYG editor replaces the page body — select text to see the **bubble formatting toolbar** appear above the selection
 - **Save** writes the changes back to the Markdown source on disk, then reloads the page
 - **Cancel** or **Escape** discards unsaved changes
@@ -128,6 +130,6 @@ See [Inline editing in themes](themes/inline-editing) for how to use `EditableTe
 
 - **Body editing requires theme support.** The theme must mark the body element with `data-dune-body` (or render the `EditableMarkdown` marker component). Themes that don't are read-only for body content.
 - **One page at a time.** The inline editor operates on the currently viewed page. There is no cross-page or bulk editing.
-- **Admin session required.** The admin bar and all editing controls are invisible to anonymous visitors and require an active admin session.
-- **Concurrent edits merge at the Markdown level.** Simultaneous edits to different parts of a page merge cleanly; two admins rewriting the exact same sentence at the same moment merge character-wise, which can need a quick proofread.
+- **An editing role is required.** The bar and all editing controls are invisible to anonymous visitors and to signed-in users without the permission to edit pages (a plain `member`, for instance).
+- **Concurrent edits merge at the Markdown level.** Simultaneous edits to different parts of a page merge cleanly; two editors rewriting the exact same sentence at the same moment merge character-wise, which can need a quick proofread.
 - **Image insertion requires a URL.** The toolbar does not include a media uploader — paste the URL of an already-hosted image. Upload via the admin media panel first if needed.

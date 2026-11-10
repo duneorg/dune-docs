@@ -282,13 +282,14 @@ Each entry adds a route under `/admin/` that is rendered inside the admin shell 
 
 ```typescript
 import type { DunePlugin } from "@dune/core/plugins";
+import { ADMIN_PAGES } from "@dune/plugin-admin";
 
 export default {
   name: "my-plugin",
   version: "1.0.0",
   hooks: {},
   setup(api) {
-    api.capabilities.contribute("admin.pages", {
+    api.capabilities.contribute(ADMIN_PAGES, {
       path: "/my-plugin", // relative to the admin prefix — registers at /admin/my-plugin
       label: "My Plugin",
       icon: "🔌",
@@ -313,8 +314,10 @@ The page appears in the admin sidebar under the label and icon you provide. The 
 For a `POST`, `PUT`, `PATCH` or `DELETE` endpoint, or a `GET` API route that is not a sidebar page:
 
 ```typescript
+import { ADMIN_ROUTES } from "@dune/plugin-admin";
+
 setup(api) {
-  api.capabilities.contribute("admin.routes", {
+  api.capabilities.contribute(ADMIN_ROUTES, {
     method: "POST",
     path: "/my-plugin/rebuild-index", // relative to the admin prefix → /admin/my-plugin/rebuild-index
     permission: "pages.publish",      // required — who may call this route
@@ -758,35 +761,34 @@ There are two shapes. A **slot** has at most one active provider; a **contributi
 | Slot | Contract | Typically provided by | Used by | If nobody provides it |
 |------|----------|----------------------|---------|-----------------------|
 | `admin.prefix` | `{ prefix }`: the URL path the admin is mounted at (starts with `/`, no trailing slash) | the admin plugin | core: keeps these paths out of the page cache and response transforms, reserves them against plugin `publicRoutes`, forwards them in `dune build --hybrid`, prints the admin URL in `dune dev` / `dune serve` | there is no admin: `/admin` is an ordinary path and nothing is reserved |
-| `editor.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: the admin bar, the inline-edit WebSocket | every visitor is anonymous for admin purposes (no bar) |
+| `editor.session` | `authenticate(req) → { authenticated, user? }`, optional `sessionCookies` | the admin plugin | core: who is treated as an editor for the bar, the inline-edit WebSocket and `/api/inline-edit/*` (a site user holding `pages.update` counts too, without this slot) | only site users who may edit are editors |
 | `scheduler.executor` | `execute(action)` | the admin plugin | `dune serve` runs core's scheduler loop with it | the loop is not started; scheduled actions stay queued |
-| `editor.inline` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/ws`, the admin | the WebSocket route answers 501 |
+| `editor.inline` | `InlineEditManager` | `@dune/plugin-inline-edit` | core's `/api/inline-edit/*` gate (WebSocket and HTTP routes), the admin | those routes answer 501 |
 
 These are the keys core itself consumes. Core has no contribution points of its own.
 
 ### Extension points a plugin declares
 
-A plugin that other plugins can extend declares its own keys, next to its types, by declaration merging. Core's contract does not grow with every plugin's features, and core never reads a key it did not declare. The rule: **a key is prefixed with the name of the plugin that consumes it**; unprefixed names belong to core.
+A plugin that other plugins can extend declares its own keys as typed tokens and exports them next to its types. Core's contract does not grow with every plugin's features, and core never reads a key it did not declare. The rule: **a key's name is prefixed with the name of the plugin that consumes it**; unprefixed names belong to core.
 
-| Key | Kind | Item | Declared and read by |
-|-----|------|------|----------------------|
-| `admin.editor` | slot | `ContentEditorPlugin`, a replacement page editor | `@dune/plugin-admin` (its built-in block editor is the fallback) |
-| `admin.pages` | contribution | `AdminPageRegistration` (a sidebar page) | `@dune/plugin-admin` |
-| `admin.routes` | contribution | `AdminRouteRegistration` (a guarded route) | `@dune/plugin-admin` |
-| `bar.actions` | contribution | `(ctx) => BarAction[]` | `@dune/plugin-inline-edit`, which renders the bar |
+| Key | Export | Kind | Item | Declared and read by |
+|-----|--------|------|------|----------------------|
+| `admin.editor` | `ADMIN_EDITOR` | slot | `ContentEditorPlugin`, a replacement page editor | `@dune/plugin-admin` (its built-in block editor is the fallback) |
+| `admin.pages` | `ADMIN_PAGES` | contribution | `AdminPageRegistration` (a sidebar page) | `@dune/plugin-admin` |
+| `admin.routes` | `ADMIN_ROUTES` | contribution | `AdminRouteRegistration` (a guarded route) | `@dune/plugin-admin` |
+| `bar.actions` | `BAR_ACTIONS` | contribution | `(ctx) => BarAction[]` | `@dune/plugin-inline-edit`, which renders the bar |
 
-Importing a plugin's types is what makes its keys known to TypeScript (`import type { AdminPageRegistration } from "jsr:@dune/plugin-admin"`). At runtime nothing is needed: the registry is keyed by string, and a key nobody reads is simply never used. To offer an extension point yourself:
+A key carries its item type, so `contribute(ADMIN_PAGES, page)` and `list(ADMIN_PAGES)` are type-checked without any module augmentation (which JSR does not accept in a published package). Import the key from the plugin that declares it. At runtime the registry is keyed by name, so two keys with the same name are the same capability: a plugin that does not want a dependency on another's package can recreate the key from its documented name, `capabilityKey<…>("bar.actions")`. A key nobody reads is simply never used. To offer an extension point yourself:
 
 ```typescript
-declare module "jsr:@dune/plugin-api" {
-  interface Contributions {
-    /** A tab on the billing page. Consumer: my-billing. */
-    "my-billing.tabs": { id: string; label: string; render(): string };
-  }
-}
+import { type CapabilityKey, capabilityKey } from "jsr:@dune/core/plugin-api";
+
+/** A tab on the billing page. Consumer: my-billing. */
+export const BILLING_TABS: CapabilityKey<{ id: string; label: string; render(): string }> =
+  capabilityKey("my-billing.tabs");
 ```
 
-and read it in `mount()` with `capabilities.list("my-billing.tabs")`, or in `transformResponse` from `ctx.capabilities`.
+and read it in `mount()` with `capabilities.list(BILLING_TABS)`, or in `transformResponse` from `ctx.capabilities`. Annotate the exported constant with its `CapabilityKey<…>` type (JSR requires explicit types on a package's exports).
 
 ### Providing and contributing
 
@@ -794,8 +796,8 @@ Declare in `setup()`; this only records the declaration. Slots are given as a fa
 
 ```typescript
 import type { DunePlugin } from "jsr:@dune/core/hooks";
-import type { ContentEditorPlugin } from "jsr:@dune/plugin-admin"; // also declares the `admin.editor` key
-import type { BarAction } from "jsr:@dune/plugin-inline-edit"; // also declares `bar.actions`
+import { ADMIN_EDITOR } from "jsr:@dune/plugin-admin"; // the `admin.editor` key
+import { BAR_ACTIONS } from "jsr:@dune/plugin-inline-edit"; // the `bar.actions` key
 
 export default {
   name: "my-editor",
@@ -803,11 +805,11 @@ export default {
   hooks: {},
   setup(api) {
     // A slot: one provider. The factory runs once, after every setup() has settled.
-    api.capabilities.provide("admin.editor", ({ storage, history, hooks }) =>
+    api.capabilities.provide(ADMIN_EDITOR, ({ storage, history, hooks }) =>
       createMyEditor({ storage, history, hooks }));
 
     // A contribution: appended to the point, in plugin registration order.
-    api.capabilities.contribute("bar.actions", ({ page }) =>
+    api.capabilities.contribute(BAR_ACTIONS, ({ page }) =>
       page?.template === "worksheet"
         ? [{ id: "my-editor:open", label: "Open in editor", href: `/editor?path=${encodeURIComponent(page.sourcePath)}` }]
         : []);
@@ -846,7 +848,7 @@ mount({ app, capabilities }) {
     const who = await capabilities.get("editor.session")?.authenticate(fc.req);
     return Response.json({ signedIn: who?.authenticated ?? false });
   });
-  const extraPages = capabilities.list("admin.pages"); // readonly array
+  const extraPages = capabilities.list(ADMIN_PAGES); // readonly array
 }
 ```
 
@@ -868,9 +870,9 @@ interface RequestAuthenticator {
 
 - **Declare `sessionCookies`.** Core uses the names for two cheap decisions that must not depend on a particular admin: whether to call `authenticate()` at all on a public page, and whether to keep the response out of the shared page cache (a response rendered for an editor must never be cached for anonymous visitors). If you leave it out, core treats *any* request with a `Cookie` header as possibly signed in: always correct, but every visitor with an analytics cookie costs a lookup and bypasses the cache.
 - **Be cheap without a session.** `authenticate()` runs on public pages. Return `{ authenticated: false }` straight away, without touching a session store, when the request carries no session of yours.
-- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `editor.session`, whether or not the built-in admin is listed. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
+- **Authorisation is core's.** Core checks `pages.update` for your user through its authz system, which exists whenever a plugin provides `editor.session` (or the site has a login), whether or not the built-in admin is listed. Give your accounts an admin-tier role and seed their tuples with `services.authz.seedAdminTuples([{ id, role }])`; a session without the tuple is authenticated but never gets the bar.
 - **You are the writer.** If your admin writes content itself, fire `onPageUpdate` (and `onPageCreate` / `onPageDelete` / `onPageMove` / `onWorkflowChange`) after each write: core does not fire them for you.
-- **Provide `admin.prefix`** with the path your admin is mounted at, e.g. `api.capabilities.provide("admin.prefix", () => ({ prefix: "/cms" }))`. Core never assumes `/admin`: without this slot your admin's pages can be served from the shared page cache and plugin routes can shadow them. `ResponseTransformContext.adminPrefix` is `""` when no admin provides one.
+- **Provide `admin.prefix`** with the path your admin is mounted at, e.g. `api.capabilities.provide("admin.prefix", () => ({ prefix: "/cms" }))`. Core never assumes `/admin`: without this slot your admin's pages can be served from the shared page cache and plugin routes can shadow them. A plugin that needs it reads `capabilities.get("admin.prefix")`; it is absent when no admin provides one.
 - Do not list `@dune/plugin-admin` if you replace the built-in admin entirely: core loads only what `plugins:` lists.
 
 [`@dune/testing`](https://jsr.io/@dune/testing) ships `createStubAdmin()`, a minimal admin built only on these services and capabilities, and `createAppHarness()`, which serves the full app in process. Use them to test a plugin against an admin that is not the built-in one, or as a reference for your own.
@@ -890,9 +892,11 @@ runAdminConformance({
 
 It checks that you provide exactly one `editor.session`; that core recognises your editor's session and nothing else (no cookie, an unrelated cookie and a forged one get no admin bar and lose the editing markers); that `sessionCookies` includes the cookie your sign-in really sets; that a plugin mounted before you can read `editor.session`; that an edit fires `onPageUpdate` once (with `editPage`); that other plugins' `admin.pages` and `admin.routes` are mounted behind your login, CSRF check and permission (with `adminPrefix`); and that the site serves with your admin removed. Use `adminConformanceChecks(driver)` to get the checks as a list instead of registering `Deno.test`s.
 
-### Firing hooks from a provider
+### Serving `/api/inline-edit/*` and firing hooks from a provider
 
-A provider that writes content outside the standard admin CRUD routes (`/admin/api/pages/...`), which are what normally fire `onPageCreate`/`onPageUpdate`/`onPageDelete` after a successful write, must fire the matching event itself, because nothing else will. Otherwise search indexes, webhooks and cache invalidation miss the write. The factory's `hooks` is the registry to fire on:
+Core owns who may edit. After the site's authentication has run it resolves the editor (a site user, else your `editor.session` user), checks `pages.update`, and for writes that the request is same-origin. It then hands everything below `/api/inline-edit/` (the WebSocket upgrade excepted, which goes to `handleUpgrade`) to your `InlineEditManager.handleRequest(req, { editor, path, pageFrontmatter })`. You decide the routes and anything page-specific, such as which pages and file types this editor may write (`editor.roles`, `pageFrontmatter(sourcePath)` for ownership). Return 404 for a path you do not serve.
+
+A provider that writes content must also fire the matching event itself, because nothing else will; otherwise search indexes, webhooks and cache invalidation miss the write. The factory's `hooks` is the registry to fire on. Name the person in `actor` so audit and webhook plugins can say who did it:
 
 ```typescript
 import type { CapabilityContext } from "jsr:@dune/core/plugin-api";
@@ -905,15 +909,14 @@ function createAutosaveManager(ctx: CapabilityContext): InlineEditManager {
   return {
     handleUpgrade: (req, user) => openAutosaveSocket(req, user), // your transport
     getPresence: () => [],
-    async commit(sourcePath, _author) {
+    async handleRequest(req, { editor, path }) {
+      // core has already checked who this is and that they may edit pages
+      if (req.method !== "POST" || !path.startsWith("save/")) return new Response("Not found", { status: 404 });
+      const sourcePath = decodeURIComponent(path.slice("save/".length));
       await storage.write(sourcePath, await currentDraft(sourcePath));
-      // The admin CRUD route fires this inline on a normal save; this manager
-      // writes directly through storage, so it must fire it too.
-      await hooks.fire("onPageUpdate", { sourcePath });
-    },
-    async patchFields(sourcePath, fields, _author) {
-      await applyFields(storage, sourcePath, fields);
-      await hooks.fire("onPageUpdate", { sourcePath });
+      // This manager writes directly through storage, so it fires the event.
+      await hooks.fire("onPageUpdate", { sourcePath, actor: editor.username });
+      return Response.json({ ok: true });
     },
   };
 }
@@ -935,10 +938,10 @@ export default function createAutosavePlugin(): DunePlugin {
 | Before (0.35) | Now (0.36) |
 |---------------|------------|
 | `adminServices() → { inlineEdit }` | `capabilities.provide("editor.inline", factory)` in `setup()` |
-| `adminServices() → { contentEditor }` | `capabilities.provide("admin.editor", factory)` (the admin declares the key) |
-| `adminPages: [...]` | `capabilities.contribute("admin.pages", page)` |
-| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute("bar.actions", fn)` (the bar plugin declares it) and `ctx.capabilities.list("bar.actions")` |
-| `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute("admin.routes", { method, path, permission, handler })` |
+| `adminServices() → { contentEditor }` | `capabilities.provide(ADMIN_EDITOR, factory)` (the admin exports the key) |
+| `adminPages: [...]` | `capabilities.contribute(ADMIN_PAGES, page)` |
+| `adminBarActions` and `ctx.plugins[].adminBarActions` in `transformResponse` | `capabilities.contribute(BAR_ACTIONS, fn)` (the bar plugin exports the key) and `ctx.capabilities.list(BAR_ACTIONS)` |
+| `app.post("/admin/…", withGuards(…))` in `mount()` | `capabilities.contribute(ADMIN_ROUTES, { method, path, permission, handler })` |
 | `fc.state.adminContext.auth.authenticate(req)` in a plugin route | `capabilities.get("editor.session")?.authenticate(req)` |
 | `mountEarly()` | removed: nothing needs admin middleware to mount first |
 | `MountApi.adminServices`, `BootstrapResult.adminServices`, `BootstrapResult.adminContext` | removed |
