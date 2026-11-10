@@ -24,7 +24,7 @@ Search uses an in-memory inverted index built from:
 - Page **template** name
 - Any **custom frontmatter fields** you add via `system.search.customFields`
 
-The index is built once at startup (`dune serve`) or rebuilt on each content change in dev mode (`dune dev`). It is not persisted to disk — a restart triggers a full rebuild.
+The index is built at startup and refreshed after every content rebuild, in `dune serve` and `dune dev` alike (a page saved in the admin, an inline edit, a plugin calling `engine.rebuild()`). The refresh runs in the background and bursts of saves are coalesced, so search is current shortly *after* the rebuild finishes, not at the moment it returns. The taxonomy and collections are current as soon as it returns. It is not persisted to disk — a restart triggers a full rebuild.
 
 ## Custom indexed fields
 
@@ -407,7 +407,7 @@ getSearchUrl("deno", "/en/search") // → "/en/search?q=deno"  (multilingual sit
 
 The search engine is replaceable. Two plugin hooks let plugins extend or swap it (see [Hooks](../../extending/hooks)):
 
-- **`onSearchRecordsCollect`** — contribute extra records (with their own result `route`) to index alongside content pages. Indexed from memory, no content file needed.
+- **`onSearchRecordsCollect`** — contribute extra records (with their own result `route`) to index alongside content pages. Indexed from memory, no content file needed. Fires at startup and after every rebuild; return the current set each time.
 - **`onSearchEngineCreate`** — provide an alternative `SearchEngine` (e.g. a Meilisearch backend) in place of the built-in in-memory engine.
 
 ### PDF text search — `@dune/plugin-pdf`
