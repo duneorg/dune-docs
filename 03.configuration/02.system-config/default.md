@@ -12,7 +12,7 @@ metadata:
 
 # System Configuration
 
-`config/system.yaml` controls how the Dune engine behaves — caching, content parsing, image handling, and more.
+`config/system.yaml` controls how the Dune engine behaves — page caching, content parsing, image handling, and more.
 
 ## Full reference
 
@@ -20,17 +20,11 @@ metadata:
 # Content settings
 content:
   dir: "content"                  # content directory (relative to site root)
-  markdown:
-    extra: true                   # extended markdown features
-    auto_links: true              # auto-link URLs in text
-    auto_url_links: true          # auto-link bare URLs
 
-# Cache settings
-cache:
-  enabled: true
-  driver: "filesystem"            # "memory", "filesystem", or "kv"
-  lifetime: 3600                  # seconds
-  check: "file"                   # "file" (mtime), "hash", or "none"
+# Rendered-page cache (server mode)
+page_cache:
+  enabled: false
+  ttl: 30                         # seconds
 
 # Image processing
 images:
@@ -47,10 +41,6 @@ languages:
 # Typography
 typography:
   orphan_protection: true         # prevent single-word last lines in paragraphs
-
-# Admin settings
-admin:
-  maxUploadMb: 100                 # max media upload size in MB (default: 100)
 
 # Where form submissions (and admin users) are stored; git-track it
 data_dir: data
@@ -69,27 +59,11 @@ session_store:
 # Debug mode
 debug: false
 
-# Timezone
-timezone: "UTC"
+# Feature flags, read anywhere with flag() (see Feature Flags)
+flags:
+  comments: true
+  beta_search: "env:ENABLE_BETA_SEARCH"
 ```
-
-## Cache drivers
-
-| Driver | Storage | Best for |
-|--------|---------|----------|
-| `filesystem` | `.dune/cache/` directory | Local development, traditional servers |
-| `memory` | In-process memory | Development, small sites |
-| `kv` | Deno KV store | Deno Deploy, edge deployment |
-
-## Cache invalidation
-
-The `check` field determines how Dune detects stale content:
-
-| Strategy | How it works | Trade-off |
-|----------|-------------|-----------|
-| `file` | Compare file modification time | Fast, misses renames |
-| `hash` | Hash file content | Accurate, slightly slower |
-| `none` | Never invalidate | Fastest, manual rebuild needed |
 
 ## Session store
 
@@ -118,17 +92,16 @@ Development and production often need different settings. Put overrides in `conf
 `config/env/development/system.yaml`:
 ```yaml
 debug: true
-cache:
+page_cache:
   enabled: false
 ```
 
 `config/env/production/system.yaml`:
 ```yaml
 debug: false
-cache:
+page_cache:
   enabled: true
-  driver: "kv"
-  check: "hash"
+  ttl: 60
 ```
 
 ### Environment detection

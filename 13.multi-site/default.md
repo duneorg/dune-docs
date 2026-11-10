@@ -100,7 +100,7 @@ site's own router processes the request. So `/docs/getting-started` becomes
 
 ## Admin Panels
 
-Each site has its own admin panel at its configured `admin.path` (default
+Each site has its own admin panel at the `path` of its admin plugin config (default
 `/admin`). Sessions do not cross site boundaries.
 
 For a prefix-routed site with `path_prefix: /docs`, the admin is reachable

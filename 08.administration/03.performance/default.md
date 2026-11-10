@@ -106,7 +106,7 @@ Requires admin role. Returns a full metrics snapshot as JSON.
 # system.yaml
 metrics:
   enabled: true                # boolean — Enable metrics collector (default: true)
-  slowQueryThresholdMs: 100    # number  — Log queries taking longer than this (default: 100)
+  slow_query_threshold_ms: 100    # number  — Log queries taking longer than this (default: 100)
 ```
 
 To disable metrics collection entirely:
@@ -134,7 +134,7 @@ All latency values are in **milliseconds**.
 
 ## Slow queries
 
-Collection and search queries that exceed `slowQueryThresholdMs` are recorded. The last 20 are retained in memory and shown on the dashboard and in the API response.
+Collection and search queries that exceed `slow_query_threshold_ms` are recorded. The last 20 are retained in memory and shown on the dashboard and in the API response.
 
 If you see frequent slow queries, consider:
 - Enabling the [in-process page cache](../deployment/caching) to reduce re-rendering

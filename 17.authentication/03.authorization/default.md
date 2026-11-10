@@ -46,13 +46,13 @@ Dune's default schema defines:
 # site.yaml
 auth:
   mode: dune           # "dune" | "external-jwt"
-  authzStore: local    # default in dune mode — data/permissions/*.json (in-memory index)
+  authz_store: local    # default in dune mode — data/permissions/*.json (in-memory index)
 ```
 
-`authzStore` is independent of `userStore` but its default depends on `mode`:
+`authz_store` is independent of `user_store` but its default depends on `mode`:
 
 - **`dune` mode**: defaults to `local` — tuples are stored as flat JSON files in `data/permissions/` and indexed in-memory on startup.
-- **`external-jwt` mode**: no default — omitting `authzStore` gives JWT-claims-only authorization (no local tuple store). Set `authzStore: local` explicitly to opt in to local polizy authz (see [External JWT + local authz](#external-jwt--local-authz) below).
+- **`external-jwt` mode**: no default — omitting `authz_store` gives JWT-claims-only authorization (no local tuple store). Set `authz_store: local` explicitly to opt in to local polizy authz (see [External JWT + local authz](#external-jwt--local-authz) below).
 
 ## Common patterns
 
@@ -144,9 +144,9 @@ After bootstrap, **tuples are the authority** for `authz.check()`. The `roles[]`
 
 ## Tuple storage
 
-Two backends are available via `authzStore`:
+Two backends are available via `authz_store`:
 
-### `authzStore: local` (default)
+### `authz_store: local` (default)
 
 Tuples are stored as JSON files, one per tuple:
 
@@ -157,13 +157,13 @@ data/permissions/
 
 The in-memory index is rebuilt from files on restart. **HMAC signing is opt-in, not automatic** — set `DUNE_AUTHZ_HMAC_SECRET` (loaded via `loadHmacKeyFromEnv()`) to enable it; without it, tuple file integrity checking is disabled (`dune serve` logs a warning: `authz.hmac.disabled`). Once a key is set, an unsigned tuple file (no `hmac` field, e.g. one written before the key was configured, or by hand) is rejected on load by default — run `dune authz:sign` after setting the secret to sign existing files. Set `DUNE_AUTHZ_HMAC_ALLOW_UNSIGNED=1` to temporarily accept unsigned tuples during migration instead. Do not edit these files directly; use `authz.allow()`, `authz.addMember()`, `authz.disallowAllMatching()`.
 
-### `authzStore: db`
+### `authz_store: db`
 
 Tuples are stored in the site's database (SQLite or PostgreSQL). Suitable for large tuple sets or multi-process deployments where flat-file I/O is a bottleneck.
 
 ```yaml
 auth:
-  authzStore: db
+  authz_store: db
 ```
 
 Requires `DUNE_DB_PATH` (SQLite) or `DUNE_DB_URL` (PostgreSQL). The `authz_tuples` table is created automatically on first startup. The `authz.allow()` / `authz.addMember()` / `authz.disallowAllMatching()` API is identical to `local`; only the storage layer changes.
@@ -189,16 +189,16 @@ setGatingAuthz(authz);
 
 `auth.mode: external-jwt` handles authentication only — the external provider (Clerk, Auth0, etc.) issues and validates tokens. Authorization (content gating, route guards) can be handled two ways:
 
-**JWT-claims-only** (default in `external-jwt` mode — `authzStore` omitted): role membership is derived directly from the `roles` claim on every request. No local tuple store. Simple, but limited to what the JWT carries.
+**JWT-claims-only** (default in `external-jwt` mode — `authz_store` omitted): role membership is derived directly from the `roles` claim on every request. No local tuple store. Simple, but limited to what the JWT carries.
 
-**External JWT + local polizy** (opt-in via `authzStore: local`): the external provider handles authn; polizy handles authz. Opt in by setting `authzStore: local` explicitly:
+**External JWT + local polizy** (opt-in via `authz_store: local`): the external provider handles authn; polizy handles authz. Opt in by setting `authz_store: local` explicitly:
 
 ```yaml
 auth:
   mode: external-jwt
-  authzStore: local
+  authz_store: local
   jwt:
-    jwksUrl: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
+    jwks_url: "https://your-tenant.clerk.accounts.dev/.well-known/jwks.json"
 ```
 
 In this mode:
@@ -225,21 +225,33 @@ mountPaymentRoutes(app, {
 
 Without this, the granted role is present in `userStore` but `authz.check()` returns false until the next restart.
 
-## Admin panel authz
+## Site-wide permissions
 
-Admin users (`User`) are bootstrapped into the authz tuple store at startup via `bootstrapAdminTuples()`. Each admin user gets a direct relation tuple on `{ type: "app", id: "admin" }` matching their role:
+Everything an editor may do (`pages.update`, `pages.create`, `config.read`, ...) is checked with `authz.check()` against one object, `{ type: "app", id: "site" }`, mapped through the canonical `actionToRelations` schema. The object names what is protected (this site's content), not the admin panel, so it is the same with no admin, with `@dune/plugin-admin`, or with another admin plugin. There is no parallel role table.
 
-```
-admin  → tuple: (user:alice, admin,  app:admin)
-editor → tuple: (user:bob,   editor, app:admin)
-author → tuple: (user:carol, author, app:admin)
-```
+Who holds a relation on it:
 
-The admin panel middleware enforces panel access via `authz.check()`. If `authz` is undefined (creation failed at startup), the gate fails closed (403). Role changes and user deletes via the admin API automatically sync the tuple store.
+- **Site users** hold it through their role. Core grants `admin`, `editor` and `author` once, at group level, and site auth already keeps `member of group:<role>` in sync, so having the role is enough:
 
-**Granular admin permission checks** (`pages.create`, `config.read`, etc.) use the same `authz.check()` against `{ type: "app", id: "admin" }`, mapped through the canonical `actionToRelations` schema. There is no parallel role table.
+  ```
+  (group:admin,  admin,  app:site)
+  (group:editor, editor, app:site)
+  (group:author, author, app:site)
+  ```
+
+  A role that is only a content tag (`member`, `subscriber`, ...) grants nothing here.
+
+Membership follows the user record: user stores that core creates (the site auth store, and `services.users.createLocalStore()` for plugins) keep `member of group:<role>` equal to `roles[]` on every create, role update and delete, so granting or revoking a role applies at once, without a restart. At startup the tuples are re-seeded from the records as well. A plugin that builds its own user store must call `syncUserRoles()` itself.
+- **The admin plugin's own accounts** get a direct tuple matching their role, seeded at startup through `services.authz.seedAdminTuples()` (`bootstrapAdminTuples()` in core):
+
+  ```
+  (user:alice, admin,  app:site)
+  (user:bob,   editor, app:site)
+  ```
+
+The authz system exists whenever something uses it: the site has a login (`site.auth`), a plugin provides `editor.session`, or a plugin declares `authzActions`. If creation fails at startup, checks fail closed (403). Tuples are derived data, re-seeded at every start; after changing this resource's name on an existing site, run `dune authz:sign` once if the store is HMAC-protected.
 
 ## Limitations
 
-- `authzStore: local` is single-process only. Multi-process deployments should use a shared database (future `authzStore: db`).
+- `authz_store: local` is single-process only. Multi-process deployments should use a shared database (future `authz_store: db`).
 - The published synchronous hook `ResponseTransformContext.auth.hasPermission()` is a role-only approximation of that schema (`roleHasPermission()`). Use `authz.check()` for access decisions.

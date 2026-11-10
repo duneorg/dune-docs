@@ -12,12 +12,12 @@ metadata:
 
 # Feature Flags
 
-Feature flags let you toggle features on or off without changing code or redeploying. Flags are declared in `site.yaml`, resolved once at startup, and read anywhere via the `flag()` helper.
+Feature flags let you toggle features on or off without changing code or redeploying. Flags are declared in `system.yaml`, resolved once at startup, and read anywhere via the `flag()` helper.
 
 ## Configuration
 
 ```yaml
-# site.yaml
+# config/system.yaml
 flags:
   comments: true
   new_editor: false
@@ -31,9 +31,9 @@ Flag values can be:
 | `true` / `false` | Boolean literal |
 | `"env:VAR_NAME"` | `true` when the env var is `"1"`, `"true"`, or `"yes"`; `false` otherwise |
 
-Flags are resolved at startup. Changing `site.yaml` while the server is running has no effect until restart. Environment variables are read at startup and cached — they are not re-read per request.
+Flags are resolved at startup. Changing `system.yaml` while the server is running has no effect until restart. Environment variables are read at startup and cached — they are not re-read per request.
 
-Unknown flags (not declared in `site.yaml`) return `false` from `flag()`. There is no error for reading an undeclared flag.
+Unknown flags (not declared in `system.yaml`) return `false` from `flag()`. There is no error for reading an undeclared flag.
 
 ## Reading flags
 

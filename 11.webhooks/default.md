@@ -18,26 +18,29 @@ Webhooks fire asynchronously and never block the editor's HTTP response.
 
 ## Configuration
 
-Define webhook endpoints in the `admin.webhooks` array in your site configuration. Each entry is a `WebhookEndpointConfig` object.
+Define webhook endpoints in the `webhooks` array of the admin plugin's config (`config:` under its entry in `plugins:`). Each entry is a `WebhookEndpointConfig` object.
 
 ```yaml
-# site.config.yaml
-admin:
-  webhooks:
-    - url: "https://api.example.com/hooks/pages"
-      label: "Page change notifier"
-      events:
-        - onPageCreate
-        - onPageUpdate
+# config/site.yaml
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      webhooks:
+        - url: "https://api.example.com/hooks/pages"
+          label: "Page change notifier"
+          events:
+            - onPageCreate
+            - onPageUpdate
 
-    - url: "https://hooks.example.com/all-events"
-      label: "Full event sink"
-      secret: "$WEBHOOK_SECRET_ALL"
-      events:
-        - onPageCreate
-        - onPageUpdate
-        - onPageDelete
-        - onWorkflowChange
+        - url: "https://hooks.example.com/all-events"
+          label: "Full event sink"
+          secret: "$WEBHOOK_SECRET_ALL"
+          events:
+            - onPageCreate
+            - onPageUpdate
+            - onPageDelete
+            - onPageMove
+            - onWorkflowChange
 ```
 
 The second endpoint reads its signing secret from the `WEBHOOK_SECRET_ALL` environment variable. Any `secret` value prefixed with `$` is resolved from the environment at startup — the raw value is never written to disk or logs.
@@ -57,8 +60,9 @@ The second endpoint reads its signing secret from the `WEBHOOK_SECRET_ALL` envir
 | Event | Fires when | Payload shape |
 |-------|-----------|---------------|
 | `onPageCreate` | A new page is created and the content index has been rebuilt. | `{ sourcePath: string, title: string }` |
-| `onPageUpdate` | A page is saved. | `{ sourcePath: string, title: string }` |
+| `onPageUpdate` | A page is saved. | `{ sourcePath: string }` |
 | `onPageDelete` | A page is deleted. | `{ sourcePath: string }` |
+| `onPageMove` | Pages are renamed or reordered. | `{ moves: { from: string, to: string }[] }` |
 | `onWorkflowChange` | A page's workflow status changes. | `{ sourcePath: string, from: WorkflowStatus, to: WorkflowStatus }` |
 
 `WorkflowStatus` is one of: `"draft"`, `"in_review"`, `"published"`, `"archived"`.
@@ -123,7 +127,7 @@ After four attempts with no success, Dune logs a warning and discards the delive
 Every delivery attempt is written to disk at:
 
 ```
-{admin.runtimeDir}/webhook-logs/{YYYY-MM-DD}/{id}.json
+{runtime_dir}/webhook-logs/{YYYY-MM-DD}/{id}.json
 ```
 
 Each log file is a delivery record:
@@ -194,7 +198,7 @@ webhooks:
       actions: [rebuild, purge-cache]
 ```
 
-Incoming webhooks are part of Dune itself and work with the admin panel off. `admin.incoming_webhooks` still works and logs a deprecation warning.
+Incoming webhooks are part of Dune itself and work with the admin panel off. `admin.incoming_webhooks` was removed in 0.36; a config that still has it refuses to load. Move the list to `webhooks.incoming` in `system.yaml`.
 
 Token values that start with `$` are expanded from environment variables at request time — the raw value is never stored in logs or config output.
 

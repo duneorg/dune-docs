@@ -28,12 +28,15 @@ Machine translation produces a draft — a translated copy of the page saved as 
 | [Google Translate](https://cloud.google.com/translate) | console.cloud.google.com | $0 up to 500k chars/month |
 | [LibreTranslate](https://libretranslate.com) | Self-hosted or libretranslate.com | Self-hosted = free |
 
-### 2. Configure in `site.yaml`
+### 2. Configure it in the admin plugin's config
 
 ```yaml
-machine_translation:
-  provider: "deepl"           # "deepl" | "google" | "libretranslate"
-  apiKey: "$DEEPL_API_KEY"    # "$ENV_VAR" expansion supported
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      machine_translation:
+          provider: "deepl"           # "deepl" | "google" | "libretranslate"
+          api_key: "$DEEPL_API_KEY"    # "$ENV_VAR" expansion supported
 ```
 
 Store your key in an environment variable — never commit it to version control.
@@ -51,9 +54,12 @@ The 🤖 button will appear on the **Admin → Translations** dashboard for all 
 Best quality for European languages. Supports Markdown-aware translation (formatting is preserved).
 
 ```yaml
-machine_translation:
-  provider: "deepl"
-  apiKey: "$DEEPL_API_KEY"
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      machine_translation:
+          provider: "deepl"
+          api_key: "$DEEPL_API_KEY"
 ```
 
 Free API keys end with `:fx` — Dune auto-detects which endpoint to use.
@@ -63,9 +69,12 @@ Free API keys end with `:fx` — Dune auto-detects which endpoint to use.
 Widest language coverage. Uses the Cloud Translation API v2 (Basic).
 
 ```yaml
-machine_translation:
-  provider: "google"
-  apiKey: "$GOOGLE_TRANSLATE_API_KEY"
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      machine_translation:
+          provider: "google"
+          api_key: "$GOOGLE_TRANSLATE_API_KEY"
 ```
 
 ### LibreTranslate
@@ -73,10 +82,13 @@ machine_translation:
 Self-hosted, open-source, no usage limits or vendor lock-in.
 
 ```yaml
-machine_translation:
-  provider: "libretranslate"
-  baseUrl: "https://translate.example.com"    # your instance URL
-  apiKey: "$LIBRETRANSLATE_API_KEY"            # optional (if your instance requires it)
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      machine_translation:
+          provider: "libretranslate"
+          base_url: "https://translate.example.com"    # your instance URL
+          api_key: "$LIBRETRANSLATE_API_KEY"            # optional (if your instance requires it)
 ```
 
 ---
@@ -163,12 +175,15 @@ Response:
 ## Configuration reference
 
 ```yaml
-# site.yaml
-machine_translation:
-  provider: "deepl"          # string — "deepl" | "google" | "libretranslate"
-  apiKey: "$DEEPL_API_KEY"   # string — API key ("$ENV_VAR" expansion supported)
-  baseUrl: "https://..."     # string — LibreTranslate instance URL (libretranslate only)
-  enabled: true              # boolean — Set to false to disable without removing config
+# config/site.yaml: the admin plugin's config
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      machine_translation:
+        provider: "deepl"          # string — "deepl" | "google" | "libretranslate"
+        api_key: "$DEEPL_API_KEY"  # string — API key ("$ENV_VAR" expansion supported)
+        base_url: "https://..."    # string — LibreTranslate instance URL (libretranslate only)
+        enabled: true              # boolean — Set to false to disable without removing config
 ```
 
 ---

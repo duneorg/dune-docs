@@ -60,30 +60,32 @@ http_cache:
 # ── Public site user authentication ─────────────────────────────────────────
 auth:
   mode: "dune"                   # "dune" | "external-jwt" (default: "dune")
-  sessionLifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
+  session_lifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
   providers:
     github:
-      clientId: "$GITHUB_CLIENT_ID"
-      clientSecret: "$GITHUB_CLIENT_SECRET"
+      client_id: "$GITHUB_CLIENT_ID"
+      client_secret: "$GITHUB_CLIENT_SECRET"
     google:
-      clientId: "$GOOGLE_CLIENT_ID"
-      clientSecret: "$GOOGLE_CLIENT_SECRET"
+      client_id: "$GOOGLE_CLIENT_ID"
+      client_secret: "$GOOGLE_CLIENT_SECRET"
     discord:
-      clientId: "$DISCORD_CLIENT_ID"
-      clientSecret: "$DISCORD_CLIENT_SECRET"
-    magicLink:
+      client_id: "$DISCORD_CLIENT_ID"
+      client_secret: "$DISCORD_CLIENT_SECRET"
+    magic_link:
       enabled: true              # boolean — Enable magic-link email login
-  authzStore: "local"            # "local" — Permission tuple storage.
+    password:
+      enabled: false             # boolean — Password login for local accounts (POST /auth/login); needs user_store other than "session"
+  authz_store: "local"            # "local" — Permission tuple storage.
                                #   dune mode: defaults to "local".
                                #   external-jwt mode: no default — omit for JWT-claims-only authz,
                                #   set "local" to enable local polizy authz alongside the external IdP.
   # external-jwt mode options (used when mode: "external-jwt")
   jwt:
     secret: "$JWT_SECRET"        # string — HMAC-SHA256 shared secret (HS256)
-    jwksUrl: "https://..."       # string — JWKS endpoint for RS256 (Clerk, Auth0, etc.)
-    userIdClaim: "sub"           # string — Claim containing user ID (default: "sub")
-    emailClaim: "email"          # string — Claim containing email (default: "email")
-    rolesClaim: "roles"          # string — Claim containing role(s) (default: "roles")
+    jwks_url: "https://..."       # string — JWKS endpoint for RS256 (Clerk, Auth0, etc.)
+    user_id_claim: "sub"           # string — Claim containing user ID (default: "sub")
+    email_claim: "email"          # string — Claim containing email (default: "email")
+    roles_claim: "roles"          # string — Claim containing role(s) (default: "roles")
 
 # ── Transactional email ───────────────────────────────────────────────────────
 email:
@@ -106,18 +108,6 @@ email:
   sendgrid:
     apiKey: "$SENDGRID_API_KEY"
 
-# ── Public file uploads ───────────────────────────────────────────────────────
-uploads:
-  max_size_mb: 10               # number — Max upload size in MB (default: 10)
-  allowed_types:                # string[] — Permitted MIME types (server-derived from extension)
-    - "image/jpeg"
-    - "image/png"
-    - "image/webp"
-    - "image/gif"
-    - "image/avif"
-    - "application/pdf"
-  require_auth: false           # boolean — Require a logged-in User (default: false)
-
 # ── Payments ──────────────────────────────────────────────────────────────────
 payments:
   provider: "stripe"            # "stripe" — only provider in this release
@@ -129,12 +119,6 @@ payments:
       price_id: "price_xxx"     # string — Stripe Price ID
       role: "member"            # string — Role assigned to user on successful payment
       mode: "subscription"      # "subscription" | "payment" (default: "subscription")
-
-# ── Feature flags ─────────────────────────────────────────────────────────────
-flags:
-  comments: true                # boolean — static value
-  new_editor: false
-  beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
 ```
 
 ```yaml
@@ -157,16 +141,6 @@ forms:
 ```yaml
 content:
   dir: "content"                 # string — Content directory path
-  markdown:
-    extra: true                  # boolean — Extended markdown features
-    auto_links: true             # boolean — Auto-link URLs
-    auto_url_links: true         # boolean — Auto-link bare URLs
-
-cache:
-  enabled: true                  # boolean
-  driver: "filesystem"           # "memory" | "filesystem" | "kv"
-  lifetime: 3600                 # number — Seconds
-  check: "file"                  # "file" | "hash" | "none"
 
 images:
   default_quality: 80            # number — 1-100
@@ -190,12 +164,11 @@ typography:
 
 search:
   fail_on_startup: false         # boolean — Stop startup if a search engine fails to build (default: false = log, retry, fall back)
-  customFields: []               # string[] — Extra frontmatter field names to include in search index
+  analytics: false               # boolean — Count GET /api/search queries in runtime_dir/search-analytics.json (default: false; see Search → Query analytics)
+  custom_fields: []               # string[] — Extra frontmatter field names to include in search index
                                  #   e.g. ["summary", "author", "series"]
   highlight: true               # boolean — Return highlighted excerpts with <mark> tags (default: true)
   excerpt_length: 160           # number — Character length of returned excerpts (default: 160)
-  include_flex: []              # string[] — Flex Object type names to include in search index
-                                 #   e.g. ["products", "events"]
   facets: []                    # Facet definitions for filtering search results
     # - field: "taxonomy.category"   # dot-path into frontmatter
     # - field: "template"
@@ -249,9 +222,16 @@ tracing:
   sample_rate: 1.0               # number — 0.0–1.0 fraction of requests sampled (default: 1.0)
 
 debug: false                     # boolean
-timezone: "UTC"                  # string — IANA timezone
 
-data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces admin.dataDir.
+# Feature flags (resolved once at startup; read with flag())
+flags:
+  comments: true                # boolean — static value
+  new_editor: false
+  beta_search: "env:ENABLE_BETA_SEARCH"  # string — resolves from env var at startup
+
+data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces the removed admin.data_dir.
+runtime_dir: ".dune/admin"       # string — Machine-local runtime state (job state, revision history, staging, scheduled actions, search analytics, sessions). Not git-tracked. Replaces the removed admin.runtime_dir. The default still carries the admin's name so existing sites keep their state.
+max_revisions: 50                # number — Revisions kept per page; the oldest is pruned on each save, 0 keeps all (default: 50). Replaces the removed admin.max_revisions.
 
 # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
 webhooks:
@@ -264,38 +244,44 @@ webhooks:
 
 Valid incoming webhook `actions`: `rebuild` (re-indexes content), `purge-cache` (clears the processed image cache). See [Webhooks](../webhooks).
 
-## admin.yaml (or admin: block in dune.config.ts)
+## Admin plugin config
+
+The admin is a plugin; its settings are the `config:` of its entry in `plugins:` (`config/site.yaml`), not a core section. Core has no `admin:` key and refuses one in `system.yaml`.
 
 ```yaml
-admin:
-  enabled: true                  # boolean — Enable admin panel (default: true)
-  path: "/admin"                 # string — URL prefix for the admin panel
-  sessionLifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
-  dataDir: "data"                # string — Deprecated: use `data_dir` in system.yaml (still read, with a warning)
-  runtimeDir: ".dune/admin"      # string — Runtime data directory (sessions, revisions, staging, analytics). Not git-tracked.
-  maxRevisions: 50               # number — Maximum revisions retained per page (default: 50)
-  git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
-
-  # Outbound webhooks — fired on content mutation events
-  webhooks:
-    - url: "https://hooks.example.com/content"
-      secret: "$WEBHOOK_SECRET"   # string — HMAC-SHA256 signing secret ("$ENV_VAR" expansion supported)
-      label: "My integration"     # string — Human-readable label for delivery logs (optional)
-      enabled: true               # boolean — Disable without removing (default: true)
-      events:                     # WebhookContentEvent[] — which events trigger this endpoint
-        - onPageCreate
-        - onPageUpdate
-        - onPageDelete
-        - onWorkflowChange
-
-  # Deprecated — use `webhooks.incoming` in system.yaml and `forms:` in site.yaml.
-  # Still read, with a warning:
-  #   incoming_webhooks, honeypot, notifications
+plugins:
+  - src: jsr:@dune/plugin-admin@^4
+    config:
+      path: "/admin"                 # string — URL prefix for the admin panel (default: "/admin")
+      session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
+      max_upload_mb: 100              # number — Upload limit in MB (default: 100)
+      git_commit: false              # boolean — Auto-commit to git after every page save/publish (default: false)
+      auth_provider:
+        type: local                  # the only supported value; omit for the same result
+      audit:
+        enabled: true                # boolean — Audit log (default: true)
+        log_file: "audit.log"        # string — must resolve under the site root
+      machine_translation:           # optional; see Machine translation
+        provider: deepl              # "deepl" | "google" | "libretranslate"
+        api_key: "$DEEPL_API_KEY"
+        base_url: "https://..."      # libretranslate only
+      # Outbound webhooks — fired on content mutation events
+      webhooks:
+        - url: "https://hooks.example.com/content"
+          secret: "$WEBHOOK_SECRET"   # string — HMAC-SHA256 signing secret ("$ENV_VAR" expansion supported)
+          label: "My integration"     # string — Human-readable label for delivery logs (optional)
+          enabled: true               # boolean — Disable without removing (default: true)
+          events:                     # WebhookContentEvent[] — which events trigger this endpoint
+            - onPageCreate
+            - onPageUpdate
+            - onPageDelete
+            - onPageMove
+            - onWorkflowChange
 ```
 
-Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
+Valid `events` values: `onPageCreate`, `onPageUpdate`, `onPageDelete`, `onPageMove`, `onWorkflowChange`. See [Webhooks](../webhooks) for full documentation.
 
-`data_dir` contains user accounts, form submissions, and editorial comments — should be committed to version control. `runtimeDir` contains ephemeral session, revision, staging, and analytics data — should be in `.gitignore`.
+`data_dir` (system.yaml) contains user accounts, form submissions, and editorial comments — it should be committed to version control. `runtime_dir` (system.yaml) contains ephemeral session, revision, staging, and analytics data — keep it in `.gitignore`.
 
 ## theme config
 
