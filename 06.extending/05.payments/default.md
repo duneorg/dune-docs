@@ -73,7 +73,7 @@ Dune verifies the `Stripe-Signature` header on every webhook request using HMAC-
 
 ## Role assignment
 
-After a successful `checkout.session.completed` event, Dune adds the product's `role` to the `User.roles` array. This role can be used in [content gating](../../17.authentication/02.content-gating) rules:
+After a successful `checkout.session.completed` event, Dune adds the product's `role` to the `User.roles` array. Use a role name that is only a content tier (`member`, `subscriber`, ...). The names `admin`, `editor` and `author` also carry editing rights by default (see [role grants](../../17.authentication/03.authorization#site-wide-permissions)), which is intended for paid contributors and not for a membership level; `dune doctor --boot` and the start-up log name a product that grants one. This role can be used in [content gating](../../17.authentication/02.content-gating) rules:
 
 ```yaml
 # In content frontmatter:

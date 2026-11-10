@@ -241,8 +241,20 @@ Who holds a relation on it:
 
   A role that is only a content tag (`member`, `subscriber`, ...) grants nothing here.
 
+  This is a default, set by `role_grants` in `system.yaml`, a mapping of group to relation. Change which group holds which relation, keep a subset, or switch the group-level grants off:
+
+  ```yaml
+  # system.yaml
+  role_grants:
+    staff: editor      # your own group holds the editor relation
+    editor: author     # "editor" is a content tier here: members only create and edit their own pages
+  # role_grants: {}    # no group holds an admin-tier relation on the site
+  ```
+
+  The relations (`admin`, `editor`, `author`) are fixed by the authz schema and plugins cannot add new ones: the setting chooses which group gets which. A group's members are the users with that name in `roles[]`. The grants are reconciled at every start, so one you remove from `role_grants` is revoked (every group → admin/editor/author tuple on the site belongs to this setting). An `editor` relation may edit any page and an `author` only the pages it created, whatever the group is called. `role_grants: {}` governs site users; the admin plugin's own accounts (below) keep their rights.
+
 Membership follows the user record: user stores that core creates (the site auth store, and `services.users.createLocalStore()` for plugins) keep `member of group:<role>` equal to `roles[]` on every create, role update and delete, so granting or revoking a role applies at once, without a restart. At startup the tuples are re-seeded from the records as well. A plugin that builds its own user store must call `syncUserRoles()` itself.
-- **The admin plugin's own accounts** get a direct tuple matching their role, seeded at startup through `services.authz.seedAdminTuples()` (`bootstrapAdminTuples()` in core):
+- **The admin plugin's own accounts**, the ones that can sign in to it (a local password), get a direct tuple matching their role, seeded at startup through `services.authz.seedAdminTuples()` (`bootstrapAdminTuples()` in core). A site user who holds `editor` through OAuth or magic link gets no direct tuple: `role_grants` governs them:
 
   ```
   (user:alice, admin,  app:site)

@@ -231,6 +231,10 @@ flags:
 
 data_dir: "data"                 # string — Persistent data directory (form submissions, admin users). Git-tracked. Replaces the removed admin.data_dir.
 runtime_dir: ".dune/admin"       # string — Machine-local runtime state (job state, revision history, staging, scheduled actions, search analytics, sessions). Not git-tracked. Replaces the removed admin.runtime_dir. The default still carries the admin's name so existing sites keep their state.
+role_grants:                     # mapping — which groups hold the admin-tier relations on the site: group -> admin | editor | author. Default: admin, editor and author each hold their own. Remap (staff: editor), keep a subset, or {} to switch the group-level grants off.
+  admin: admin
+  editor: editor
+  author: author
 max_revisions: 50                # number — Revisions kept per page; the oldest is pruned on each save, 0 keeps all (default: 50). Replaces the removed admin.max_revisions.
 
 # Incoming webhooks — let external systems trigger actions via POST /api/webhook/incoming
