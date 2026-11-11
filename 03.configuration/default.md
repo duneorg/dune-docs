@@ -68,7 +68,7 @@ dune migrate:config             # rewrite the files in place
 
 It rewrites `config/site.yaml`, `config/system.yaml` and every file under `config/env/*/`, keeps comments and key order, and is safe to run twice. At a multisite install root pass `--site <id>`.
 
-The migrator only touches block-style YAML. A file that has an old key it cannot reach (flow style such as `uploads: { maxSizeMb: 5 }`, a quoted key, a key inside a list item, or a file with Windows `CRLF` line endings) is reported and left unchanged, so rename those by hand. Programmatic config in `dune.config.ts` is not checked: an old key there is ignored, so rename it yourself.
+The migrator only touches block-style YAML. A file that has an old key it cannot reach (flow style such as `metrics: { slowQueryThresholdMs: 50 }`, a quoted key, a key inside a list item, or a file with Windows `CRLF` line endings) is reported and left unchanged, so rename those by hand. Programmatic config in `dune.config.ts` gets the same check: an old key in its `site:` or `system:` block is refused at load, naming the new key. The migrator cannot rewrite a `.ts` file, so rename it yourself.
 
 Some settings did not just change spelling, they moved, so the migrator reports them and you move them by hand (the loader refuses them too, naming the new place):
 
