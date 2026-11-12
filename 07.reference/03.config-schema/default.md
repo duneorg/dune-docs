@@ -61,6 +61,7 @@ http_cache:
 auth:
   mode: "dune"                   # "dune" | "external-jwt" (default: "dune")
   session_lifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
+  default_roles: any              # roles: value for pages that declare/inherit none (e.g. "any"); opt out per page with `roles: public`
   providers:
     github:
       client_id: "$GITHUB_CLIENT_ID"

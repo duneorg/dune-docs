@@ -26,9 +26,15 @@ roles: member        # single role — string shorthand
 ```yaml
 ---
 title: Premium Content
-roles:               # array — user must have ALL listed roles
-  - member
-  - premium
+roles: [member, premium]   # array — user needs AT LEAST ONE of the listed roles
+---
+```
+
+```yaml
+---
+title: Verified Members
+roles:               # all: — user must have EVERY listed role
+  all: [member, verified]
 ---
 ```
 
@@ -36,6 +42,13 @@ roles:               # array — user must have ALL listed roles
 ---
 title: Account Required
 roles: any           # special value — any logged-in user, regardless of role
+---
+```
+
+```yaml
+---
+title: Teaser
+roles: public        # open to everyone, even inside a gated section or a gated site
 ---
 ```
 
@@ -53,23 +66,19 @@ The check happens server-side, before any template is executed. There is no clie
 
 | Value | Meaning |
 |-------|---------|
-| `any` | Any authenticated user (roles don't matter) |
+| `any` | Any authenticated user (roles don't matter). Same as `[]`. |
+| `public` | Open to everyone. Overrides an inherited or site-default gate. |
 | `"member"` | User must have `"member"` in their `roles[]` |
-| `["member", "premium"]` | User must have **all** listed roles |
+| `["member", "premium"]` | User must have **at least one** listed role |
+| `all: ["member", "verified"]` | User must have **every** listed role |
+
+A role literally named `any` or `public` can't be used: both words are reserved. (Before 0.37, `any` was read as a role named `any` and did not mean "any logged-in user".)
 
 Roles are assigned at login (from OAuth profile or JWT claims) or after a successful payment (see [Payments](../../06.extending/05.payments)).
 
-## Custom login redirect
+## Login redirect
 
-The redirect target defaults to `/auth/login`. To send visitors to a custom login page:
-
-```yaml
-# site.yaml
-auth:
-  loginPath: "/join"   # custom login page route
-```
-
-The `?next=` query parameter carries the original URL and is restored after login.
+Logged-out visitors are sent to `/auth/login?next={current-path}`, and the `next` parameter is restored after login.
 
 ## 403 page
 
@@ -89,7 +98,46 @@ export default function Forbidden({ site, Layout, ...props }) {
 
 ## Gating a section
 
-`roles:` applies to individual pages — there is no directory-level config. To gate an entire section, add the field to each page's frontmatter. If you manage many gated pages, consider using a blueprint with `roles` as a default field.
+A page's `roles:` applies to everything beneath it, in every language. Put it on the section's top page and every page below inherits it:
+
+```
+content/
+  05.members/
+    default.md        # roles: member
+    01.handbook/      # gated: inherits `member`
+    02.downloads/     # gated
+      default.md
+      guide.pdf       # gated too (see Files below)
+```
+
+Dune resolves the rule for each page in this order, and the first match wins:
+
+1. the page's own `roles:`
+2. the nearest ancestor's `roles:`
+3. the site default, `auth.default_roles` in `site.yaml`
+4. otherwise the page is public
+
+`roles: public` on a page or section opts it out of an inherited or default gate. A malformed `roles:` value counts as "not declared", so it inherits rather than opening the page.
+
+A translated section takes its rule from the same language first, then from another language. If the languages disagree, the gate wins over `public`.
+
+## Gating the whole site
+
+For a site that is entirely members-only (a private preview, an event site), set a default instead of repeating `roles:` everywhere:
+
+```yaml
+# site.yaml
+auth:
+  default_roles: any    # same values as `roles:`
+```
+
+Every page that neither declares nor inherits a rule now requires login. Mark the exceptions with `roles: public`, such as a teaser page. `/auth/*` (login, logout, callbacks) and the theme's static assets are never gated.
+
+## Files in a gated page's folder
+
+Audio, images, PDFs and other files next to a gated page follow that page's rule. A file in a folder with no page of its own follows the nearest ancestor page. A visitor who may not see the page gets a `404` for its files, which doesn't confirm the file exists. The one exception is a logged-out visitor who opens a file directly in the browser: they are sent to the login page. Gated files are sent with `Cache-Control: private, no-store`.
+
+A file with no owning page stays public, unless the site sets `auth.default_roles`, which then gates it too.
 
 ## Checking roles in templates
 
