@@ -468,4 +468,4 @@ search:
 
 Startup also stops, regardless of this setting, when a plugin reports a configuration error that retrying cannot fix, such as a rejected API key.
 
-If you write a search engine plugin: throw `SearchConfigError` (from `@dune/core/search`) for a failure that will not fix itself, and any other error for one that might.
+If you write a search engine plugin: throw `SearchConfigError` (from `@dune/plugin-api`) for a failure that will not fix itself, and any other error for one that might.
