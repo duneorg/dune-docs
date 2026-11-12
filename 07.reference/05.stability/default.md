@@ -100,8 +100,9 @@ The plugin contract is the `@dune/plugin-api` package. Check its `PLUGIN_API_VER
 ```ts
 import { PLUGIN_API_VERSION } from "@dune/plugin-api";
 
-if (PLUGIN_API_VERSION < "1.2") {
-  console.warn(`[my-plugin] needs plugin API 1.2, got ${PLUGIN_API_VERSION}`);
+const [major, minor] = PLUGIN_API_VERSION.split(".").map(Number);
+if (major !== 1 || minor < 2) {
+  console.warn(`[my-plugin] needs plugin API 1.2 or later, got ${PLUGIN_API_VERSION}`);
 }
 ```
 
