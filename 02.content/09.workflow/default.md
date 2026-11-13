@@ -253,7 +253,7 @@ When `git_commit: true` is set in the admin plugin's config, every page save and
 ```yaml
 # config/site.yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       git_commit: true
 ```

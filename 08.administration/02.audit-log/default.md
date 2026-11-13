@@ -42,7 +42,7 @@ Use the filter controls to narrow by event type or actor.
 ```yaml
 # config/site.yaml: the admin plugin's config
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       audit:
         enabled: true          # boolean — Enable audit logging (default: true)
@@ -55,7 +55,7 @@ To disable audit logging entirely:
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       audit:
         enabled: false

@@ -254,7 +254,7 @@ The admin is a plugin; its settings are the `config:` of its entry in `plugins:`
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       path: "/admin"                 # string — URL prefix for the admin panel (default: "/admin")
       session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
