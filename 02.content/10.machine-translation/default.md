@@ -32,7 +32,7 @@ Machine translation produces a draft — a translated copy of the page saved as 
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       machine_translation:
           provider: "deepl"           # "deepl" | "google" | "libretranslate"
@@ -55,7 +55,7 @@ Best quality for European languages. Supports Markdown-aware translation (format
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       machine_translation:
           provider: "deepl"
@@ -70,7 +70,7 @@ Widest language coverage. Uses the Cloud Translation API v2 (Basic).
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       machine_translation:
           provider: "google"
@@ -83,7 +83,7 @@ Self-hosted, open-source, no usage limits or vendor lock-in.
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       machine_translation:
           provider: "libretranslate"
@@ -177,7 +177,7 @@ Response:
 ```yaml
 # config/site.yaml: the admin plugin's config
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       machine_translation:
         provider: "deepl"          # string — "deepl" | "google" | "libretranslate"

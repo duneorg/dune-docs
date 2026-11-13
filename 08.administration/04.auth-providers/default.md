@@ -27,7 +27,7 @@ No configuration needed. Users are managed in Admin → Users.
 ```yaml
 # config/site.yaml: this is the implicit default
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     # config.auth_provider: not set → local passwords
 ```
 
@@ -92,7 +92,7 @@ The injected provider takes precedence over anything set in `system.yaml`. This 
 ```yaml
 # config/site.yaml: the admin plugin's config
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       auth_provider:
         type: local   # the only value; omit the section entirely for the same result
