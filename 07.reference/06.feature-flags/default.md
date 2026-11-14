@@ -67,7 +67,7 @@ In plugins:
 
 ```ts
 import { flag } from "@dune/core";
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 const plugin: DunePlugin = {
   name: "my-plugin",

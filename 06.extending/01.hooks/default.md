@@ -98,7 +98,7 @@ Fired by Dune itself, so they work without an admin plugin.
 
 ```typescript
 // plugins/my-hooks.ts
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default {
   name: "my-hooks",

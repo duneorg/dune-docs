@@ -177,7 +177,7 @@ export default async function handler(ctx: JobContext) {
 Plugin hook handlers (`HookContext`) have no ambient `email`, `content`, or `db` — construct your own client in `setup()` and close over it in your hooks:
 
 ```ts
-import type { DunePlugin, PluginApi } from "@dune/core/plugins";
+import type { DunePlugin, PluginApi } from "@dune/plugin-api";
 import { createEmailClient, createEmailProvider } from "@dune/core/email";
 
 let email: ReturnType<typeof createEmailClient>;

@@ -64,7 +64,7 @@ Use this when your plugin does not need configuration:
 
 ```typescript
 // plugins/logger/mod.ts
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default {
   name: "logger",
@@ -90,7 +90,7 @@ Since 0.36 the factory also receives a second argument with facts that exist bef
 
 ```typescript
 // plugins/analytics/mod.ts
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export interface AnalyticsConfig {
   provider?: "plausible" | "umami";
@@ -163,7 +163,7 @@ The handler receives a `HookContext<Request>` with the following properties:
 ### Custom API endpoint
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default {
   name: "my-api",
@@ -225,7 +225,7 @@ If `setData()` is not called (or the new value is not a `Response`), the request
 `publicRoutes` is the preferred way to add custom endpoints to the public site. Each entry is a proper Fresh route registered before the content catch-all, so it takes priority over content pages and the `onRequest` hook.
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default {
   name: "my-api",
@@ -281,7 +281,7 @@ A plugin adds to the admin panel by **contributing** to it from `setup()`; the a
 Each entry adds a route under `/admin/` that is rendered inside the admin shell (sidebar, header, auth) automatically.
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 import { ADMIN_PAGES } from "@dune/plugin-admin";
 
 export default {
@@ -342,7 +342,7 @@ Two hooks let a plugin extend or replace site search. Both fire once during star
 `onSearchRecordsCollect` lets you add documents to the index alongside content pages — useful for indexing text that doesn't live in a Markdown file (extracted PDF text, an external API, a database table). Each record carries its own result `route` and is indexed from memory, so there's no file read.
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default {
   name: "changelog-index",
@@ -369,7 +369,7 @@ An `InjectedSearchRecord` is `{ route, title, body, fields?, template? }`. Anyth
 `onSearchEngineCreate` lets you swap the built-in in-memory engine for an alternative backend. Pass any object implementing the `SearchEngine` interface (`build`, `rebuild`, `search`, `suggest`) to `ctx.data.register(name, engine)`, then call `ctx.data.setActiveEngine(name)` to make it the one that serves queries. Register nothing to keep the built-in engine. (Assigning `ctx.data.engine` was removed in 0.36.) The context also provides the page list, any records collected by `onSearchRecordsCollect`, and a `loadText(page)` helper that returns a page's plain-text body — so an alternative engine can index the same text the built-in engine would.
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 import { createMyEngine } from "./engine.ts";
 
 export default function mylSearch(config: { url?: string } = {}): DunePlugin {
@@ -460,7 +460,7 @@ setup: ({ hooks }) => {
 When `configSchema` is defined, the admin panel renders a typed form for the plugin's settings. Users can edit config values without touching `site.yaml`. Changes are saved to `data/plugins/{name}.json` and loaded at the next startup.
 
 ```typescript
-import type { DunePlugin } from "@dune/core/plugins";
+import type { DunePlugin } from "@dune/plugin-api";
 
 export default function createSeo(config = {}): DunePlugin {
   return {
@@ -586,7 +586,7 @@ Most plugins do not need `mount()` — hooks and `setup()` cover the vast majori
 
 ```typescript
 import type { App } from "jsr:@fresh/core";
-import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
+import type { DunePlugin, MountApi } from "@dune/plugin-api";
 
 export default function createMyPlugin(): DunePlugin {
   return {
@@ -614,7 +614,7 @@ A route you register with `app.get()`/`app.post()` in `mount()` runs outside the
 A public route that behaves differently for a signed-in admin asks the `editor.session` capability, at request time:
 
 ```typescript
-import type { DunePlugin, MountApi } from "jsr:@dune/core/hooks";
+import type { DunePlugin, MountApi } from "@dune/plugin-api";
 
 export default function createMyPlugin(): DunePlugin {
   return {
@@ -712,7 +712,7 @@ interface PluginServices {
 - **Blueprints** read the content engine's currently loaded blueprints on every call, so a reload is picked up. Use `resolve` for the form definition and `validate` before saving frontmatter.
 - **Search analytics** are recorded by core when `system.search.analytics` is on (see [Query analytics](../../reference/search#query-analytics)); a plugin only reads the summary.
 - **Paths** are site-relative storage paths. Use them instead of re-deriving `data_dir` and `runtime_dir` from the config.
-- **Types** only: the interfaces are what a plugin may rely on. Import them with `import type { PluginServices } from "@dune/core/plugin-api"`.
+- **Types** only: the interfaces are what a plugin may rely on. Import them with `import type { PluginServices } from "@dune/plugin-api"`.
 
 ```typescript
 setup: ({ services }) => {
@@ -740,7 +740,7 @@ mount: ({ app, services }) => {
 | `weak_password` | a password rejected by the strength policy |
 
 ```typescript
-import { isDuneError } from "@dune/core/plugin-api";
+import { isDuneError } from "@dune/plugin-api";
 
 try {
   await services.security.safeFetch(url);
@@ -781,7 +781,7 @@ A plugin that other plugins can extend declares its own keys as typed tokens and
 A key carries its item type, so `contribute(ADMIN_PAGES, page)` and `list(ADMIN_PAGES)` are type-checked without any module augmentation (which JSR does not accept in a published package). Import the key from the plugin that declares it. At runtime the registry is keyed by name, so two keys with the same name are the same capability: a plugin that does not want a dependency on another's package can recreate the key from its documented name, `capabilityKey<…>("bar.actions")`. A key nobody reads is simply never used. To offer an extension point yourself:
 
 ```typescript
-import { type CapabilityKey, capabilityKey } from "jsr:@dune/core/plugin-api";
+import { type CapabilityKey, capabilityKey } from "@dune/plugin-api";
 
 /** A tab on the billing page. Consumer: my-billing. */
 export const BILLING_TABS: CapabilityKey<{ id: string; label: string; render(): string }> =
@@ -795,7 +795,7 @@ and read it in `mount()` with `capabilities.list(BILLING_TABS)`, or in `transfor
 Declare in `setup()`; this only records the declaration. Slots are given as a factory:
 
 ```typescript
-import type { DunePlugin } from "jsr:@dune/core/hooks";
+import type { DunePlugin } from "@dune/plugin-api";
 import { ADMIN_EDITOR } from "jsr:@dune/plugin-admin"; // the `admin.editor` key
 import { BAR_ACTIONS } from "jsr:@dune/plugin-inline-edit"; // the `bar.actions` key
 
@@ -899,9 +899,9 @@ Core owns who may edit. After the site's authentication has run it resolves the 
 A provider that writes content must also fire the matching event itself, because nothing else will; otherwise search indexes, webhooks and cache invalidation miss the write. The factory's `hooks` is the registry to fire on. Name the person in `actor` so audit and webhook plugins can say who did it:
 
 ```typescript
-import type { CapabilityContext } from "jsr:@dune/core/plugin-api";
-import type { DunePlugin } from "jsr:@dune/core/hooks";
-import type { InlineEditManager } from "jsr:@dune/core/inline-edit";
+import type { CapabilityContext } from "@dune/plugin-api";
+import type { DunePlugin } from "@dune/plugin-api";
+import type { InlineEditManager } from "@dune/plugin-api";
 
 function createAutosaveManager(ctx: CapabilityContext): InlineEditManager {
   const { storage, hooks } = ctx;

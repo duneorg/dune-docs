@@ -45,7 +45,7 @@ The following sub-module exports are also available. (Theme helpers such as `pag
 
 | Import path | Contents |
 |---|---|
-| `@dune/core/plugins` | `PLUGIN_API_VERSION`, `CORE_VERSION`, `CORE_INSTANCE`, `loadPlugins`, `loadPluginAdminConfigs` |
+| `@dune/core/plugins` | `CORE_VERSION`, `CORE_INSTANCE`, `loadPlugins`, `loadPluginAdminConfigs`, `mountPlugins` (plugin types are in `@dune/plugin-api`) |
 | `@dune/core/sections` | `SectionRegistry`, `sectionRegistry`, `renderSections`, section types |
 | `@dune/core/content` | `ContentApi`, `createContentApi()` — content query API for headless Fresh routes, obtained via `BootstrapResult.contentApi` |
 | `@dune/core/admin` | `mountDuneAdmin()`, `getDuneAdminIslands()` — headless admin mounting |
@@ -63,7 +63,7 @@ Anything **not** exported from `@dune/core` (or its sub-modules) is internal and
 The plugin interface is frozen since v0.6.0. No field will be removed from `DunePlugin` before v1.0.
 
 ```ts
-import type { DunePlugin } from "@dune/core";
+import type { DunePlugin } from "@dune/plugin-api";
 
 const plugin: DunePlugin = {
   name: "my-plugin",
@@ -95,31 +95,22 @@ export default plugin;
 
 ### Plugin API version
 
-Check `PLUGIN_API_VERSION` at runtime if your plugin uses features that were added in a specific version:
+The plugin contract is the `@dune/plugin-api` package. Check its `PLUGIN_API_VERSION` (its major.minor, for example `"1.2"`) at runtime if your plugin uses something added in a specific minor:
 
 ```ts
-import { PLUGIN_API_VERSION } from "@dune/core/plugins";
+import { PLUGIN_API_VERSION } from "@dune/plugin-api";
 
-if (PLUGIN_API_VERSION !== "0.7") {
-  console.warn(`[my-plugin] expected plugin API 0.7, got ${PLUGIN_API_VERSION}`);
+const [major, minor] = PLUGIN_API_VERSION.split(".").map(Number);
+if (major !== 1 || minor < 2) {
+  console.warn(`[my-plugin] needs plugin API 1.2 or later, got ${PLUGIN_API_VERSION}`);
 }
 ```
 
-### Core-instance identity (since 0.31)
+### Plugins do not import `@dune/core`
 
-`CORE_VERSION` and `CORE_INSTANCE` identify which `@dune/core` module instance your plugin's own dependency resolution landed on. `CORE_INSTANCE` is a reference sentinel (not a version string) — Dune compares it against its own by identity (`===`) after loading your plugin, to detect the case where a plugin resolved a *different copy* of core than the host site (a stale or too-narrow `@dune/core` version range is the usual cause). Re-export both from your plugin's own entrypoint (read them via the namespace object, not named imports, so linking still succeeds against cores older than 0.31) and Dune will warn — never fail the boot — when it detects a split.
+A plugin imports types and helpers from `@dune/plugin-api` and nothing from `@dune/core`, so a core release does not force a new plugin release. Core 0.37 removed the subpaths whose content moved into the package: `@dune/core/hooks`, `/config`, `/inline-edit`, `/content/path-utils`, `/content/page-loader`, `/i18n`, `/auth/types`, `/auth/user-store-db`, `/auth/authz-adapter-local` and `/auth/authz-adapter-db`. A plugin that still imports one stops loading; swap the import for `@dune/plugin-api`.
 
-```ts
-import * as corePlugins from "@dune/core/plugins";
-
-const _core = corePlugins as unknown as { CORE_INSTANCE?: unknown; CORE_VERSION?: string };
-
-// undefined on cores older than 0.31 — that's expected, not an error
-export const resolvedCoreSentinel: unknown = _core.CORE_INSTANCE;
-export const resolvedCoreVersion: string | undefined = _core.CORE_VERSION;
-```
-
-Use a `!==` check only if you need an exact version; prefer a `<` or `>` comparison when checking for minimum capability.
+The old `CORE_INSTANCE` handshake (a plugin re-exporting `resolvedCoreSentinel` so core could detect a second copy of itself) only applies to a plugin that imports core. Core still honours it; a plugin on `@dune/plugin-api` has nothing to detect.
 
 ### Hook events
 
@@ -157,7 +148,7 @@ The `SectionRegistry` and `sectionRegistry` singleton are stable. Register custo
 
 ```ts
 import { sectionRegistry } from "@dune/core/sections";
-import type { DunePlugin } from "@dune/core";
+import type { DunePlugin } from "@dune/plugin-api";
 
 const plugin: DunePlugin = {
   name: "my-sections",
