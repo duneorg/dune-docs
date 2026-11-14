@@ -18,7 +18,7 @@ The Dune admin panel is a browser-based interface for managing content, media, u
 
 ## Accessing the panel
 
-By default the panel is at `/admin`. Dune does not create a default admin account: create the first admin yourself (see below), then log in with it. A site that has no enabled admin logs a warning at startup with the command to run.
+By default the panel is at `/admin`. Dune does not create a default admin account: create the first admin yourself (see below), then log in with it. A site that has the admin plugin loaded but no enabled admin user logs `bootstrap.no_admin_user` at startup, with the command to run.
 
 > Before `@dune/plugin-admin` 3.3.0, first startup created a default `admin` account and wrote its password to a file. That no longer happens. Sites that already have an admin are unaffected.
 
@@ -43,6 +43,18 @@ If both `DUNE_ADMIN_EMAIL` and `DUNE_ADMIN_PASSWORD` are set and the site has no
 - It only acts when **no enabled admin exists**. It never overrides or resets an existing account; to change a password use [`dune users:passwd`](reference/cli#users).
 - Both variables must be set, or neither. A weak password, an invalid email, a username that is taken, or an email that belongs to a non-admin account stops boot with a message saying which.
 - The password stays in the process environment. Remove `DUNE_ADMIN_PASSWORD` from your deployment config after the first boot.
+
+### The "no admin user" notice
+
+When the admin plugin is loaded and no enabled user has the `admin` role, startup logs an `info` line:
+
+```text
+bootstrap.no_admin_user  The admin panel is on but no admin user exists, so nobody can log in. Create one with `dune users:create you@example.com --role admin --password-prompt` (or set DUNE_ADMIN_EMAIL and DUNE_ADMIN_PASSWORD for a container deploy).
+```
+
+It also fires when users exist but none is an enabled admin. A common cause is an account made with `dune users:create ... --password-prompt` but without `--role admin`: it can log in, and then every admin page answers 403. Create an admin with `--role admin`, or give the account the role.
+
+The notice stays quiet when no admin plugin is loaded (a headless site may not want one), when an enabled admin exists, and when the configuration hands out admin-tier roles itself (`role_grants`, OAuth role claims), where the first admin arrives with the first login.
 
 Change the URL prefix with `path` in the admin plugin's config (`config:` under its entry in `plugins:`):
 

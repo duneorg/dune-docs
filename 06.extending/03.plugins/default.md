@@ -140,6 +140,7 @@ export default function createAnalytics(config: AnalyticsConfig = {}): DunePlugi
 | `configSchema` | — | Blueprint-style field definitions for admin-driven config UI |
 | `setup` | — | One-time initialization function called when the plugin is registered |
 | `dependencies` | — | Names of other plugins this plugin requires (soft warning at startup) |
+| `requiresCore` | — | The oldest `@dune/core` this plugin runs on; always `MIN_CORE_VERSION` from `@dune/plugin-api` (see [Declaring the core you need](#declaring-the-core-you-need)) |
 | `publicRoutes` | — | Fresh routes registered on the public site (see below) |
 | `capabilities` (via `setup(api)`) | — | What this plugin provides to core and other plugins: admin pages, guarded admin routes, inline editing, bar buttons, ... (see [Plugin capabilities](#plugin-capabilities)) |
 
@@ -454,6 +455,31 @@ setup: ({ hooks }) => {
   }
 },
 ```
+
+## Declaring the core you need
+
+A plugin built against a newer version of the plugin contract can use something an older core does not provide. Set `requiresCore` so core says so at startup instead of letting the plugin fail later on something that is missing:
+
+```typescript
+import { type DunePlugin, MIN_CORE_VERSION } from "@dune/plugin-api";
+
+export default {
+  name: "dune-comments",
+  version: "1.0.0",
+  requiresCore: MIN_CORE_VERSION,
+  hooks: {},
+} satisfies DunePlugin;
+```
+
+Always use `MIN_CORE_VERSION`, imported from `@dune/plugin-api`. It is the oldest `@dune/core` that implements the version of the contract your plugin was built against, so the number belongs to that contract version, not to your plugin. `@dune/plugin-api` raises it in a release that adds something core must provide, and leaves it alone for types, helpers and optional fields, so rebuilding against a newer plugin-api is all it takes to keep it right.
+
+On an older core, the plugin loader skips the plugin and logs an error, then carries on loading the rest:
+
+```text
+plugins.load.core_too_old  admin needs @dune/core 0.38.0 or later, but this is 0.37.1. Upgrade @dune/core, or use an older release of admin.
+```
+
+Any version string is accepted, but a plugin has no reason to invent one. A value that is missing or not a readable version never blocks a plugin. Core 0.37.1 and later enforce the field; earlier cores ignore it. Themes have no equivalent.
 
 ## Config schema
 
