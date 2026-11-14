@@ -23,7 +23,7 @@ Define webhook endpoints in the `webhooks` array of the admin plugin's config (`
 ```yaml
 # config/site.yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       webhooks:
         - url: "https://api.example.com/hooks/pages"

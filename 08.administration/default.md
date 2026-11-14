@@ -49,7 +49,7 @@ Change the URL prefix with `path` in the admin plugin's config (`config:` under 
 ```yaml
 # config/site.yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       path: /cms   # panel available at /cms
 ```
@@ -61,7 +61,7 @@ The admin panel is a plugin, `@dune/plugin-admin`, and core runs it only when `c
 ```yaml
 # config/site.yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
 ```
 
 > **Headless / API-only deployments:** do not list it. With no admin plugin there are no admin routes, no admin user pool and no related overhead, and core says once at boot that nothing provides the admin. (`admin.enabled` no longer exists; a config that still sets it is refused.) Advanced users can replace the admin with their own plugin that provides `editor.session`; see [Writing your own admin](/docs/extending/plugins#writing-your-own-admin-the-editorsession-contract).
@@ -157,7 +157,7 @@ When `git_commit: true` is set in the admin plugin's config, every page save and
 ```yaml
 # config/site.yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       git_commit: true
 ```

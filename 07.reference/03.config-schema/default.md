@@ -61,6 +61,7 @@ http_cache:
 auth:
   mode: "dune"                   # "dune" | "external-jwt" (default: "dune")
   session_lifetime: 2592000       # number — Session TTL in seconds (default: 30 days)
+  default_roles: any              # roles: value for pages that declare/inherit none (e.g. "any"); opt out per page with `roles: public`
   providers:
     github:
       client_id: "$GITHUB_CLIENT_ID"
@@ -254,7 +255,7 @@ The admin is a plugin; its settings are the `config:` of its entry in `plugins:`
 
 ```yaml
 plugins:
-  - src: jsr:@dune/plugin-admin@^4
+  - src: jsr:@dune/plugin-admin@^5
     config:
       path: "/admin"                 # string — URL prefix for the admin panel (default: "/admin")
       session_lifetime: 86400         # number — Session lifetime in seconds (default: 86400 = 24 h)
